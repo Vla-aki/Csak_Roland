@@ -14,10 +14,8 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Check for existing session on load
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
-    console.log('Stored user:', storedUser); // Debug log
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
@@ -25,7 +23,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (email, password) => {
-    // Mock login - determine role based on email
+    // Demo login - meghatározzuk a szerepkört az email alapján
     const role = email.includes('drone') ? 'driver' : 'customer';
     const userData = {
       id: 1,
@@ -34,15 +32,12 @@ export const AuthProvider = ({ children }) => {
       name: email.split('@')[0]
     };
     
-    console.log('Logging in with:', userData); // Debug log
-    
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
     return { success: true };
   };
 
   const logout = () => {
-    console.log('Logging out'); // Debug log
     setUser(null);
     localStorage.removeItem('user');
   };
