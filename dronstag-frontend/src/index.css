@@ -1,37 +1,142 @@
-/* @tailwind base;
-@tailwind components;
-@tailwind utilities; */
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   body {
-    @apply bg-gray-50;
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-      sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+  
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border-radius: 10px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
   }
 }
 
 @layer components {
-  .btn-primary {
-    @apply bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors duration-200 font-medium;
+  .glass-effect {
+    @apply bg-white bg-opacity-20 backdrop-blur-lg backdrop-filter;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
   }
   
-  .btn-secondary {
-    @apply bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors duration-200 font-medium;
+  .glass-card {
+    @apply bg-white bg-opacity-20 backdrop-blur-md backdrop-filter;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
   }
   
-  .input-field {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600;
   }
   
-  .nav-link {
-    @apply text-gray-700 hover:text-primary-600 transition-colors duration-200;
+  .hover-glow {
+    @apply transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/50;
   }
+  
+  .slide-in-left {
+    animation: slideInLeft 0.5s ease-out;
+  }
+  
+  .slide-in-right {
+    animation: slideInRight 0.5s ease-out;
+  }
+  
+  .fade-in {
+    animation: fadeIn 0.8s ease-out;
+  }
+  
+  .float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  .pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(139, 92, 246, 0.8);
+  }
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.bg-gradient-animated {
+  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
 }
