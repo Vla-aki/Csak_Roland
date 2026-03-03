@@ -1,286 +1,451 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  FaArrowRight,
-  FaCheckCircle,
-  FaShieldAlt,
-  FaCamera,
-  FaMapMarkedAlt,
-  FaIndustry,
-  FaNewspaper,
-  FaQuoteRight,
-  FaUsers,
-  FaRegCalendarAlt,
-  FaStar,
-  FaRocket,
-  FaChartLine,
-  FaUserTie,
-  FaPlay
-} from 'react-icons/fa';
+import Navbar from '../components/common/Navbar';  // Javított import
+import Footer from '../components/common/Footer';  // Javított import
 
 const Landing = () => {
+  // ========== STATE MANAGEMENT ==========
+  const [scrollY, setScrollY] = useState(0);
   const [activeSection, setActiveSection] = useState('hero');
-  const [counts, setCounts] = useState({ pilots: 0, projects: 0, years: 0 });
-  const [showVideo, setShowVideo] = useState(false);
-  const sectionRefs = {
-    hero: useRef(null),
-    services: useRef(null),
-    stats: useRef(null),
-    howItWorks: useRef(null),
-    news: useRef(null),
-    team: useRef(null),
-    cta: useRef(null)
-  };
+  const [activeJobCategory, setActiveJobCategory] = useState('all');
+  const [activeFreelancerCategory, setActiveFreelancerCategory] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [selectedFreelancer, setSelectedFreelancer] = useState(null);
+  const [showJobModal, setShowJobModal] = useState(false);
+  const [showFreelancerModal, setShowFreelancerModal] = useState(false);
+  const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 });
+  const [selectedLocation, setSelectedLocation] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [stats, setStats] = useState({ jobs: 0, freelancers: 0, completed: 0, earnings: 0 });
 
-  // Intersection Observer a görgetés követéséhez
+  // ========== REFERENCIÁK ==========
+  const heroRef = useRef(null);
+  const jobsRef = useRef(null);
+  const freelancersRef = useRef(null);
+  const statsRef = useRef(null);
+  const howItWorksRef = useRef(null);
+  const ctaRef = useRef(null);
+
+  // ========== SCROLL EFFECTS ==========
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveSection(entry.target.id);
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+      
+      const sections = [
+        { id: 'hero', ref: heroRef },
+        { id: 'jobs', ref: jobsRef },
+        { id: 'freelancers', ref: freelancersRef },
+        { id: 'stats', ref: statsRef },
+        { id: 'how-it-works', ref: howItWorksRef },
+        { id: 'cta', ref: ctaRef }
+      ];
+      
+      for (const section of sections) {
+        if (section.ref.current) {
+          const rect = section.ref.current.getBoundingClientRect();
+          if (rect.top <= 200 && rect.bottom >= 200) {
+            setActiveSection(section.id);
+            break;
           }
-        });
-      },
-      { threshold: 0.3, rootMargin: '-100px 0px -100px 0px' }
-    );
-
-    Object.values(sectionRefs).forEach((ref) => {
-      if (ref.current) observer.observe(ref.current);
-    });
-
-    return () => observer.disconnect();
+        }
+      }
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Számláló animáció
+  // ========== STATISZTIKA ANIMÁCIÓ ==========
   useEffect(() => {
-    const targetCounts = { pilots: 528, projects: 1247, years: 10 };
+    const targetStats = { 
+      jobs: 1247, 
+      freelancers: 528, 
+      completed: 9876, 
+      earnings: 2450000 
+    };
     const duration = 2000;
-    const step = 50;
-    let current = { pilots: 0, projects: 0, years: 0 };
+    let startTime = Date.now();
+    let animationFrame;
     
-    const timer = setInterval(() => {
-      const progress = Math.min(1, (Date.now() - startTime) / duration);
-      setCounts({
-        pilots: Math.floor(progress * targetCounts.pilots),
-        projects: Math.floor(progress * targetCounts.projects),
-        years: Math.floor(progress * targetCounts.years)
+    const updateStats = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      setStats({
+        jobs: Math.floor(progress * targetStats.jobs),
+        freelancers: Math.floor(progress * targetStats.freelancers),
+        completed: Math.floor(progress * targetStats.completed),
+        earnings: Math.floor(progress * targetStats.earnings)
       });
       
-      if (progress >= 1) clearInterval(timer);
-    }, step);
+      if (progress < 1) {
+        animationFrame = requestAnimationFrame(updateStats);
+      }
+    };
     
-    const startTime = Date.now();
-    return () => clearInterval(timer);
+    animationFrame = requestAnimationFrame(updateStats);
+    return () => cancelAnimationFrame(animationFrame);
   }, []);
 
-  const szolgaltatasok = [
+  // ========== JOBS ADATOK ==========
+  const jobCategories = [
+    { id: 'all', name: 'Összes', count: 1247 },
+    { id: 'photography', name: 'Légifotó', count: 432 },
+    { id: 'videography', name: 'Videózás', count: 356 },
+    { id: 'inspection', name: 'Ellenőrzés', count: 289 },
+    { id: 'mapping', name: 'Térképezés', count: 178 },
+    { id: 'delivery', name: 'Szállítás', count: 92 }
+  ];
+
+  const jobs = [
     {
-      icon: <FaIndustry className="text-3xl text-indigo-600" />,
-      title: "Ipari drónozás",
-      description: "Gyáregységek, építkezések, nehézgépes anyagmozgatás ellenőrzése és kivitelezése.",
-      features: ["Anyagmozgatás", "Struktúra ellenőrzés", "Biztonsági monitoring"]
+      id: 1,
+      title: "Drónfotózás ingatlanhoz - 10 ingatlan",
+      description: "Budapesti luxusingatlanok fotózásához keresek profi drónost. 10 különböző helyszín, 20-30 kép/ingatlan.",
+      budget: 250,
+      budgetType: "fix",
+      location: "Budapest",
+      category: "photography",
+      postedDate: "2026.03.01.",
+      deadline: "2026.03.15.",
+      proposals: 8,
+      skills: ["légifotó", "ingatlan", "photoshop"],
+      client: {
+        name: "Ingatlan.com Zrt.",
+        rating: 4.9,
+        reviews: 234,
+        verified: true
+      },
+      featured: true
     },
     {
-      icon: <FaCamera className="text-3xl text-indigo-600" />,
-      title: "Légifotó és videó",
-      description: "Esküvő, ingatlanfotózás, reklámfilmek - professzionális kivitelezésben.",
-      features: ["4K / 8K felbontás", "Stabilizált felvétel", "Utómunka"]
+      id: 2,
+      title: "Ipari csarnok ellenőrzése - szerkezetvizsgálat",
+      description: "5000m2-es ipari csarnok tetőszerkezetének ellenőrzése hőkamerás drónnal. Részletes jelentés kell, fotókkal.",
+      budget: 65,
+      budgetType: "hourly",
+      location: "Győr",
+      category: "inspection",
+      postedDate: "2026.03.02.",
+      deadline: "2026.03.20.",
+      proposals: 3,
+      skills: ["hőkamera", "ipari", "szerkezetvizsgálat"],
+      client: {
+        name: "Győri Ipari Park",
+        rating: 4.7,
+        reviews: 56,
+        verified: true
+      },
+      featured: false
     },
     {
-      icon: <FaMapMarkedAlt className="text-3xl text-indigo-600" />,
-      title: "Térképezés, felmérés",
-      description: "Precíziós mezőgazdaság, erdőgazdálkodás, 3D modellek készítése.",
-      features: ["3D modellek", "NDVI elemzés", "Topográfiai térképek"]
+      id: 3,
+      title: "Mezőgazdasági terület térképezés - NDVI elemzés",
+      description: "120 hektáros búzatábla NDVI elemzése, 3D modell készítése. Részletes jelentés a növényegészségügyi állapotról.",
+      budget: 480,
+      budgetType: "fix",
+      location: "Bács-Kiskun",
+      category: "mapping",
+      postedDate: "2026.02.28.",
+      deadline: "2026.03.25.",
+      proposals: 5,
+      skills: ["NDVI", "térképezés", "mezőgazdaság"],
+      client: {
+        name: "Kiskunsági Mezőgazdasági Zrt.",
+        rating: 4.8,
+        reviews: 112,
+        verified: true
+      },
+      featured: true
     },
     {
-      icon: <FaShieldAlt className="text-3xl text-indigo-600" />,
-      title: "Keresés és mentés",
-      description: "Hőkamerás drónokkal végzett keresések, mentési műveletek támogatása.",
-      features: ["Hőkamera", "Éjjellátó", "Gyors reagálás"]
+      id: 4,
+      title: "Esküvői drónvideó - 8 órás rendezvény",
+      description: "Esküvői helyszín és ceremónia drónos felvétele. 8 órás rendezvény, 3-5 perces összeállítás kell.",
+      budget: 120,
+      budgetType: "hourly",
+      location: "Visegrád",
+      category: "videography",
+      postedDate: "2026.03.03.",
+      deadline: "2026.04.01.",
+      proposals: 12,
+      skills: ["esküvő", "videózás", "utómunka"],
+      client: {
+        name: "Kovácsék",
+        rating: 5.0,
+        reviews: 8,
+        verified: false
+      },
+      featured: false
+    },
+    {
+      id: 5,
+      title: "Napelempark ellenőrzés - hőkamerás diagnosztika",
+      description: "5MW-s napelempark paneljeinek ellenőrzése hőkamerával. Hibás panelek azonosítása, részletes jelentés.",
+      budget: 1800,
+      budgetType: "fix",
+      location: "Kecskemét",
+      category: "inspection",
+      postedDate: "2026.02.25.",
+      deadline: "2026.03.10.",
+      proposals: 6,
+      skills: ["napelem", "hőkamera", "diagnosztika"],
+      client: {
+        name: "Magyar Napelem Kft.",
+        rating: 4.6,
+        reviews: 45,
+        verified: true
+      },
+      featured: true
+    },
+    {
+      id: 6,
+      title: "Reklámfilm drónfelvételek - autó reklám",
+      description: "Autóreklámhoz kellenek dinamikus drónfelvételek. 2 nap forgatás, Balaton környékén.",
+      budget: 95,
+      budgetType: "hourly",
+      location: "Balatonfüred",
+      category: "videography",
+      postedDate: "2026.03.01.",
+      deadline: "2026.03.18.",
+      proposals: 9,
+      skills: ["reklám", "autó", "dinamikus"],
+      client: {
+        name: "Creative Studio Budapest",
+        rating: 4.9,
+        reviews: 178,
+        verified: true
+      },
+      featured: false
     }
   ];
 
-  const hirek = [
-    {
-      title: "DJI korlátozás: 120 méter a C0-ás drónoknak",
-      excerpt: "Az új szoftverfrissítés után a 250g alatti drónok sem emelkedhetnek 120 méter fölé.",
-      date: "2026.01.25.",
-      category: "Technológia",
-      image: "https://images.unsplash.com/photo-1508614589041-895b88991e3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-    },
-    {
-      title: "DJI FlyCart 30: ipari anyagmozgatás drónokkal",
-      excerpt: "Gyáregységek tetejére telepített drónok forradalmasítják a logisztikát.",
-      date: "2026.01.18.",
-      category: "Ipari alkalmazás",
-      image: "https://images.unsplash.com/photo-1579829366248-204feedb6cfd?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-    },
-    {
-      title: "Potensic Atom 2: beépített kijelzős távirányító",
-      excerpt: "Vége a kábelrengetegnek - új korszak a drónvezérlésben.",
-      date: "2026.01.12.",
-      category: "Termékbemutató",
-      image: "https://images.unsplash.com/photo-1527977966376-1c8408f9f108?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-    }
+  const filteredJobs = jobs.filter(job => {
+    if (activeJobCategory !== 'all' && job.category !== activeJobCategory) return false;
+    if (searchQuery && !job.title.toLowerCase().includes(searchQuery.toLowerCase()) && 
+        !job.description.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (selectedLocation && !job.location.includes(selectedLocation)) return false;
+    if (job.budgetType === 'fix' && (job.budget < priceRange.min || job.budget > priceRange.max)) return false;
+    return true;
+  });
+
+  // ========== FREELANCERS ADATOK ==========
+  const freelancerCategories = [
+    { id: 'all', name: 'Összes', count: 528 },
+    { id: 'photography', name: 'Fotós', count: 156 },
+    { id: 'videography', name: 'Videós', count: 143 },
+    { id: 'inspection', name: 'Ellenőrzés', count: 98 },
+    { id: 'mapping', name: 'Térképezés', count: 76 },
+    { id: 'delivery', name: 'Szállítás', count: 55 }
   ];
 
-  const csapat = [
+  const freelancers = [
     {
-      name: "Pataki András",
-      nickname: "BanDeE",
-      role: "Alapító",
-      quote: "Nyomjuk meg, ez az utolsó akkumulátor…",
+      id: 1,
+      name: "Kovács Péter",
+      title: "Profi drónpilóta - 8 év tapasztalat",
+      description: "DJI Inspire 2, Mavic 3, hőkamera. Ingatlanfotózás, ipari ellenőrzés, rendezvények.",
+      hourlyRate: 45,
+      location: "Budapest",
+      category: "photography",
+      rating: 4.9,
+      reviews: 234,
+      jobs: 187,
+      verified: true,
+      skills: ["ingatlan", "ipari", "hőkamera", "DJI"],
       image: "https://randomuser.me/api/portraits/men/32.jpg",
-      expertise: ["Stratégia", "Közösségépítés"]
+      featured: true,
+      availability: "azonnal"
     },
     {
-      name: "Tóth Tamás",
-      nickname: "Tomeedey",
-      role: "Tesztpilóta",
-      quote: "Mindjárt indulok, most pakolok…",
+      id: 2,
+      name: "Nagy Eszter",
+      title: "Kreatív drónvideós - rendezvények, esküvők",
+      description: "Kreatív megközelítés, professzionális utómunka. 5+ év tapasztalat, 300+ esemény.",
+      hourlyRate: 55,
+      location: "Győr",
+      category: "videography",
+      rating: 5.0,
+      reviews: 178,
+      jobs: 256,
+      verified: true,
+      skills: ["esküvő", "rendezvény", "kreatív", "utómunka"],
+      image: "https://randomuser.me/api/portraits/women/44.jpg",
+      featured: true,
+      availability: "1 hét"
+    },
+    {
+      id: 3,
+      name: "Szabó István",
+      title: "Ipari drónspecialista - hőkamera, szerkezetvizsgálat",
+      description: "Mérnöki végzettség, ipari létesítmények ellenőrzése, részletes műszaki jelentések.",
+      hourlyRate: 65,
+      location: "Miskolc",
+      category: "inspection",
+      rating: 4.8,
+      reviews: 156,
+      jobs: 234,
+      verified: true,
+      skills: ["ipari", "hőkamera", "mérnöki", "jelentés"],
       image: "https://randomuser.me/api/portraits/men/45.jpg",
-      expertise: ["Tesztelés", "Oktatás"]
+      featured: false,
+      availability: "3 nap"
     },
     {
-      name: "Mákos Kristóf",
-      nickname: "Mákostészta",
-      role: "Videós",
-      quote: "Kétféle pilóta létezik…",
-      image: "https://randomuser.me/api/portraits/men/67.jpg",
-      expertise: ["Videózás", "Vágás"]
+      id: 4,
+      name: "Tóth Gábor",
+      title: "Térképezési szakértő - NDVI, 3D modellek",
+      description: "Agrármérnöki végzettség, precíziós mezőgazdaság, NDVI elemzések, topográfiai térképek.",
+      hourlyRate: 50,
+      location: "Szeged",
+      category: "mapping",
+      rating: 4.9,
+      reviews: 98,
+      jobs: 145,
+      verified: true,
+      skills: ["NDVI", "3D", "agrár", "térkép"],
+      image: "https://randomuser.me/api/portraits/men/52.jpg",
+      featured: false,
+      availability: "azonnal"
+    },
+    {
+      id: 5,
+      name: "Varga Balázs",
+      title: "Drónos szállítás - logisztika, sürgősségi",
+      description: "Speciális szállítási engedélyek, 30kg-ig, gyógyszer- és dokumentumszállítás.",
+      hourlyRate: 40,
+      location: "Budapest",
+      category: "delivery",
+      rating: 4.7,
+      reviews: 67,
+      jobs: 189,
+      verified: true,
+      skills: ["szállítás", "logisztika", "gyors"],
+      image: "https://randomuser.me/api/portraits/men/62.jpg",
+      featured: false,
+      availability: "2 nap"
+    },
+    {
+      id: 6,
+      name: "Kiss Anna",
+      title: "Luxus ingatlanfotós - drón + földi fotózás",
+      description: "Luxusingatlanokra specializálódva, komplett fotócsomag drónnal + földi géppel.",
+      hourlyRate: 60,
+      location: "Budapest",
+      category: "photography",
+      rating: 5.0,
+      reviews: 145,
+      jobs: 312,
+      verified: true,
+      skills: ["luxus", "ingatlan", "fotózás", "utómunka"],
+      image: "https://randomuser.me/api/portraits/women/63.jpg",
+      featured: true,
+      availability: "1 hét"
     }
   ];
 
-  const folyamat = [
+  const filteredFreelancers = freelancers.filter(f => {
+    if (activeFreelancerCategory !== 'all' && f.category !== activeFreelancerCategory) return false;
+    if (searchQuery && !f.name.toLowerCase().includes(searchQuery.toLowerCase()) && 
+        !f.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !f.description.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (selectedLocation && !f.location.includes(selectedLocation)) return false;
+    if (f.hourlyRate < priceRange.min || f.hourlyRate > priceRange.max) return false;
+    return true;
+  });
+
+  // ========== HOW IT WORKS ==========
+  const howItWorks = [
     {
       step: 1,
       title: "Projekt meghirdetése",
-      description: "Add meg a projekt részleteit, helyszínt, időpontot és költségkeretet."
+      description: "Add meg a projekt részleteit, helyszínt, időpontot és költségkeretet. Teljesen ingyenes!",
+      icon: "📋"
     },
     {
       step: 2,
       title: "Ajánlatok fogadása",
-      description: "A regisztrált pilóták ajánlatokat küldenek, te pedig kiválasztod a legjobbat."
+      description: "A regisztrált pilóták ajánlatokat küldenek, te pedig összehasonlíthatod őket.",
+      icon: "📨"
     },
     {
       step: 3,
-      title: "Munka elvégzése",
-      description: "A pilóta elvégzi a munkát, te pedig élőben követheted a folyamatot."
+      title: "Kiválasztás és munka",
+      description: "Válaszd ki a legjobb ajánlatot, és a pilóta elvégzi a munkát.",
+      icon: "✅"
     },
     {
       step: 4,
       title: "Értékelés és fizetés",
-      description: "Ha elégedett vagy, a pénz kifizetésre kerül, és értékelheted a pilótát."
+      description: "Ha elégedett vagy, a pénz kifizetésre kerül, és értékelheted a pilótát.",
+      icon: "💰"
     }
   ];
 
+  // ========== RENDER ==========
   return (
-    <div className="bg-white">
-      {/* Oldalsó navigációs indikátor */}
-      <div className="fixed right-8 top-1/2 transform -translate-y-1/2 z-40 hidden lg:block">
-        <div className="flex flex-col gap-3">
-          {['hero', 'services', 'stats', 'howItWorks', 'news', 'team', 'cta'].map((section) => (
-            <a
-              key={section}
-              href={`#${section}`}
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                activeSection === section 
-                  ? 'bg-indigo-600 h-6' 
-                  : 'bg-gray-300 hover:bg-indigo-400'
-              }`}
-              onClick={(e) => {
-                e.preventDefault();
-                sectionRefs[section].current?.scrollIntoView({ behavior: 'smooth' });
-              }}
-            />
-          ))}
-        </div>
-      </div>
+    <div className="min-h-screen bg-white dark:bg-gray-900 transition-all duration-700">
+      
+      {/* ===== NAVBAR ===== */}
+      <Navbar />
 
-      {/* HERO SZEKCIÓ */}
-      <section id="hero" ref={sectionRefs.hero} className="min-h-screen flex items-center pt-20">
-        <div className="container mx-auto px-6">
+      {/* ===== HERO SZEKCIÓ ===== */}
+      <section ref={heroRef} id="hero" className="pt-24 pb-16 px-4 bg-gradient-to-b from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 transition-all duration-700">
+        <div className="container mx-auto max-w-7xl transition-all duration-700">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8">
-              <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-full text-sm">
-                <FaRocket className="text-indigo-600" />
-                <span>Magyarország legnagyobb drónos közössége</span>
-              </div>
-              
-              <h1 className="text-5xl lg:text-6xl xl:text-7xl font-light leading-tight">
-                Drónszolgáltatások
-                <span className="block font-bold text-indigo-600 mt-2">professzionális szinten</span>
+            <div className="transition-all duration-700">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6 transition-all duration-700">
+                Találd meg a legjobb 
+                <span className="text-blue-600 dark:text-blue-400"> drónpilótát</span>
               </h1>
-              
-              <p className="text-xl text-gray-600 leading-relaxed max-w-xl">
-                Több mint 10 éve segítjük a drónok iránt érdeklődőket. 
-                Találd meg a projektedhez legmegfelelőbb pilótát percek alatt.
+              <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 mb-8 transition-all duration-700">
+                Magyarország legnagyobb drónos piactere. Több mint 500 ellenőrzött pilóta, 
+                1200+ sikeres projekt.
               </p>
-              
-              <div className="flex flex-wrap gap-4">
-                <Link 
-                  to="/register" 
-                  className="group bg-indigo-600 text-white px-8 py-4 rounded-xl hover:bg-indigo-700 transition shadow-lg hover:shadow-xl flex items-center gap-2 text-lg"
-                >
-                  Projektet hirdetek 
-                  <FaArrowRight className="group-hover:translate-x-1 transition" />
-                </Link>
-                <button 
-                  onClick={() => setShowVideo(true)}
-                  className="border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-xl hover:border-indigo-600 hover:text-indigo-600 transition flex items-center gap-2 text-lg"
-                >
-                  <FaPlay className="text-sm" /> Bemutató videó
-                </button>
+
+              {/* Kereső */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-2 mb-6 transition-all duration-700">
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Keresés projektek vagy pilóták között..."
+                    className="flex-1 px-4 py-3 bg-transparent border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:border-blue-600 dark:focus:border-blue-400 text-gray-900 dark:text-white transition-all duration-700"
+                  />
+                  <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 whitespace-nowrap">
+                    Keresés
+                  </button>
+                </div>
               </div>
 
-              <div className="flex items-center gap-6 pt-6">
-                <div className="flex -space-x-2">
-                  {[1,2,3,4].map((i) => (
-                    <img 
-                      key={i}
-                      src={`https://randomuser.me/api/portraits/men/${30+i}.jpg`}
-                      alt="Pilóta"
-                      className="w-10 h-10 rounded-full border-2 border-white"
-                    />
-                  ))}
-                </div>
-                <div className="text-sm text-gray-600">
-                  <span className="font-bold text-gray-900">500+</span> aktív pilóta
-                </div>
+              <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400 transition-all duration-700">
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 bg-green-500 rounded-full transition-all duration-700"></span>
+                  500+ pilóta
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 bg-blue-500 rounded-full transition-all duration-700"></span>
+                  1200+ projekt
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 bg-purple-500 rounded-full transition-all duration-700"></span>
+                  98% elégedettség
+                </span>
               </div>
             </div>
 
-            <div className="relative hidden lg:block">
+            <div className="relative transition-all duration-700 mt-8 lg:mt-0">
               <img 
-                src="https://images.unsplash.com/photo-1473968512647-3e447244af8f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                src="https://images.unsplash.com/photo-1508614589041-895b88991e3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
                 alt="Drone"
-                className="rounded-3xl shadow-2xl"
+                className="rounded-lg shadow-2xl transition-all duration-700 w-full h-auto"
               />
-              
-              {/* Floating statisztika */}
-              <div className="absolute -bottom-8 -left-8 bg-white p-6 rounded-2xl shadow-xl max-w-xs">
-                <div className="flex items-center gap-4">
-                  <div className="bg-green-100 p-3 rounded-full">
-                    <FaCheckCircle className="text-green-600 text-2xl" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-lg">100% biztonságos</div>
-                    <div className="text-sm text-gray-500">Letéti számla védelem</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Rating */}
-              <div className="absolute -top-4 -right-4 bg-white p-4 rounded-xl shadow-lg">
-                <div className="flex items-center gap-2">
-                  <div className="flex">
-                    {[1,2,3,4,5].map((i) => (
-                      <FaStar key={i} className="text-yellow-400" />
-                    ))}
-                  </div>
-                  <span className="font-bold">4.9</span>
-                  <span className="text-gray-500">(128 értékelés)</span>
+              <div className="absolute -bottom-4 -left-4 bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 transition-all duration-700">
+                <div className="flex items-center gap-2 sm:gap-4">
+                  <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 transition-all duration-700">98%</div>
+                  <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 transition-all duration-700">Ügyfél<br />elégedettség</div>
                 </div>
               </div>
             </div>
@@ -288,132 +453,283 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* SZOLGÁLTATÁSOK */}
-      <section id="services" ref={sectionRefs.services} className="py-24 bg-gray-50">
-        <div className="container mx-auto px-6">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <span className="text-indigo-600 font-semibold text-sm tracking-wider uppercase">Szolgáltatások</span>
-            <h2 className="text-4xl font-light mt-4 mb-6">Minden, amire szükséged lehet</h2>
-            <p className="text-xl text-gray-600">
-              Legyen szó ipari alkalmazásról vagy kreatív projektről, nálunk megtalálod a megfelelő szakembert.
-            </p>
+      {/* ===== STATISZTIKA ===== */}
+      <section ref={statsRef} id="stats" className="py-16 px-4 bg-gray-50 dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700 transition-all duration-700">
+        <div className="container mx-auto max-w-7xl transition-all duration-700">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div className="transition-all duration-700">
+              <div className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2 transition-all duration-700">{stats.jobs}+</div>
+              <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 transition-all duration-700">Meghirdetett projekt</div>
+            </div>
+            <div className="transition-all duration-700">
+              <div className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2 transition-all duration-700">{stats.freelancers}+</div>
+              <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 transition-all duration-700">Aktív pilóta</div>
+            </div>
+            <div className="transition-all duration-700">
+              <div className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2 transition-all duration-700">{stats.completed}+</div>
+              <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 transition-all duration-700">Sikeres projekt</div>
+            </div>
+            <div className="transition-all duration-700">
+              <div className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2 transition-all duration-700">{stats.earnings.toLocaleString()} €</div>
+              <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 transition-all duration-700">Kifizetett összeg</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== AKTUÁLIS PROJEKTEK ===== */}
+      <section ref={jobsRef} id="jobs" className="py-24 px-4 transition-all duration-700">
+        <div className="container mx-auto max-w-7xl transition-all duration-700">
+          <div className="flex flex-wrap items-center justify-between mb-12">
+            <div className="transition-all duration-700">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 transition-all duration-700">Aktuális projektek</h2>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 transition-all duration-700">Tallózz a legfrissebb munkák között</p>
+            </div>
+            <Link to="/find-work" className="text-blue-600 dark:text-blue-400 hover:underline transition-all duration-300 text-sm sm:text-base">
+              Összes projekt megtekintése →
+            </Link>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {szolgaltatasok.map((item, index) => (
-              <div 
-                key={index} 
-                className="group bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border border-gray-100"
+          {/* Kategória szűrő */}
+          <div className="flex flex-wrap gap-2 mb-8">
+            <div className="flex flex-wrap gap-2 w-full md:w-auto">
+              {jobCategories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveJobCategory(cat.id)}
+                  className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 ${
+                    activeJobCategory === cat.id
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  {cat.name} <span className="text-xs opacity-75">({cat.count})</span>
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="px-3 sm:px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 text-xs sm:text-sm"
+            >
+              <span className="hidden sm:inline">Szűrők </span>⚙️
+            </button>
+          </div>
+
+          {/* Szűrők panel */}
+          {showFilters && (
+            <div className="mb-8 p-6 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 transition-all duration-700">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-all duration-700">
+                    Helyszín
+                  </label>
+                  <select
+                    value={selectedLocation}
+                    onChange={(e) => setSelectedLocation(e.target.value)}
+                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white transition-all duration-700"
+                  >
+                    <option value="">Minden helyszín</option>
+                    <option value="Budapest">Budapest</option>
+                    <option value="Győr">Győr</option>
+                    <option value="Miskolc">Miskolc</option>
+                    <option value="Szeged">Szeged</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-all duration-700">
+                    Ár minimum
+                  </label>
+                  <input
+                    type="number"
+                    value={priceRange.min}
+                    onChange={(e) => setPriceRange({...priceRange, min: parseInt(e.target.value) || 0})}
+                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white transition-all duration-700"
+                    placeholder="0 €"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-all duration-700">
+                    Ár maximum
+                  </label>
+                  <input
+                    type="number"
+                    value={priceRange.max}
+                    onChange={(e) => setPriceRange({...priceRange, max: parseInt(e.target.value) || 1000})}
+                    className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white transition-all duration-700"
+                    placeholder="1000 €"
+                  />
+                </div>
+                <div className="flex items-end">
+                  <button
+                    onClick={() => {
+                      setSelectedLocation('');
+                      setPriceRange({ min: 0, max: 1000 });
+                    }}
+                    className="w-full px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-300"
+                  >
+                    Szűrők törlése
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Projektek grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredJobs.map((job) => (
+              <div
+                key={job.id}
+                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-lg transition-all duration-300 cursor-pointer group relative overflow-hidden"
+                onClick={() => {
+                  setSelectedJob(job);
+                  setShowJobModal(true);
+                }}
               >
-                <div className="mb-6 transform group-hover:scale-110 transition duration-300">
-                  {item.icon}
-                </div>
-                <h3 className="text-xl font-bold mb-3">{item.title}</h3>
-                <p className="text-gray-600 mb-4 text-sm">{item.description}</p>
-                <ul className="space-y-2">
-                  {item.features.map((feature, i) => (
-                    <li key={i} className="text-sm text-gray-500 flex items-center gap-2">
-                      <FaCheckCircle className="text-indigo-400 text-xs" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* STATISZTIKÁK */}
-      <section id="stats" ref={sectionRefs.stats} className="py-24 bg-indigo-600">
-        <div className="container mx-auto px-6">
-          <div className="grid md:grid-cols-3 gap-12 text-center">
-            <div>
-              <div className="text-5xl font-bold text-white mb-2">{counts.pilots}+</div>
-              <div className="text-indigo-200 text-lg">Igazolt pilóta</div>
-              <p className="text-indigo-300 text-sm mt-2">Szigorúan ellenőrzött szakemberek</p>
-            </div>
-            <div>
-              <div className="text-5xl font-bold text-white mb-2">{counts.projects}+</div>
-              <div className="text-indigo-200 text-lg">Elvégzett projekt</div>
-              <p className="text-indigo-300 text-sm mt-2">Elégedett ügyfelek országszerte</p>
-            </div>
-            <div>
-              <div className="text-5xl font-bold text-white mb-2">{counts.years}+</div>
-              <div className="text-indigo-200 text-lg">Év tapasztalat</div>
-              <p className="text-indigo-300 text-sm mt-2">2016 óta folyamatosan fejlődünk</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* HOGYAN MŰKÖDIK */}
-      <section id="howItWorks" ref={sectionRefs.howItWorks} className="py-24">
-        <div className="container mx-auto px-6">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <span className="text-indigo-600 font-semibold text-sm tracking-wider uppercase">Hogyan működik</span>
-            <h2 className="text-4xl font-light mt-4 mb-6">Négy egyszerű lépésben</h2>
-            <p className="text-xl text-gray-600">
-              Percek alatt megtalálhatod a projektedhez legmegfelelőbb drónpilótát.
-            </p>
-          </div>
-
-          <div className="grid lg:grid-cols-4 gap-8 relative">
-            {folyamat.map((item, index) => (
-              <div key={index} className="relative">
-                <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 relative z-10">
-                  <div className="w-12 h-12 bg-indigo-600 text-white rounded-xl flex items-center justify-center text-xl font-bold mb-6">
-                    {item.step}
-                  </div>
-                  <h3 className="text-xl font-bold mb-3">{item.title}</h3>
-                  <p className="text-gray-600">{item.description}</p>
-                </div>
-                {index < 3 && (
-                  <div className="hidden lg:block absolute top-1/2 -right-4 transform -translate-y-1/2 z-0">
-                    <FaArrowRight className="text-gray-300 text-2xl" />
+                {job.featured && (
+                  <div className="absolute top-0 left-0 bg-blue-600 text-white text-xs font-medium px-3 py-1 rounded-br-lg transition-all duration-700 z-10">
+                    Kiemelt
                   </div>
                 )}
+                <div className="p-6 pt-8">
+                  <div className="flex items-start justify-between mb-4">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-all duration-300 pr-4">
+                      {job.title}
+                    </h3>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 transition-all duration-700 whitespace-nowrap">{job.postedDate}</span>
+                  </div>
+
+                  <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm mb-4 line-clamp-2 transition-all duration-700">
+                    {job.description}
+                  </p>
+
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="flex items-center gap-1">
+                      <span className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white transition-all duration-700">{job.budget} €</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 transition-all duration-700">/{job.budgetType === 'fix' ? 'fix' : 'óra'}</span>
+                    </div>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 transition-all duration-700">{job.location}</span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {job.skills.map((skill, i) => (
+                      <span key={i} className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs rounded transition-all duration-700">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700 transition-all duration-700">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white transition-all duration-700">{job.client.name}</span>
+                      {job.client.verified && (
+                        <span className="text-blue-600 dark:text-blue-400 text-xs transition-all duration-700">✓</span>
+                      )}
+                    </div>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 transition-all duration-700">
+                      {job.proposals} ajánlat
+                    </span>
+                  </div>
+                </div>
               </div>
             ))}
+          </div>
+
+          <div className="text-center mt-12">
+            <Link
+              to="/find-work"
+              className="inline-block px-5 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 text-sm sm:text-base"
+            >
+              Összes projekt megtekintése
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* HÍREK */}
-      <section id="news" ref={sectionRefs.news} className="py-24 bg-gray-50">
-        <div className="container mx-auto px-6">
+      {/* ===== PILÓTÁK ===== */}
+      <section ref={freelancersRef} id="freelancers" className="py-24 px-4 bg-gray-50 dark:bg-gray-800 transition-all duration-700">
+        <div className="container mx-auto max-w-7xl transition-all duration-700">
           <div className="flex flex-wrap items-center justify-between mb-12">
-            <div>
-              <span className="text-indigo-600 font-semibold text-sm tracking-wider uppercase">Legfrissebb hírek</span>
-              <h2 className="text-4xl font-light mt-2">Drónos világ hírei</h2>
+            <div className="transition-all duration-700">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 transition-all duration-700">Legjobb pilótáink</h2>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 transition-all duration-700">Ellenőrzött szakemberek, profi felszereléssel</p>
             </div>
-            <Link to="/hirek" className="text-indigo-600 hover:text-indigo-700 flex items-center gap-2">
-              Összes hír megtekintése <FaArrowRight />
+            <Link to="/find-freelancers" className="text-blue-600 dark:text-blue-400 hover:underline transition-all duration-300 text-sm sm:text-base">
+              Összes pilóta megtekintése →
             </Link>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {hirek.map((item, index) => (
-              <div key={index} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition group">
-                <div className="h-48 overflow-hidden">
-                  <img 
-                    src={item.image} 
-                    alt={item.title} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                  />
-                </div>
+          {/* Kategória szűrő */}
+          <div className="flex flex-wrap gap-2 mb-8">
+            {freelancerCategories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setActiveFreelancerCategory(cat.id)}
+                className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 ${
+                  activeFreelancerCategory === cat.id
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
+                }`}
+              >
+                {cat.name} <span className="text-xs opacity-75">({cat.count})</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Pilóták grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredFreelancers.map((f) => (
+              <div
+                key={f.id}
+                className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:shadow-lg transition-all duration-300 cursor-pointer group"
+                onClick={() => {
+                  setSelectedFreelancer(f);
+                  setShowFreelancerModal(true);
+                }}
+              >
                 <div className="p-6">
-                  <div className="flex items-center gap-3 text-sm text-gray-500 mb-3">
-                    <FaRegCalendarAlt className="text-indigo-400" />
-                    <span>{item.date}</span>
-                    <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                    <span className="text-indigo-600 font-medium">{item.category}</span>
+                  <div className="flex items-start gap-4 mb-4">
+                    <img src={f.image} alt={f.name} className="w-12 h-12 sm:w-16 sm:h-16 rounded-full border-2 border-gray-200 dark:border-gray-600 transition-all duration-700" />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-all duration-300">
+                          {f.name}
+                        </h3>
+                        {f.verified && (
+                          <span className="text-blue-600 dark:text-blue-400 text-xs transition-all duration-700">✓</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 transition-all duration-700">{f.title}</p>
+                    </div>
                   </div>
-                  <h3 className="font-bold text-lg mb-3 line-clamp-2">{item.title}</h3>
-                  <p className="text-gray-600 mb-4 line-clamp-2 text-sm">{item.excerpt}</p>
-                  <Link to={`/hirek/${index}`} className="text-indigo-600 font-medium hover:gap-2 flex items-center gap-1">
-                    Bővebben <FaArrowRight className="text-xs" />
-                  </Link>
+
+                  <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm mb-4 line-clamp-2 transition-all duration-700">
+                    {f.description}
+                  </p>
+
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {f.skills.map((skill, i) => (
+                      <span key={i} className="px-2 py-1 bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-400 text-xs rounded transition-all duration-700">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white transition-all duration-700">{f.hourlyRate} €</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 transition-all duration-700">/óra</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-yellow-400 transition-all duration-700">★</span>
+                      <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white transition-all duration-700">{f.rating}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 transition-all duration-700">({f.reviews})</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600 flex items-center justify-between text-xs transition-all duration-700">
+                    <span className="text-gray-500 dark:text-gray-400 transition-all duration-700">{f.location}</span>
+                    <span className="text-green-600 dark:text-green-400 transition-all duration-700">{f.availability}</span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -421,111 +737,221 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* CSAPAT */}
-      <section id="team" ref={sectionRefs.team} className="py-24">
-        <div className="container mx-auto px-6">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <span className="text-indigo-600 font-semibold text-sm tracking-wider uppercase">A csapat</span>
-            <h2 className="text-4xl font-light mt-4 mb-6">Akikre a projektet bízhatod</h2>
-            <p className="text-xl text-gray-600">
-              Tapasztalt szakemberek, akik szenvedéllyel végzik munkájukat.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {csapat.map((person, index) => (
-              <div key={index} className="group">
-                <div className="relative mb-6">
-                  <img 
-                    src={person.image} 
-                    alt={person.name}
-                    className="w-full h-80 object-cover rounded-2xl shadow-lg group-hover:shadow-xl transition"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition"></div>
-                  <div className="absolute bottom-4 left-4 text-white opacity-0 group-hover:opacity-100 transition">
-                    <p className="text-sm">"{person.quote}"</p>
-                  </div>
-                </div>
-                <h3 className="text-xl font-bold">{person.name}</h3>
-                <p className="text-indigo-600 font-medium mb-2">"{person.nickname}"</p>
-                <p className="text-gray-500 text-sm mb-3">{person.role}</p>
-                <div className="flex gap-2">
-                  {person.expertise.map((exp, i) => (
-                    <span key={i} className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs">
-                      {exp}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-20 max-w-3xl mx-auto text-center bg-indigo-50 p-12 rounded-3xl">
-            <FaUsers className="text-5xl text-indigo-600 mx-auto mb-6" />
-            <p className="text-xl text-gray-700 leading-relaxed">
-              "Célunk egy aktív, hiteles közösség építése, ahol márkafüggetlenül születnek 
-              vélemények a drónokról és szolgáltatásokról."
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section id="cta" ref={sectionRefs.cta} className="py-24 relative overflow-hidden">
-        <div className="absolute inset-0">
-          <img 
-            src="https://images.unsplash.com/photo-1508614589041-895b88991e3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"
-            alt="Drone"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-indigo-900/95 to-purple-900/95"></div>
-        </div>
-
-        <div className="relative container mx-auto px-6 text-center text-white max-w-4xl">
-          <h2 className="text-5xl font-bold mb-6">Készen állsz a felszállásra?</h2>
-          <p className="text-2xl mb-12 opacity-90">
-            Csatlakozz Magyarország legnagyobb drónos közösségéhez!
+      {/* ===== HOW IT WORKS ===== */}
+      <section ref={howItWorksRef} id="how-it-works" className="py-24 px-4 transition-all duration-700">
+        <div className="container mx-auto max-w-7xl transition-all duration-700">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white text-center mb-4 transition-all duration-700">Hogyan működik?</h2>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 text-center mb-12 max-w-2xl mx-auto transition-all duration-700">
+            Négy egyszerű lépésben megtalálhatod a projektedhez legmegfelelőbb drónpilótát.
           </p>
-          <div className="flex flex-wrap gap-6 justify-center">
-            <Link 
-              to="/register" 
-              className="bg-white text-indigo-600 px-10 py-5 rounded-xl hover:bg-gray-100 transition shadow-2xl text-lg font-semibold"
-            >
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {howItWorks.map((step) => (
+              <div key={step.step} className="text-center transition-all duration-700">
+                <div className="w-16 h-16 mx-auto mb-4 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center transition-all duration-700">
+                  <span className="text-2xl transition-all duration-700">{step.icon}</span>
+                </div>
+                <div className="relative">
+                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold transition-all duration-700">
+                    {step.step}
+                  </div>
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2 mt-4 transition-all duration-700">{step.title}</h3>
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 transition-all duration-700">{step.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ===== CTA ===== */}
+      <section ref={ctaRef} id="cta" className="py-24 px-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 border-y border-gray-200 dark:border-gray-800 transition-all duration-700">
+        <div className="container mx-auto max-w-4xl text-center transition-all duration-700">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-6 transition-all duration-700">
+            Készen állsz a felszállásra?
+          </h2>
+          <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto transition-all duration-700">
+            Csatlakozz Magyarország legnagyobb drónos közösségéhez. Ingyenes regisztráció, ellenőrzött pilóták, biztonságos fizetés.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/register" className="px-6 sm:px-8 py-3 sm:py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 font-medium shadow-lg hover:shadow-xl">
               Projektet hirdetek
             </Link>
-            <Link 
-              to="/register?type=driver" 
-              className="border-2 border-white text-white px-10 py-5 rounded-xl hover:bg-white/10 transition text-lg font-semibold"
-            >
+            <Link to="/register?type=driver" className="px-6 sm:px-8 py-3 sm:py-4 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-300 font-medium">
               Pilóta leszek
             </Link>
           </div>
-          <div className="flex justify-center gap-8 mt-12 text-white/80">
-            <span>✓ Ingyenes regisztráció</span>
-            <span>✓ Ellenőrzött pilóták</span>
-            <span>✓ Biztonságos fizetés</span>
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-6 mt-8 text-xs sm:text-sm text-gray-500 dark:text-gray-400 transition-all duration-700">
+            <span className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 bg-green-500 rounded-full transition-all duration-700"></span>
+              Ingyenes regisztráció
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 bg-blue-500 rounded-full transition-all duration-700"></span>
+              Ellenőrzött pilóták
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 bg-purple-500 rounded-full transition-all duration-700"></span>
+              Biztonságos fizetés
+            </span>
           </div>
         </div>
       </section>
 
-      {/* Videó modal */}
-      {showVideo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4" onClick={() => setShowVideo(false)}>
-          <div className="relative w-full max-w-4xl" onClick={(e) => e.stopPropagation()}>
-            <button 
-              onClick={() => setShowVideo(false)}
-              className="absolute -top-12 right-0 text-white hover:text-gray-300 text-xl"
-            >
-              Bezárás
-            </button>
-            <div className="relative pt-[56.25%]">
-              <iframe 
-                className="absolute inset-0 w-full h-full rounded-xl"
-                src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1" 
-                title="HoverHire bemutató"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              ></iframe>
+      {/* ===== FOOTER ===== */}
+      <Footer />
+
+      {/* ===== PROJEKT MODAL ===== */}
+      {showJobModal && selectedJob && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 transition-all duration-700">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto transition-all duration-700">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white transition-all duration-700">{selectedJob.title}</h2>
+                <button
+                  onClick={() => setShowJobModal(false)}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-all duration-300 text-2xl"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div className="flex flex-wrap items-center gap-4 text-sm">
+                  <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 rounded-full transition-all duration-700">
+                    {selectedJob.category === 'photography' && 'Légifotó'}
+                    {selectedJob.category === 'videography' && 'Videózás'}
+                    {selectedJob.category === 'inspection' && 'Ellenőrzés'}
+                    {selectedJob.category === 'mapping' && 'Térképezés'}
+                  </span>
+                  <span className="text-gray-500 dark:text-gray-400 transition-all duration-700">{selectedJob.location}</span>
+                  <span className="text-gray-500 dark:text-gray-400 transition-all duration-700">{selectedJob.postedDate}</span>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2 transition-all duration-700">Leírás</h3>
+                  <p className="text-gray-600 dark:text-gray-400 transition-all duration-700">{selectedJob.description}</p>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2 transition-all duration-700">Elvárt készségek</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedJob.skills.map((skill, i) => (
+                      <span key={i} className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded transition-all duration-700">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="font-semibold mb-2 transition-all duration-700">Költségkeret</h3>
+                    <p className="text-2xl font-bold text-blue-600 transition-all duration-700">{selectedJob.budget} € / {selectedJob.budgetType === 'fix' ? 'fix' : 'óra'}</p>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-2 transition-all duration-700">Jelentkezési határidő</h3>
+                    <p className="text-gray-600 dark:text-gray-400 transition-all duration-700">{selectedJob.deadline}</p>
+                  </div>
+                </div>
+
+                <div className="pt-6 border-t border-gray-200 dark:border-gray-700 transition-all duration-700">
+                  <h3 className="font-semibold mb-2 transition-all duration-700">Megbízó adatai</h3>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <p className="font-medium transition-all duration-700">{selectedJob.client.name}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-yellow-400 transition-all duration-700">★</span>
+                        <span className="text-sm transition-all duration-700">{selectedJob.client.rating}</span>
+                        <span className="text-sm text-gray-500 transition-all duration-700">({selectedJob.client.reviews} értékelés)</span>
+                      </div>
+                    </div>
+                    <Link
+                      to={`/client/${selectedJob.client.name}`}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 text-center"
+                    >
+                      Ajánlatot küldök
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== PILÓTA MODAL ===== */}
+      {showFreelancerModal && selectedFreelancer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 transition-all duration-700">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto transition-all duration-700">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white transition-all duration-700">{selectedFreelancer.name}</h2>
+                <button
+                  onClick={() => setShowFreelancerModal(false)}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-all duration-300 text-2xl"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row items-start gap-6">
+                  <img src={selectedFreelancer.image} alt={selectedFreelancer.name} className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 border-gray-200 dark:border-gray-600 transition-all duration-700" />
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-semibold mb-2 transition-all duration-700">{selectedFreelancer.title}</h3>
+                    <div className="flex flex-wrap items-center gap-4">
+                      <div className="flex items-center gap-1">
+                        <span className="text-yellow-400 transition-all duration-700">★</span>
+                        <span className="font-medium transition-all duration-700">{selectedFreelancer.rating}</span>
+                        <span className="text-sm text-gray-500 transition-all duration-700">({selectedFreelancer.reviews} értékelés)</span>
+                      </div>
+                      <span className="text-sm text-gray-500 transition-all duration-700">{selectedFreelancer.jobs} projekt</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2 transition-all duration-700">Bemutatkozás</h3>
+                  <p className="text-gray-600 dark:text-gray-400 transition-all duration-700">{selectedFreelancer.description}</p>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2 transition-all duration-700">Szakértelem</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedFreelancer.skills.map((skill, i) => (
+                      <span key={i} className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded transition-all duration-700">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="font-semibold mb-2 transition-all duration-700">Óradíj</h3>
+                    <p className="text-2xl font-bold text-blue-600 transition-all duration-700">{selectedFreelancer.hourlyRate} € / óra</p>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-2 transition-all duration-700">Elérhetőség</h3>
+                    <p className="text-green-600 transition-all duration-700">{selectedFreelancer.availability}</p>
+                  </div>
+                </div>
+
+                <div className="pt-6 border-t border-gray-200 dark:border-gray-700 transition-all duration-700">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm text-gray-500 transition-all duration-700">Helyszín: {selectedFreelancer.location}</p>
+                    </div>
+                    <Link
+                      to={`/message/${selectedFreelancer.id}`}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 text-center"
+                    >
+                      Kapcsolatfelvétel
+                    </Link>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
