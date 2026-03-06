@@ -1,6 +1,7 @@
+// src/contexts/AuthContext.jsx
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
-const AuthContext = createContext(null);
+const AuthContext = createContext();
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -15,6 +16,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Ellenőrizzük, hogy van-e mentett user a localStorage-ban
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
@@ -22,31 +24,70 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = (email, password) => {
-    // Demo login - meghatározzuk a szerepkört az email alapján
-    const role = email.includes('drone') ? 'driver' : 'customer';
-    const userData = {
-      id: 1,
-      email,
-      role: role,
-      name: email.split('@')[0]
-    };
-    
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
-    return { success: true };
+  const login = async (email, password) => {
+    try {
+      // TODO: Valódi API hívás a backend felé
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        setUser(data.user);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        // Ha van token, azt is elmentjük
+        if (data.token) {
+          localStorage.setItem('token', data.token);
+        }
+        return { success: true };
+      } else {
+        return { success: false, error: data.message || 'Hibás email cím vagy jelszó' };
+      }
+    } catch (error) {
+      return { success: false, error: 'Hálózati hiba történt' };
+    }
+  };
+
+  const register = async (userData) => {
+    try {
+      // TODO: Valódi API hívás a backend felé
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        return { success: true };
+      } else {
+        return { success: false, error: data.message || 'Regisztrációs hiba' };
+      }
+    } catch (error) {
+      return { success: false, error: 'Hálózati hiba történt' };
+    }
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('token');
   };
 
   const value = {
     user,
-    loading,
     login,
-    logout
+    register,
+    logout,
+    loading
   };
 
   return (

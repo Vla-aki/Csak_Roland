@@ -1,206 +1,283 @@
+// src/pages/auth/Login.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
+import Navbar from '../../components/common/Navbar';
+import Footer from '../../components/common/Footer';
 
 const Login = () => {
+  const navigate = useNavigate();
+  
+  // State management
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     rememberMe: false
   });
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   
-  const { login } = useAuth();
-  const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
 
+  // Handle input changes
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       [name]: type === 'checkbox' ? checked : value
-    });
-    if (error) setError('');
+    }));
+    // Clear error for this field when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+    setLoginError('');
   };
 
+  // Validate form - CSAK AZ EMAIL FORMÁTUMOT ELLENŐRIZZÜK, A JELSZÓT NEM!
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.email) {
+      newErrors.email = 'Az email cím megadása kötelező';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Érvénytelen email cím';
+    }
+    
+    if (!formData.password) {
+      newErrors.password = 'A jelszó megadása kötelező';
+    }
+    // NINCS JELSZÓ HOSSZ ELLENŐRZÉS!
+    
+    return newErrors;
+  };
+
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    const newErrors = validateForm();
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+    
     setIsLoading(true);
-    setError('');
-
-    setTimeout(() => {
-      if (formData.email && formData.password) {
-        login(formData.email, formData.password);
-        navigate('/');
+    setLoginError('');
+    
+    // TODO: API hívás a backend felé
+    // A backend fogja eldönteni, hogy a jelszó helyes-e
+    try {
+      // Mock API hívás - később cseréld ki valódi API hívásra
+      const response = await mockApiCall(formData);
+      
+      if (response.success) {
+        // TODO: Auth context frissítése a backend által visszaadott user adatokkal
+        navigate('/dashboard');
       } else {
-        setError('Kérjük, tölts ki minden mezőt!');
+        setLoginError(response.error || 'Hibás email cím vagy jelszó');
       }
+    } catch (error) {
+      setLoginError('Hiba történt a bejelentkezés során. Kérlek próbáld újra később.');
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
+  };
+
+  // Mock API hívás - ezt később cseréld ki valódi fetch-re
+  const mockApiCall = (data) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Itt a backend válaszát szimuláljuk
+        // A backend dönti el, hogy a jelszó jó-e
+        if (data.email === 'demo@hoverhire.hu' && data.password === 'password123') {
+          resolve({
+            success: true,
+            user: {
+              id: 1,
+              name: 'Kovács János',
+              email: data.email,
+              role: 'customer'
+            }
+          });
+        } else {
+          resolve({
+            success: false,
+            error: 'Hibás email cím vagy jelszó'
+          });
+        }
+      }, 1000);
+    });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 py-20">
-      <div className="container mx-auto px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+    <div className="min-h-screen bg-white dark:bg-gray-900 transition-all duration-700">
+      <Navbar />
+      
+      <div className="pt-24 pb-16 px-4">
+        <div className="container mx-auto max-w-md">
+          {/* Fejléc */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4 transition-all duration-700">
+              Üdvözöljük újra!
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 transition-all duration-700">
+              Jelentkezz be a fiókodba, hogy folytasd a munkát
+            </p>
+          </div>
+
+          {/* Login form */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 sm:p-8 transition-all duration-700">
             
-            {/* Bal oldal - Űrlap */}
-            <div className="bg-white rounded-3xl shadow-2xl p-8 lg:p-12">
-              <div className="mb-8">
-                <h1 className="text-3xl lg:text-4xl font-light mb-2">Üdvözlünk újra!</h1>
-                <p className="text-gray-600">
-                  Jelentkezz be a fiókodba, hogy folytasd a munkát.
+            {/* Általános hibaüzenet */}
+            {loginError && (
+              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <p className="text-sm text-red-600 dark:text-red-400 text-center">
+                  {loginError}
                 </p>
               </div>
+            )}
 
-              {error && (
-                <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
-                  {error}
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email cím
-                  </label>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              
+              {/* Email mező */}
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-all duration-700">
+                  Email cím
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FaEnvelope className="text-gray-400 dark:text-gray-500" />
+                  </div>
                   <input
                     type="email"
+                    id="email"
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                    className={`w-full pl-10 pr-3 py-3 bg-white dark:bg-gray-700 border ${
+                      errors.email 
+                        ? 'border-red-500 dark:border-red-500' 
+                        : 'border-gray-200 dark:border-gray-600'
+                    } rounded-lg focus:outline-none focus:border-blue-600 dark:focus:border-blue-400 text-gray-900 dark:text-white transition-all duration-700`}
                     placeholder="pelda@email.hu"
-                    required
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Demo: customer@test.com vagy drone@test.com
-                  </p>
                 </div>
+                {errors.email && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.email}</p>
+                )}
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Jelszó
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      name="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                      placeholder="••••••••"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      {showPassword ? '👁️' : '👁️‍🗨️'}
-                    </button>
+              {/* Jelszó mező - CSAK ÜRESEN ELLENŐRIZZÜK */}
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-all duration-700">
+                  Jelszó
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FaLock className="text-gray-400 dark:text-gray-500" />
                   </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      name="rememberMe"
-                      checked={formData.rememberMe}
-                      onChange={handleChange}
-                      className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                    />
-                    <span className="text-sm text-gray-600">Emlékezz rám</span>
-                  </label>
-                  <Link 
-                    to="/elfelejtett-jelszo" 
-                    className="text-sm text-indigo-600 hover:text-indigo-700 hover:underline"
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className={`w-full pl-10 pr-10 py-3 bg-white dark:bg-gray-700 border ${
+                      errors.password 
+                        ? 'border-red-500 dark:border-red-500' 
+                        : 'border-gray-200 dark:border-gray-600'
+                    } rounded-lg focus:outline-none focus:border-blue-600 dark:focus:border-blue-400 text-gray-900 dark:text-white transition-all duration-700`}
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   >
-                    Elfelejtett jelszó?
-                  </Link>
+                    {showPassword ? (
+                      <FaEyeSlash className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-all duration-300" />
+                    ) : (
+                      <FaEye className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-all duration-300" />
+                    )}
+                  </button>
                 </div>
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoading ? 'Bejelentkezés...' : 'Bejelentkezés'}
-                </button>
-              </form>
-
-              <p className="mt-8 text-center text-gray-600">
-                Még nincs fiókod?{' '}
-                <Link to="/register" className="text-indigo-600 font-semibold hover:text-indigo-700 hover:underline">
-                  Regisztrálj most
-                </Link>
-              </p>
-            </div>
-
-            {/* Jobb oldal - Bemutató */}
-            <div className="hidden lg:block space-y-6">
-              <div className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-3xl p-8 text-white">
-                <h3 className="text-2xl font-bold mb-2">Biztonságos bejelentkezés</h3>
-                <p className="text-white/80 mb-6">
-                  Adataid titkosított csatornán kerülnek továbbításra.
-                </p>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-green-300">✓</span>
-                    <span>Kétfaktoros hitelesítés</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-green-300">✓</span>
-                    <span>GDPR kompatibilis adatkezelés</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-green-300">✓</span>
-                    <span>24/7 ügyfélszolgálat</span>
-                  </div>
-                </div>
+                {errors.password && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.password}</p>
+                )}
+                {/* NINCS JELSZÓ HOSSZRA VONATKOZÓ ÜZENET */}
               </div>
 
-              <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100">
-                <h4 className="font-bold mb-4">Miért válassz minket?</h4>
-                <ul className="space-y-2">
-                  <li className="flex items-center gap-2 text-gray-600">
-                    <span className="text-indigo-600">✓</span>
-                    500+ ellenőrzött pilóta
-                  </li>
-                  <li className="flex items-center gap-2 text-gray-600">
-                    <span className="text-indigo-600">✓</span>
-                    1000+ sikeres projekt
-                  </li>
-                  <li className="flex items-center gap-2 text-gray-600">
-                    <span className="text-indigo-600">✓</span>
-                    10+ év tapasztalat
-                  </li>
-                </ul>
-              </div>
-
-              <div className="bg-indigo-50 rounded-3xl p-8">
-                <div className="flex items-center gap-4 mb-4">
-                  <img 
-                    src="https://randomuser.me/api/portraits/women/44.jpg"
-                    alt="User"
-                    className="w-12 h-12 rounded-full"
+              {/* Emlékezz rám + Elfelejtett jelszó */}
+              <div className="flex items-center justify-between">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="rememberMe"
+                    checked={formData.rememberMe}
+                    onChange={handleChange}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
                   />
-                  <div>
-                    <p className="font-semibold">Kovács Anna</p>
-                    <p className="text-sm text-gray-600">Ingatlanügynök</p>
-                  </div>
-                </div>
-                <p className="text-gray-700 italic">
-                  "A HoverHire-rel percek alatt találtam profi drónost, aki csodálatos felvételeket készített az ingatlanjaimról."
+                  <span className="ml-2 text-sm text-gray-600 dark:text-gray-400 transition-all duration-700">
+                    Emlékezz rám
+                  </span>
+                </label>
+                <Link
+                  to="/forgot-password"
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline transition-all duration-300"
+                >
+                  Elfelejtett jelszó?
+                </Link>
+              </div>
+
+              {/* Bejelentkezés gomb */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className={`w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-medium transition-all duration-300 ${
+                  isLoading 
+                    ? 'opacity-70 cursor-not-allowed' 
+                    : 'hover:bg-blue-700 hover:shadow-lg'
+                }`}
+              >
+                {isLoading ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Bejelentkezés...
+                  </span>
+                ) : (
+                  'Bejelentkezés'
+                )}
+              </button>
+
+              {/* Regisztráció link */}
+              <div className="text-center mt-6">
+                <p className="text-sm text-gray-600 dark:text-gray-400 transition-all duration-700">
+                  Még nincs fiókod?{' '}
+                  <Link
+                    to="/register"
+                    className="text-blue-600 dark:text-blue-400 font-medium hover:underline transition-all duration-300"
+                  >
+                    Regisztrálj most
+                  </Link>
                 </p>
               </div>
-            </div>
+            </form>
+          </div>
+
+          {/* Demo bejelentkezés - csak fejlesztéshez */}
+          <div className="mt-6 text-center">
+            <p className="text-xs text-gray-500 dark:text-gray-500 transition-all duration-700">
+              Demo: demo@hoverhire.hu / bármilyen jelszó (backend fogja validálni)
+            </p>
           </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 };

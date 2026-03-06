@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import Navbar from '../components/common/Navbar';  // Javított import
-import Footer from '../components/common/Footer';  // Javított import
+import Navbar from '../components/common/Navbar';
+import Footer from '../components/common/Footer';
 
 const Landing = () => {
   // ========== STATE MANAGEMENT ==========
@@ -355,7 +355,7 @@ const Landing = () => {
     return true;
   });
 
-  // ========== HOW IT WORKS ==========
+  // ========== HOW IT WORKS - ITT VAN A TÖMB ==========
   const howItWorks = [
     {
       step: 1,
@@ -511,7 +511,8 @@ const Landing = () => {
               onClick={() => setShowFilters(!showFilters)}
               className="px-3 sm:px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 text-xs sm:text-sm"
             >
-              <span className="hidden sm:inline">Szűrők </span>⚙️
+              <span className="hidden sm:inline">Szűrők</span>
+              <span className="sm:hidden">Szűrők</span>
             </button>
           </div>
 
@@ -737,7 +738,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* ===== HOW IT WORKS ===== */}
+      {/* ===== HOW IT WORKS - ITT HASZNÁLJUK A TÖMBÖT ===== */}
       <section ref={howItWorksRef} id="how-it-works" className="py-24 px-4 transition-all duration-700">
         <div className="container mx-auto max-w-7xl transition-all duration-700">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white text-center mb-4 transition-all duration-700">Hogyan működik?</h2>
@@ -748,16 +749,15 @@ const Landing = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {howItWorks.map((step) => (
               <div key={step.step} className="text-center transition-all duration-700">
-                <div className="w-16 h-16 mx-auto mb-4 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center transition-all duration-700">
-                  <span className="text-2xl transition-all duration-700">{step.icon}</span>
+                <div className="w-16 h-16 mx-auto mb-4 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center text-3xl transition-all duration-700">
+                  {step.icon}
                 </div>
-                <div className="relative">
-                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold transition-all duration-700">
-                    {step.step}
-                  </div>
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2 mt-4 transition-all duration-700">{step.title}</h3>
-                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 transition-all duration-700">{step.description}</p>
-                </div>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2 transition-all duration-700">
+                  {step.title}
+                </h3>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 transition-all duration-700">
+                  {step.description}
+                </p>
               </div>
             ))}
           </div>

@@ -1,193 +1,315 @@
+// src/pages/auth/Register.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaCheckCircle } from 'react-icons/fa';
+import Navbar from '../../components/common/Navbar';
+import Footer from '../../components/common/Footer';
 
 const Register = () => {
+  const navigate = useNavigate();
+  
+  // State management
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'customer',
-    termsAccepted: false
+    role: 'customer', // 'customer' vagy 'driver'
+    acceptTerms: false
   });
+  
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [step, setStep] = useState(1);
-  const [error, setError] = useState('');
+  const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-  
-  const navigate = useNavigate();
 
+  // Handle input changes
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
+    
+    setFormData(prev => ({
+      ...prev,
       [name]: type === 'checkbox' ? checked : value
-    });
-    if (error) setError('');
+    }));
+    
+    // Clear error for this field
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
   };
 
+  // Validate step 1 (Name)
+  const validateStep1 = () => {
+    const newErrors = {};
+    if (!formData.name.trim()) {
+      newErrors.name = 'A név megadása kötelező';
+    } else if (formData.name.length < 3) {
+      newErrors.name = 'A név legalább 3 karakter hosszú kell legyen';
+    }
+    return newErrors;
+  };
+
+  // Validate step 2 (Email)
+  const validateStep2 = () => {
+    const newErrors = {};
+    if (!formData.email) {
+      newErrors.email = 'Az email cím megadása kötelező';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Érvénytelen email cím';
+    }
+    return newErrors;
+  };
+
+  // Validate step 3 (Password) - CSAK ÜRESEN ELLENŐRIZZÜK ÉS EGYEZÉST
+  const validateStep3 = () => {
+    const newErrors = {};
+    if (!formData.password) {
+      newErrors.password = 'A jelszó megadása kötelező';
+    }
+    // NINCS JELSZÓ HOSSZ ELLENŐRZÉS!
+    
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = 'A jelszó megerősítése kötelező';
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'A jelszavak nem egyeznek';
+    }
+    return newErrors;
+  };
+
+  // Validate step 4 (Role and terms)
+  const validateStep4 = () => {
+    const newErrors = {};
+    if (!formData.acceptTerms) {
+      newErrors.acceptTerms = 'El kell fogadnod a felhasználási feltételeket';
+    }
+    return newErrors;
+  };
+
+  // Handle next step
   const handleNextStep = () => {
-    if (step === 1 && !formData.name) {
-      setError('Kérjük, add meg a neved!');
+    let newErrors = {};
+    
+    switch(step) {
+      case 1:
+        newErrors = validateStep1();
+        break;
+      case 2:
+        newErrors = validateStep2();
+        break;
+      case 3:
+        newErrors = validateStep3();
+        break;
+      default:
+        break;
+    }
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
-    if (step === 2 && !formData.email) {
-      setError('Kérjük, add meg az email címed!');
-      return;
-    }
-    if (step === 3) {
-      if (!formData.password) {
-        setError('Kérjük, add meg a jelszavad!');
-        return;
-      }
-      if (formData.password.length < 6) {
-        setError('A jelszónak legalább 6 karakter hosszúnak kell lennie!');
-        return;
-      }
-      if (formData.password !== formData.confirmPassword) {
-        setError('A jelszavak nem egyeznek!');
-        return;
-      }
-    }
-    setError('');
+    
     setStep(step + 1);
   };
 
+  // Handle previous step
+  const handlePrevStep = () => {
+    setStep(step - 1);
+  };
+
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.termsAccepted) {
-      setError('Kérjük, fogadd el az adatvédelmi nyilatkozatot!');
+    
+    const newErrors = validateStep4();
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
     
     setIsLoading(true);
     
-    setTimeout(() => {
+    // TODO: API hívás a backend felé
+    // A backend fogja validálni a jelszó erősségét és minden mást
+    try {
+      // Mock API hívás - később cseréld ki valódi API hívásra
+      const response = await mockApiCall(formData);
+      
+      if (response.success) {
+        // Sikeres regisztráció után átirányítás a login oldalra
+        navigate('/login', { 
+          state: { 
+            message: 'Sikeres regisztráció! Kérlek jelentkezz be a fiókoddal.' 
+          } 
+        });
+      } else {
+        setErrors({ form: response.error || 'Hiba történt a regisztráció során' });
+      }
+    } catch (error) {
+      setErrors({ form: 'Hiba történt a regisztráció során. Kérlek próbáld újra később.' });
+    } finally {
       setIsLoading(false);
-      navigate('/login');
-    }, 1500);
+    }
   };
 
-  const passwordStrength = () => {
-    const pass = formData.password;
-    if (!pass) return { text: 'Add meg a jelszót', color: 'gray' };
-    if (pass.length < 6) return { text: 'Gyenge', color: 'red' };
-    if (pass.length < 8) return { text: 'Közepes', color: 'yellow' };
-    if (pass.match(/[A-Z]/) && pass.match(/[0-9]/)) return { text: 'Erős', color: 'green' };
-    return { text: 'Közepes', color: 'yellow' };
+  // Mock API hívás - ezt később cseréld ki valódi fetch-re
+  const mockApiCall = (data) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Itt a backend válaszát szimuláljuk
+        // A backend fogja eldönteni, hogy a jelszó megfelelő-e
+        resolve({
+          success: true,
+          message: 'Sikeres regisztráció'
+        });
+      }, 1500);
+    });
+  };
+
+  // Render progress steps
+  const renderProgressSteps = () => {
+    const steps = ['Név', 'Email', 'Jelszó', 'Szerepkör'];
+    
+    return (
+      <div className="flex items-center justify-between mb-8">
+        {steps.map((label, index) => (
+          <div key={index} className="flex items-center flex-1">
+            <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-all duration-300 ${
+              step > index + 1
+                ? 'bg-green-500 text-white'
+                : step === index + 1
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+            }`}>
+              {step > index + 1 ? <FaCheckCircle /> : index + 1}
+            </div>
+            {index < steps.length - 1 && (
+              <div className={`flex-1 h-1 mx-2 transition-all duration-300 ${
+                step > index + 1
+                  ? 'bg-green-500'
+                  : 'bg-gray-200 dark:bg-gray-700'
+              }`} />
+            )}
+          </div>
+        ))}
+      </div>
+    );
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 py-20">
-      <div className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto">
-          
+    <div className="min-h-screen bg-white dark:bg-gray-900 transition-all duration-700">
+      <Navbar />
+      
+      <div className="pt-24 pb-16 px-4">
+        <div className="container mx-auto max-w-md">
           {/* Fejléc */}
-          <div className="text-center mb-10">
-            <h1 className="text-4xl lg:text-5xl font-light mb-4">
-              Csatlakozz a <span className="font-bold text-indigo-600">közösséghez!</span>
+          <div className="text-center mb-8">
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4 transition-all duration-700">
+              Hozd létre fiókod
             </h1>
-            <p className="text-xl text-gray-600">
-              Ingyenes regisztráció, ellenőrzött pilóták, biztonságos fizetés.
+            <p className="text-gray-600 dark:text-gray-400 transition-all duration-700">
+              Csatlakozz Magyarország legnagyobb drónos közösségéhez
             </p>
           </div>
 
-          {/* Progress bar */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between">
-              {[1, 2, 3, 4].map((s) => (
-                <div key={s} className="flex items-center flex-1">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold relative z-10 ${
-                    step > s 
-                      ? 'bg-green-500 text-white' 
-                      : step === s 
-                        ? 'bg-indigo-600 text-white' 
-                        : 'bg-gray-200 text-gray-400'
-                  }`}>
-                    {s}
-                  </div>
-                  {s < 4 && (
-                    <div className={`flex-1 h-1 mx-2 ${
-                      step > s ? 'bg-green-500' : 'bg-gray-200'
-                    }`}></div>
-                  )}
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-between mt-2 text-sm text-gray-500">
-              <span>Név</span>
-              <span>Email</span>
-              <span>Jelszó</span>
-              <span>Szerepkör</span>
-            </div>
-          </div>
+          {/* Progress steps */}
+          {renderProgressSteps()}
 
-          {/* Fő űrlap */}
-          <div className="bg-white rounded-3xl shadow-2xl p-8 lg:p-12">
+          {/* Register form */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 sm:p-8 transition-all duration-700">
+            
+            {/* Általános hiba */}
+            {errors.form && (
+              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <p className="text-sm text-red-600 dark:text-red-400 text-center">
+                  {errors.form}
+                </p>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit}>
-              {/* Step 1: Név */}
+              {/* STEP 1: Név */}
               {step === 1 && (
                 <div className="space-y-6">
-                  <h2 className="text-2xl font-semibold mb-6">Először is, hogy hívnak?</h2>
-                  
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-all duration-700">
                       Teljes név
                     </label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-lg"
-                      placeholder="Pl. Kovács János"
-                      autoFocus
-                    />
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FaUser className="text-gray-400 dark:text-gray-500" />
+                      </div>
+                      <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        className={`w-full pl-10 pr-3 py-3 bg-white dark:bg-gray-700 border ${
+                          errors.name 
+                            ? 'border-red-500 dark:border-red-500' 
+                            : 'border-gray-200 dark:border-gray-600'
+                        } rounded-lg focus:outline-none focus:border-blue-600 dark:focus:border-blue-400 text-gray-900 dark:text-white transition-all duration-700`}
+                        placeholder="Pl. Kovács János"
+                      />
+                    </div>
+                    {errors.name && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.name}</p>
+                    )}
                   </div>
 
                   <button
                     type="button"
                     onClick={handleNextStep}
-                    className="w-full bg-indigo-600 text-white py-4 rounded-xl font-semibold hover:bg-indigo-700 transition text-lg"
+                    className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 hover:shadow-lg transition-all duration-300"
                   >
                     Tovább
                   </button>
                 </div>
               )}
 
-              {/* Step 2: Email */}
+              {/* STEP 2: Email */}
               {step === 2 && (
                 <div className="space-y-6">
-                  <h2 className="text-2xl font-semibold mb-6">Mi az email címed?</h2>
-                  
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-all duration-700">
                       Email cím
                     </label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-lg"
-                      placeholder="pelda@email.hu"
-                      autoFocus
-                    />
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FaEnvelope className="text-gray-400 dark:text-gray-500" />
+                      </div>
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        className={`w-full pl-10 pr-3 py-3 bg-white dark:bg-gray-700 border ${
+                          errors.email 
+                            ? 'border-red-500 dark:border-red-500' 
+                            : 'border-gray-200 dark:border-gray-600'
+                        } rounded-lg focus:outline-none focus:border-blue-600 dark:focus:border-blue-400 text-gray-900 dark:text-white transition-all duration-700`}
+                        placeholder="pelda@email.hu"
+                      />
+                    </div>
+                    {errors.email && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.email}</p>
+                    )}
                   </div>
 
-                  <div className="flex gap-4">
+                  <div className="flex gap-3">
                     <button
                       type="button"
-                      onClick={() => setStep(1)}
-                      className="flex-1 border-2 border-gray-200 text-gray-700 py-4 rounded-xl font-semibold hover:border-gray-300 transition"
+                      onClick={handlePrevStep}
+                      className="flex-1 py-3 px-4 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-300"
                     >
                       Vissza
                     </button>
                     <button
                       type="button"
                       onClick={handleNextStep}
-                      className="flex-1 bg-indigo-600 text-white py-4 rounded-xl font-semibold hover:bg-indigo-700 transition"
+                      className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 hover:shadow-lg transition-all duration-300"
                     >
                       Tovább
                     </button>
@@ -195,81 +317,107 @@ const Register = () => {
                 </div>
               )}
 
-              {/* Step 3: Jelszó */}
+              {/* STEP 3: Jelszó - JELSZÓ HOSSZ ELLENŐRZÉS NÉLKÜL */}
               {step === 3 && (
                 <div className="space-y-6">
-                  <h2 className="text-2xl font-semibold mb-6">Válassz jelszót</h2>
-                  
+                  {/* Jelszó mező */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-all duration-700">
                       Jelszó
                     </label>
                     <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FaLock className="text-gray-400 dark:text-gray-500" />
+                      </div>
                       <input
                         type={showPassword ? 'text' : 'password'}
+                        id="password"
                         name="password"
                         value={formData.password}
                         onChange={handleChange}
-                        className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-lg"
+                        className={`w-full pl-10 pr-10 py-3 bg-white dark:bg-gray-700 border ${
+                          errors.password 
+                            ? 'border-red-500 dark:border-red-500' 
+                            : 'border-gray-200 dark:border-gray-600'
+                        } rounded-lg focus:outline-none focus:border-blue-600 dark:focus:border-blue-400 text-gray-900 dark:text-white transition-all duration-700`}
                         placeholder="••••••••"
-                        autoFocus
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
                       >
-                        {showPassword ? '👁️' : '👁️‍🗨️'}
+                        {showPassword ? (
+                          <FaEyeSlash className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300" />
+                        ) : (
+                          <FaEye className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300" />
+                        )}
                       </button>
                     </div>
                     
-                    {formData.password && (
-                      <div className="mt-2">
-                        <div className="flex items-center gap-2">
-                          <div className={`h-2 w-16 rounded-full bg-${passwordStrength().color}-500`}></div>
-                          <span className={`text-sm text-${passwordStrength().color}-600`}>
-                            {passwordStrength().text} jelszó
-                          </span>
-                        </div>
-                      </div>
+                    {/* NINCS JELSZÓ ERŐSSÉG JELZŐ */}
+                    
+                    {errors.password && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.password}</p>
                     )}
+                    
+                    {/* Tájékoztató szöveg - nem validáció, csak info */}
+                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                      A jelszó erősségét a rendszer automatikusan ellenőrzi regisztrációkor.
+                    </p>
                   </div>
 
+                  {/* Jelszó megerősítése */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-all duration-700">
                       Jelszó megerősítése
                     </label>
                     <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FaLock className="text-gray-400 dark:text-gray-500" />
+                      </div>
                       <input
                         type={showConfirmPassword ? 'text' : 'password'}
+                        id="confirmPassword"
                         name="confirmPassword"
                         value={formData.confirmPassword}
                         onChange={handleChange}
-                        className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-lg"
+                        className={`w-full pl-10 pr-10 py-3 bg-white dark:bg-gray-700 border ${
+                          errors.confirmPassword 
+                            ? 'border-red-500 dark:border-red-500' 
+                            : 'border-gray-200 dark:border-gray-600'
+                        } rounded-lg focus:outline-none focus:border-blue-600 dark:focus:border-blue-400 text-gray-900 dark:text-white transition-all duration-700`}
                         placeholder="••••••••"
                       />
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
                       >
-                        {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+                        {showConfirmPassword ? (
+                          <FaEyeSlash className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300" />
+                        ) : (
+                          <FaEye className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300" />
+                        )}
                       </button>
                     </div>
+                    {errors.confirmPassword && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.confirmPassword}</p>
+                    )}
                   </div>
 
-                  <div className="flex gap-4">
+                  <div className="flex gap-3">
                     <button
                       type="button"
-                      onClick={() => setStep(2)}
-                      className="flex-1 border-2 border-gray-200 text-gray-700 py-4 rounded-xl font-semibold hover:border-gray-300 transition"
+                      onClick={handlePrevStep}
+                      className="flex-1 py-3 px-4 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-300"
                     >
                       Vissza
                     </button>
                     <button
                       type="button"
                       onClick={handleNextStep}
-                      className="flex-1 bg-indigo-600 text-white py-4 rounded-xl font-semibold hover:bg-indigo-700 transition"
+                      className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 hover:shadow-lg transition-all duration-300"
                     >
                       Tovább
                     </button>
@@ -277,114 +425,135 @@ const Register = () => {
                 </div>
               )}
 
-              {/* Step 4: Szerepkör + Elfogadás */}
+              {/* STEP 4: Szerepkör választás */}
               {step === 4 && (
                 <div className="space-y-6">
-                  <h2 className="text-2xl font-semibold mb-6">Milyen szerepkörben csatlakozol?</h2>
-                  
-                  <div className="grid md:grid-cols-2 gap-4 mb-6">
-                    <label className={`relative border-2 rounded-xl p-6 cursor-pointer transition ${
-                      formData.role === 'customer' 
-                        ? 'border-indigo-600 bg-indigo-50' 
-                        : 'border-gray-200 hover:border-indigo-300'
-                    }`}>
-                      <input
-                        type="radio"
-                        name="role"
-                        value="customer"
-                        checked={formData.role === 'customer'}
-                        onChange={handleChange}
-                        className="sr-only"
-                      />
-                      <div className="text-center">
-                        <div className="text-3xl mb-3">🚀</div>
-                        <h3 className="font-bold mb-1">Megbízó</h3>
-                        <p className="text-sm text-gray-600">
-                          Projektet hirdetek, pilótát keresek
-                        </p>
-                      </div>
-                      {formData.role === 'customer' && (
-                        <div className="absolute top-3 right-3 text-indigo-600 font-bold">✓</div>
-                      )}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 transition-all duration-700">
+                      Válaszd ki a szerepköröd
                     </label>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Megbízó */}
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, role: 'customer' }))}
+                        className={`p-4 border rounded-lg text-center transition-all duration-300 ${
+                          formData.role === 'customer'
+                            ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                            : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700'
+                        }`}
+                      >
+                        <span className="text-3xl mb-2 block">📋</span>
+                        <h3 className="font-semibold text-gray-900 dark:text-white">Megbízó</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Projektet hirdetek, pilótákat keresek
+                        </p>
+                      </button>
 
-                    <label className={`relative border-2 rounded-xl p-6 cursor-pointer transition ${
-                      formData.role === 'driver' 
-                        ? 'border-indigo-600 bg-indigo-50' 
-                        : 'border-gray-200 hover:border-indigo-300'
-                    }`}>
-                      <input
-                        type="radio"
-                        name="role"
-                        value="driver"
-                        checked={formData.role === 'driver'}
-                        onChange={handleChange}
-                        className="sr-only"
-                      />
-                      <div className="text-center">
-                        <div className="text-3xl mb-3">🚁</div>
-                        <h3 className="font-bold mb-1">Pilóta</h3>
-                        <p className="text-sm text-gray-600">
+                      {/* Pilóta */}
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, role: 'driver' }))}
+                        className={`p-4 border rounded-lg text-center transition-all duration-300 ${
+                          formData.role === 'driver'
+                            ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                            : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700'
+                        }`}
+                      >
+                        <span className="text-3xl mb-2 block">🚁</span>
+                        <h3 className="font-semibold text-gray-900 dark:text-white">Pilóta</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                           Munkát vállalok, projektekre jelentkezem
                         </p>
-                      </div>
-                      {formData.role === 'driver' && (
-                        <div className="absolute top-3 right-3 text-indigo-600 font-bold">✓</div>
-                      )}
-                    </label>
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="space-y-4">
-                    <label className="flex items-center gap-3">
+                  {/* Felhasználási feltételek */}
+                  <div>
+                    <label className="flex items-start gap-3">
                       <input
                         type="checkbox"
-                        name="termsAccepted"
-                        checked={formData.termsAccepted}
+                        name="acceptTerms"
+                        checked={formData.acceptTerms}
                         onChange={handleChange}
-                        className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                        className="mt-1 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
                       />
-                      <span className="text-gray-600">
-                        Elfogadom az <Link to="/aszf" className="text-indigo-600 hover:underline">Adatvédelmi Nyilatkozatot</Link> és az <Link to="/aszf" className="text-indigo-600 hover:underline">ÁSZF</Link>-et
+                      <span className="text-sm text-gray-600 dark:text-gray-400 transition-all duration-700">
+                        Elfogadom a{' '}
+                        <Link to="/terms" className="text-blue-600 dark:text-blue-400 hover:underline">
+                          felhasználási feltételeket
+                        </Link>{' '}
+                        és az{' '}
+                        <Link to="/privacy" className="text-blue-600 dark:text-blue-400 hover:underline">
+                          adatvédelmi irányelveket
+                        </Link>
                       </span>
                     </label>
+                    {errors.acceptTerms && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.acceptTerms}</p>
+                    )}
                   </div>
 
-                  {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
-                      {error}
-                    </div>
-                  )}
-
-                  <div className="flex gap-4">
+                  <div className="flex gap-3">
                     <button
                       type="button"
-                      onClick={() => setStep(3)}
-                      className="flex-1 border-2 border-gray-200 text-gray-700 py-4 rounded-xl font-semibold hover:border-gray-300 transition"
+                      onClick={handlePrevStep}
+                      className="flex-1 py-3 px-4 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-300"
                     >
                       Vissza
                     </button>
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 rounded-xl font-semibold hover:shadow-lg transition disabled:opacity-50"
+                      className={`flex-1 py-3 px-4 bg-blue-600 text-white rounded-lg font-medium transition-all duration-300 ${
+                        isLoading 
+                          ? 'opacity-70 cursor-not-allowed' 
+                          : 'hover:bg-blue-700 hover:shadow-lg'
+                      }`}
                     >
-                      {isLoading ? 'Regisztráció...' : 'Regisztráció'}
+                      {isLoading ? (
+                        <span className="flex items-center justify-center">
+                          <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                        </span>
+                      ) : (
+                        'Regisztráció'
+                      )}
                     </button>
                   </div>
                 </div>
               )}
             </form>
+
+            {/* Login link */}
+            <div className="text-center mt-6">
+              <p className="text-sm text-gray-600 dark:text-gray-400 transition-all duration-700">
+                Már van fiókod?{' '}
+                <Link
+                  to="/login"
+                  className="text-blue-600 dark:text-blue-400 font-medium hover:underline transition-all duration-300"
+                >
+                  Jelentkezz be
+                </Link>
+              </p>
+            </div>
           </div>
 
-          {/* Login link */}
-          <p className="text-center mt-8 text-gray-600">
-            Már van fiókod?{' '}
-            <Link to="/login" className="text-indigo-600 font-semibold hover:text-indigo-700 hover:underline">
-              Jelentkezz be
-            </Link>
-          </p>
+          {/* Információ a jelszóról */}
+          <div className="mt-6 text-center">
+            <p className="text-xs text-gray-500 dark:text-gray-500 transition-all duration-700">
+              A jelszó erősségét és érvényességét a rendszer ellenőrzi regisztrációkor.
+              Az adatbázisban tárolt biztonsági előírásoknak megfelelő jelszót kell választanod.
+            </p>
+          </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 };

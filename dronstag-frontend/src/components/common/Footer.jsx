@@ -1,6 +1,7 @@
 // src/components/common/Footer.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { FaFacebookF, FaInstagram, FaYoutube, FaTwitter, FaLinkedinIn } from 'react-icons/fa';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -85,56 +86,76 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Közösségi média */}
+          {/* Közösségi média - IKONOKKAL */}
           <div className="transition-all duration-700">
             <h4 className="text-white dark:text-white font-semibold mb-4 transition-all duration-700">Kövess minket</h4>
             <div className="flex flex-wrap gap-3">
-              <a href="#" className="w-10 h-10 bg-gray-800 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 dark:hover:bg-blue-600 transition-all duration-300">
-                <span className="text-lg text-gray-300 dark:text-gray-300 transition-all duration-700">f</span>
+              <a 
+                href="#" 
+                className="w-10 h-10 bg-gray-800 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 dark:hover:bg-blue-600 transition-all duration-300"
+                aria-label="Facebook"
+              >
+                <FaFacebookF className="text-gray-300 dark:text-gray-300 text-lg" />
               </a>
-              <a href="#" className="w-10 h-10 bg-gray-800 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 dark:hover:bg-blue-600 transition-all duration-300">
-                <span className="text-lg text-gray-300 dark:text-gray-300 transition-all duration-700">ig</span>
+              <a 
+                href="#" 
+                className="w-10 h-10 bg-gray-800 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 dark:hover:bg-blue-600 transition-all duration-300"
+                aria-label="Instagram"
+              >
+                <FaInstagram className="text-gray-300 dark:text-gray-300 text-lg" />
               </a>
-              <a href="#" className="w-10 h-10 bg-gray-800 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 dark:hover:bg-blue-600 transition-all duration-300">
-                <span className="text-lg text-gray-300 dark:text-gray-300 transition-all duration-700">yt</span>
+              <a 
+                href="#" 
+                className="w-10 h-10 bg-gray-800 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 dark:hover:bg-blue-600 transition-all duration-300"
+                aria-label="YouTube"
+              >
+                <FaYoutube className="text-gray-300 dark:text-gray-300 text-lg" />
               </a>
-              <a href="#" className="w-10 h-10 bg-gray-800 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 dark:hover:bg-blue-600 transition-all duration-300">
-                <span className="text-lg text-gray-300 dark:text-gray-300 transition-all duration-700">x</span>
+              <a 
+                href="#" 
+                className="w-10 h-10 bg-gray-800 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 dark:hover:bg-blue-600 transition-all duration-300"
+                aria-label="Twitter"
+              >
+                <FaTwitter className="text-gray-300 dark:text-gray-300 text-lg" />
               </a>
-              <a href="#" className="w-10 h-10 bg-gray-800 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 dark:hover:bg-blue-600 transition-all duration-300">
-                <span className="text-lg text-gray-300 dark:text-gray-300 transition-all duration-700">in</span>
+              <a 
+                href="#" 
+                className="w-10 h-10 bg-gray-800 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 dark:hover:bg-blue-600 transition-all duration-300"
+                aria-label="LinkedIn"
+              >
+                <FaLinkedinIn className="text-gray-300 dark:text-gray-300 text-lg" />
               </a>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Elérhetőségek - KÜLÖN SORBAN */}
+      {/* Elérhetőségek */}
       <div className="border-t border-gray-800 dark:border-gray-800 bg-gray-950/50 dark:bg-gray-900/50 transition-all duration-700 py-8">
         <div className="container mx-auto px-6 transition-all duration-700">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-sm">
             
-            {/* Cím - ikon nélkül */}
+            {/* Cím */}
             <div className="transition-all duration-700">
               <p className="font-medium text-white dark:text-white mb-1 transition-all duration-700">Székhely</p>
               <p className="text-gray-400 dark:text-gray-400 transition-all duration-700">1137 Budapest<br />Drón utca 12.</p>
             </div>
 
-            {/* Telefon - ikon nélkül */}
+            {/* Telefon */}
             <div className="transition-all duration-700">
               <p className="font-medium text-white dark:text-white mb-1 transition-all duration-700">Telefon</p>
               <p className="text-gray-400 dark:text-gray-400 transition-all duration-700">+36 30 123 4567</p>
               <p className="text-gray-500 dark:text-gray-500 text-xs transition-all duration-700">H-P: 9-18</p>
             </div>
 
-            {/* Email - ikon nélkül */}
+            {/* Email */}
             <div className="transition-all duration-700">
               <p className="font-medium text-white dark:text-white mb-1 transition-all duration-700">Email</p>
               <p className="text-gray-400 dark:text-gray-400 transition-all duration-700">info@hoverhire.hu</p>
               <p className="text-gray-500 dark:text-gray-500 text-xs transition-all duration-700">Ügyelet: info@hoverhire.hu</p>
             </div>
 
-            {/* Nyitvatartás - ikon nélkül */}
+            {/* Nyitvatartás */}
             <div className="transition-all duration-700">
               <p className="font-medium text-white dark:text-white mb-1 transition-all duration-700">Nyitvatartás</p>
               <p className="text-gray-400 dark:text-gray-400 transition-all duration-700">Hétfő - Péntek: 9:00 - 18:00</p>
@@ -144,7 +165,7 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* Alsó rész - Copyright + Legal */}
+      {/* Alsó rész */}
       <div className="border-t border-gray-800 dark:border-gray-800 bg-gray-950 dark:bg-black transition-all duration-700 py-4">
         <div className="container mx-auto px-6 transition-all duration-700">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
