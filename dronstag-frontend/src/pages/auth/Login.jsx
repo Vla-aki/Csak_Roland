@@ -1,17 +1,20 @@
 // src/pages/auth/Login.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaUserCircle } from 'react-icons/fa';
 import Navbar from '../../components/common/Navbar';
 import Footer from '../../components/common/Footer';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   
   // State management
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    role: 'customer', // 'customer' vagy 'driver'
     rememberMe: false
   });
   
@@ -34,7 +37,7 @@ const Login = () => {
     setLoginError('');
   };
 
-  // Validate form - CSAK AZ EMAIL FORMÁTUMOT ELLENŐRIZZÜK, A JELSZÓT NEM!
+  // Validate form - CSAK AZ EMAIL FORMÁTUMOT ELLENŐRIZZÜK
   const validateForm = () => {
     const newErrors = {};
     
@@ -47,7 +50,10 @@ const Login = () => {
     if (!formData.password) {
       newErrors.password = 'A jelszó megadása kötelező';
     }
-    // NINCS JELSZÓ HOSSZ ELLENŐRZÉS!
+    
+    if (!formData.role) {
+      newErrors.role = 'Válassz szerepkört';
+    }
     
     return newErrors;
   };
@@ -65,49 +71,36 @@ const Login = () => {
     setIsLoading(true);
     setLoginError('');
     
-    // TODO: API hívás a backend felé
-    // A backend fogja eldönteni, hogy a jelszó helyes-e
     try {
-      // Mock API hívás - később cseréld ki valódi API hívásra
-      const response = await mockApiCall(formData);
+      // BÁRMILYEN JELSZÓT ELFOGADUNK
+      // Itt csak szimuláljuk a bejelentkezést
+      setTimeout(() => {
+        const userData = {
+          id: Date.now(),
+          name: formData.email.split('@')[0], // Az email első része lesz a név
+          email: formData.email,
+          role: formData.role,
+          verified: true,
+          createdAt: new Date().toISOString()
+        };
+        
+        // Mentés a localStorage-ba és context-be
+        login(userData);
+        
+        // Átirányítás a megfelelő dashboardra
+        if (formData.role === 'customer') {
+          navigate('/dashboard');
+        } else {
+          navigate('/drone-dashboard');
+        }
+        
+        setIsLoading(false);
+      }, 1000);
       
-      if (response.success) {
-        // TODO: Auth context frissítése a backend által visszaadott user adatokkal
-        navigate('/dashboard');
-      } else {
-        setLoginError(response.error || 'Hibás email cím vagy jelszó');
-      }
     } catch (error) {
-      setLoginError('Hiba történt a bejelentkezés során. Kérlek próbáld újra később.');
-    } finally {
+      setLoginError('Hiba történt a bejelentkezés során');
       setIsLoading(false);
     }
-  };
-
-  // Mock API hívás - ezt később cseréld ki valódi fetch-re
-  const mockApiCall = (data) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        // Itt a backend válaszát szimuláljuk
-        // A backend dönti el, hogy a jelszó jó-e
-        if (data.email === 'demo@hoverhire.hu' && data.password === 'password123') {
-          resolve({
-            success: true,
-            user: {
-              id: 1,
-              name: 'Kovács János',
-              email: data.email,
-              role: 'customer'
-            }
-          });
-        } else {
-          resolve({
-            success: false,
-            error: 'Hibás email cím vagy jelszó'
-          });
-        }
-      }, 1000);
-    });
   };
 
   return (
@@ -168,7 +161,7 @@ const Login = () => {
                 )}
               </div>
 
-              {/* Jelszó mező - CSAK ÜRESEN ELLENŐRIZZÜK */}
+              {/* Jelszó mező */}
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-all duration-700">
                   Jelszó
@@ -205,10 +198,63 @@ const Login = () => {
                 {errors.password && (
                   <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.password}</p>
                 )}
-                {/* NINCS JELSZÓ HOSSZRA VONATKOZÓ ÜZENET */}
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Bármilyen jelszó megfelel (még nincs adatbázis)
+                </p>
               </div>
 
-              {/* Emlékezz rám + Elfelejtett jelszó */}
+              {/* Szerepkör választás */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-all duration-700">
+                  Bejelentkezés mint
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, role: 'customer' }))}
+                    className={`p-4 border rounded-lg text-center transition-all duration-300 ${
+                      formData.role === 'customer'
+                        ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700'
+                    }`}
+                  >
+                    <FaUserCircle className={`mx-auto text-2xl mb-2 ${
+                      formData.role === 'customer' ? 'text-blue-600' : 'text-gray-400'
+                    }`} />
+                    <h3 className={`font-semibold ${
+                      formData.role === 'customer' ? 'text-blue-600' : 'text-gray-900 dark:text-white'
+                    }`}>Megbízó</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Projektet hirdetek
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, role: 'driver' }))}
+                    className={`p-4 border rounded-lg text-center transition-all duration-300 ${
+                      formData.role === 'driver'
+                        ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700'
+                    }`}
+                  >
+                    <span className={`text-2xl mb-2 block ${
+                      formData.role === 'driver' ? 'text-blue-600' : 'text-gray-400'
+                    }`}>🚁</span>
+                    <h3 className={`font-semibold ${
+                      formData.role === 'driver' ? 'text-blue-600' : 'text-gray-900 dark:text-white'
+                    }`}>Pilóta</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Munkát vállalok
+                    </p>
+                  </button>
+                </div>
+                {errors.role && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.role}</p>
+                )}
+              </div>
+
+              {/* Emlékezz rám */}
               <div className="flex items-center justify-between">
                 <label className="flex items-center">
                   <input
@@ -268,10 +314,10 @@ const Login = () => {
             </form>
           </div>
 
-          {/* Demo bejelentkezés - csak fejlesztéshez */}
+          {/* Információ */}
           <div className="mt-6 text-center">
             <p className="text-xs text-gray-500 dark:text-gray-500 transition-all duration-700">
-              Demo: demo@hoverhire.hu / bármilyen jelszó (backend fogja validálni)
+              ⚡ Fejlesztői mód: bármilyen jelszóval bejelentkezhetsz, a szerepkör kiválasztásával.
             </p>
           </div>
         </div>
