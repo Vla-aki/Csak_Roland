@@ -18,68 +18,94 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     // Ellenőrizzük, hogy van-e mentett user a localStorage-ban
     const storedUser = localStorage.getItem('user');
+    const storedRole = localStorage.getItem('userRole');
+    
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error('Hiba a user adatok betöltésekor');
+        localStorage.removeItem('user');
+      }
     }
     setLoading(false);
   }, []);
 
-  const login = async (email, password) => {
-    try {
-      // TODO: Valódi API hívás a backend felé
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-      
-      const data = await response.json();
-      
-      if (response.ok) {
-        setUser(data.user);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        // Ha van token, azt is elmentjük
-        if (data.token) {
-          localStorage.setItem('token', data.token);
-        }
-        return { success: true };
-      } else {
-        return { success: false, error: data.message || 'Hibás email cím vagy jelszó' };
+  // Egyszerűsített login - bármilyen adatot elfogad
+  const login = (userData) => {
+    // Ha stringként kapjuk, akkor objektummá alakítjuk
+    if (typeof userData === 'string') {
+      try {
+        userData = JSON.parse(userData);
+      } catch {
+        userData = { email: userData, name: userData.split('@')[0] };
       }
-    } catch (error) {
-      return { success: false, error: 'Hálózati hiba történt' };
     }
+    
+    // Alapértelmezett mezők biztosítása
+    const userWithDefaults = {
+      id: userData.id || Date.now(),
+      name: userData.name || (userData.email ? userData.email.split('@')[0] : 'Felhasználó'),
+      email: userData.email || 'felhasznalo@pelda.hu',
+      role: userData.role || 'customer',
+      verified: userData.verified || true,
+      createdAt: userData.createdAt || new Date().toISOString()
+    };
+    
+    setUser(userWithDefaults);
+    localStorage.setItem('user', JSON.stringify(userWithDefaults));
+    localStorage.setItem('userRole', userWithDefaults.role);
+    
+    return { success: true, user: userWithDefaults };
+  };
+
+  // Demo bejelentkezés előre beállított szerepkörökkel
+  const loginAsCustomer = () => {
+    const userData = {
+      id: 1,
+      name: 'Kovács János (Megbízó)',
+      email: 'megbizo@demo.hu',
+      role: 'customer',
+      verified: true,
+      createdAt: new Date().toISOString()
+    };
+    return login(userData);
+  };
+
+  const loginAsDriver = () => {
+    const userData = {
+      id: 2,
+      name: 'Kovács Péter (Pilóta)',
+      email: 'pilota@demo.hu',
+      role: 'driver',
+      verified: true,
+      createdAt: new Date().toISOString()
+    };
+    return login(userData);
   };
 
   const register = async (userData) => {
-    try {
-      // TODO: Valódi API hívás a backend felé
-      const response = await fetch('/api/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
-      
-      const data = await response.json();
-      
-      if (response.ok) {
-        return { success: true };
-      } else {
-        return { success: false, error: data.message || 'Regisztrációs hiba' };
-      }
-    } catch (error) {
-      return { success: false, error: 'Hálózati hiba történt' };
-    }
+    // Egyszerűsített regisztráció - azonnal be is jelentkeztet
+    const newUser = {
+      id: Date.now(),
+      name: userData.name || 'Új felhasználó',
+      email: userData.email || 'uj@felhasznalo.hu',
+      role: userData.role || 'customer',
+      verified: true,
+      createdAt: new Date().toISOString()
+    };
+    
+    setUser(newUser);
+    localStorage.setItem('user', JSON.stringify(newUser));
+    localStorage.setItem('userRole', newUser.role);
+    
+    return { success: true, user: newUser };
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
-    localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
   };
 
   const value = {
@@ -87,7 +113,12 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
-    loading
+    loginAsCustomer,
+    loginAsDriver,
+    loading,
+    isAuthenticated: !!user,
+    isCustomer: user?.role === 'customer',
+    isDriver: user?.role === 'driver'
   };
 
   return (
