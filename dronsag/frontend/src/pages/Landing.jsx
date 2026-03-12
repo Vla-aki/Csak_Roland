@@ -355,7 +355,7 @@ const Landing = () => {
     return true;
   });
 
-  // ========== HOW IT WORKS - ITT VAN A TÖMB ==========
+  // ========== HOW IT WORKS ==========
   const howItWorks = [
     {
       step: 1,
@@ -738,7 +738,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* ===== HOW IT WORKS - ITT HASZNÁLJUK A TÖMBÖT ===== */}
+      {/* ===== HOW IT WORKS ===== */}
       <section ref={howItWorksRef} id="how-it-works" className="py-24 px-4 transition-all duration-700">
         <div className="container mx-auto max-w-7xl transition-all duration-700">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white text-center mb-4 transition-all duration-700">Hogyan működik?</h2>
@@ -866,8 +866,9 @@ const Landing = () => {
                         <span className="text-sm text-gray-500 transition-all duration-700">({selectedJob.client.reviews} értékelés)</span>
                       </div>
                     </div>
+                    {/* JAVÍTVA: Ez az útvonal nem létezik, átirányítjuk a find-work oldalra */}
                     <Link
-                      to={`/client/${selectedJob.client.name}`}
+                      to="/find-work"
                       className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 text-center"
                     >
                       Ajánlatot küldök
@@ -943,11 +944,12 @@ const Landing = () => {
                     <div>
                       <p className="text-sm text-gray-500 transition-all duration-700">Helyszín: {selectedFreelancer.location}</p>
                     </div>
+                    {/* JAVÍTVA: Ez az útvonal nem létezik, átirányítjuk a login oldalra */}
                     <Link
-                      to={`/message/${selectedFreelancer.id}`}
+                      to="/login"
                       className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 text-center"
                     >
-                      Kapcsolatfelvétel
+                      Kapcsolatfelvétel (Bejelentkezés)
                     </Link>
                   </div>
                 </div>
