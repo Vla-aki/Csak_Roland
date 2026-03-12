@@ -1,173 +1,10 @@
 // src/pages/Privacy.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FaShieldAlt, FaCookie, FaLock, FaUserSecret, FaDatabase, FaEnvelope } from 'react-icons/fa';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
 
 const Privacy = () => {
-  const sections = [
-    {
-      id: 'intro',
-      title: '1. Bevezetés',
-      icon: <FaShieldAlt />,
-      content: [
-        'A HoverHire Kft. (székhely: 1137 Budapest, Drón utca 12., adószám: 12345678-1-42, cégjegyzékszám: 01-09-123456, továbbiakban: Adatkezelő vagy HoverHire) elkötelezett az ügyfelei és a weboldal látogatói személyes adatainak védelme iránt.',
-        'Jelen Adatvédelmi Tájékoztató célja, hogy átfogó képet adjon arról, hogyan kezeljük az Ön személyes adatait a hoverhire.hu weboldalon és a kapcsolódó szolgáltatások igénybevétele során.',
-        'Kérjük, figyelmesen olvassa el a tájékoztatót, és amennyiben kérdése merülne fel, forduljon hozzánk bizalommal.'
-      ]
-    },
-    {
-      id: 'definitions',
-      title: '2. Fogalommeghatározások',
-      icon: <FaUserSecret />,
-      content: [
-        'Személyes adat: Azonosított vagy azonosítható természetes személyre vonatkozó bármely információ.',
-        'Adatkezelés: A személyes adatokon végzett bármely művelet, beleértve a gyűjtést, rögzítést, tárolást, felhasználást, továbbítást és törlést.',
-        'Adatkezelő: Az a természetes vagy jogi személy, aki az adatkezelés célját és eszközeit meghatározza.',
-        'Adatfeldolgozó: Az a természetes vagy jogi személy, aki az Adatkezelő megbízásából adatokat kezel.',
-        'Érintett: Bármely azonosított vagy azonosítható természetes személy, akinek személyes adatait kezeljük.'
-      ]
-    },
-    {
-      id: 'data',
-      title: '3. Az általunk kezelt adatok köre',
-      icon: <FaDatabase />,
-      tables: [
-        {
-          title: 'Regisztráció során kezelt adatok:',
-          headers: ['Adat típusa', 'Cél', 'Jogalap', 'Megőrzési idő'],
-          rows: [
-            ['Név', 'Azonosítás, kapcsolattartás', 'Szerződés teljesítése', 'A regisztráció törléséig'],
-            ['Email cím', 'Kapcsolattartás, értesítések', 'Szerződés teljesítése', 'A regisztráció törléséig'],
-            ['Telefonszám (opcionális)', 'Kapcsolattartás', 'Hozzájárulás', 'A regisztráció törléséig'],
-            ['Profilkép (opcionális)', 'Bemutatkozás', 'Hozzájárulás', 'A regisztráció törléséig']
-          ]
-        },
-        {
-          title: 'Projekt meghirdetése során kezelt adatok:',
-          headers: ['Adat típusa', 'Cél', 'Jogalap', 'Megőrzési idő'],
-          rows: [
-            ['Projekt adatok', 'Szolgáltatás nyújtása', 'Szerződés teljesítése', 'A projekt lezárását követő 1 év'],
-            ['Helyszín adatok', 'Pontos helymeghatározás', 'Szerződés teljesítése', 'A projekt lezárását követő 1 év']
-          ]
-        },
-        {
-          title: 'Technikai adatok:',
-          headers: ['Adat típusa', 'Cél', 'Jogalap', 'Megőrzési idő'],
-          rows: [
-            ['IP cím', 'Biztonság, statisztika', 'Jogos érdek', '30 nap'],
-            ['Cookie-k', 'Felhasználói élmény javítása', 'Hozzájárulás', 'A cookie típusától függően'],
-            ['Böngésző adatok', 'Kompatibilitás biztosítása', 'Jogos érdek', '30 nap']
-          ]
-        }
-      ]
-    },
-    {
-      id: 'purpose',
-      title: '4. Az adatkezelés céljai',
-      icon: <FaShieldAlt />,
-      content: [
-        'Személyes adatait az alábbi célokból kezeljük:',
-        '• A regisztráció és a felhasználói fiók kezelése',
-        '• A szolgáltatások nyújtása (projektek meghirdetése, ajánlattétel, szerződéskötés)',
-        '• Kapcsolattartás, ügyfélszolgálati tevékenység',
-        '• A fizetési rendszer működtetése',
-        '• Jogi kötelezettségek teljesítése (pl. számviteli előírások)',
-        '• Visszaélések megelőzése, biztonsági intézkedések',
-        '• Statisztikák készítése, a szolgáltatások fejlesztése'
-      ]
-    },
-    {
-      id: 'legal',
-      title: '5. Az adatkezelés jogalapja',
-      icon: <FaLock />,
-      content: [
-        'Személyes adatait az alábbi jogalapokon kezeljük:',
-        '• Szerződés teljesítése (pl. regisztráció, projektek kezelése)',
-        '• Jogos érdek (pl. biztonsági intézkedések, visszaélések megelőzése)',
-        '• Jogi kötelezettség teljesítése (pl. számviteli bizonylatok megőrzése)',
-        '• Az érintett hozzájárulása (pl. hírlevél küldése, cookie-k kezelése)'
-      ]
-    },
-    {
-      id: 'duration',
-      title: '6. Adatmegőrzési idő',
-      icon: <FaDatabase />,
-      content: [
-        'A személyes adatokat csak a cél megvalósulásához szükséges ideig tároljuk.',
-        'A regisztrációs adatokat a felhasználói fiók törléséig kezeljük.',
-        'A projektekhez kapcsolódó adatokat a projekt lezárását követő 1 évig tároljuk jogi igények érvényesítése céljából.',
-        'A számviteli bizonylatokat a számviteli törvény előírásai szerint 8 évig megőrizzük.',
-        'A hozzájáruláson alapuló adatkezelések esetén a hozzájárulás visszavonásáig kezeljük az adatokat.'
-      ]
-    },
-    {
-      id: 'rights',
-      title: '7. Az érintettek jogai',
-      icon: <FaUserSecret />,
-      content: [
-        'Ön az adatkezeléssel kapcsolatban az alábbi jogokkal élhet:',
-        '• Tájékoztatás kérése a kezelt adatokról',
-        '• Adatok helyesbítésének kérése',
-        '• Adatok törlésének kérése',
-        '• Adatkezelés korlátozásának kérése',
-        '• Adathordozhatósághoz való jog',
-        '• Hozzájárulás visszavonása',
-        '• Panasz benyújtása a felügyeleti hatósághoz',
-        'Jogainak gyakorlásával kapcsolatban az info@hoverhire.hu email címen kereshet meg minket.'
-      ]
-    },
-    {
-      id: 'cookies',
-      title: '8. Cookie-k (sütik)',
-      icon: <FaCookie />,
-      content: [
-        'Weboldalunk cookie-kat (sütiket) használ a felhasználói élmény javítása, statisztikák készítése és a weboldal működésének biztosítása érdekében.',
-        'A cookie-k kis szöveges fájlok, amelyeket a böngésző tárol el a számítógépén vagy mobil eszközén.',
-        'Az alábbi típusú cookie-kat használjuk:',
-        '• Alapvető működést biztosító cookie-k (pl. bejelentkezés, biztonság)',
-        '• Analitikai cookie-k (pl. Google Analytics)',
-        '• Funkcionális cookie-k (pl. nyelvi beállítások)',
-        'A cookie-k használatához hozzájárulását kérjük. A hozzájárulást bármikor visszavonhatja böngészője beállításaiban.'
-      ]
-    },
-    {
-      id: 'data-security',
-      title: '9. Adatbiztonság',
-      icon: <FaLock />,
-      content: [
-        'Személyes adatait megfelelő technikai és szervezési intézkedésekkel védjük a jogosulatlan hozzáférés, megváltoztatás, továbbítás vagy megsemmisítés ellen.',
-        'Adatai védelme érdekében SSL titkosítást, tűzfalakat és biztonságos szervereket alkalmazunk.',
-        'Munkatársaink titoktartási kötelezettséggel tartoznak, és csak a feladatuk ellátásához szükséges mértékben férhetnek hozzá az adatokhoz.'
-      ]
-    },
-    {
-      id: 'contact',
-      title: '10. Kapcsolat',
-      icon: <FaEnvelope />,
-      content: [
-        'Adatkezeléssel kapcsolatos kérdéseit, észrevételeit az alábbi elérhetőségeken jelezheti:',
-        'Email: info@hoverhire.hu',
-        'Postacím: 1137 Budapest, Drón utca 12.',
-        'Telefon: +36 30 123 4567',
-        'Adatvédelmi tisztviselő: Dr. Jogász Elek, jogasz@hoverhire.hu'
-      ]
-    },
-    {
-      id: 'authority',
-      title: '11. Felügyeleti hatóság',
-      icon: <FaShieldAlt />,
-      content: [
-        'Amennyiben úgy érzi, hogy adatkezelésünk során megsértettük a hatályos adatvédelmi előírásokat, panasszal élhet a Nemzeti Adatvédelmi és Információszabadság Hatóságnál (NAIH):',
-        'Cím: 1055 Budapest, Falk Miksa utca 9-11.',
-        'Postacím: 1363 Budapest, Pf.: 9.',
-        'Email: ugyfelszolgalat@naih.hu',
-        'Web: www.naih.hu'
-      ]
-    }
-  ];
-
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 transition-all duration-700">
       <Navbar />
@@ -177,9 +14,6 @@ const Privacy = () => {
           
           {/* Fejléc */}
           <div className="text-center mb-12">
-            <div className="w-20 h-20 mx-auto mb-6 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-              <FaShieldAlt className="text-4xl text-blue-600 dark:text-blue-400" />
-            </div>
             <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-4 transition-all duration-700">
               Adatvédelmi tájékoztató
             </h1>
@@ -187,108 +21,176 @@ const Privacy = () => {
               Hatályos: 2024. január 1-től
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
-              <Link
-                to="/terms"
-                className="text-blue-600 dark:text-blue-400 hover:underline"
-              >
-                Általános Szerződési Feltételek
-              </Link>
+              <Link to="/terms" className="text-blue-600 dark:text-blue-400 hover:underline">ÁSZF</Link>
               <span className="text-gray-300 dark:text-gray-600">|</span>
-              <Link
-                to="/cookie"
-                className="text-blue-600 dark:text-blue-400 hover:underline"
-              >
-                Cookie szabályzat
-              </Link>
+              <Link to="/cookie" className="text-blue-600 dark:text-blue-400 hover:underline">Cookie</Link>
               <span className="text-gray-300 dark:text-gray-600">|</span>
-              <Link
-                to="/impresszum"
-                className="text-blue-600 dark:text-blue-400 hover:underline"
-              >
-                Impresszum
-              </Link>
+              <Link to="/impressum" className="text-blue-600 dark:text-blue-400 hover:underline">Impresszum</Link>
             </div>
           </div>
 
           {/* Tartalom */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-8 transition-all duration-700">
             <div className="space-y-8">
-              {sections.map((section) => (
-                <section key={section.id} id={section.id} className="scroll-mt-24">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center text-blue-600 dark:text-blue-400">
-                      {section.icon}
-                    </div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {section.title}
-                    </h2>
-                  </div>
-                  
-                  {section.content && (
-                    <div className="space-y-3 ml-14">
-                      {section.content.map((item, index) => (
-                        <p key={index} className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                          {item}
-                        </p>
-                      ))}
-                    </div>
-                  )}
-
-                  {section.tables && section.tables.map((table, tableIndex) => (
-                    <div key={tableIndex} className="mt-4 ml-14">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-                        {table.title}
-                      </h3>
-                      <div className="overflow-x-auto">
-                        <table className="w-full border-collapse">
-                          <thead>
-                            <tr className="bg-gray-50 dark:bg-gray-700">
-                              {table.headers.map((header, i) => (
-                                <th key={i} className="p-3 text-left text-sm font-semibold text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600">
-                                  {header}
-                                </th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {table.rows.map((row, i) => (
-                              <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300">
-                                {row.map((cell, j) => (
-                                  <td key={j} className="p-3 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600">
-                                    {cell}
-                                  </td>
-                                ))}
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  ))}
-                </section>
-              ))}
-            </div>
-
-            {/* Elfogadás */}
-            <div className="mt-12 p-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <div className="flex items-start gap-3">
-                <FaShieldAlt className="text-2xl text-blue-600 dark:text-blue-400 flex-shrink-0 mt-1" />
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                    Adatai biztonságban vannak
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    A HoverHire-nél kiemelten fontosnak tartjuk adatai védelmét. Ha bármilyen kérdése van az adatkezeléssel kapcsolatban, kérjük, lépjen kapcsolatba <Link to="/contact" className="text-blue-600 dark:text-blue-400 hover:underline">ügyfélszolgálatunkkal</Link>.
-                  </p>
+              
+              {/* 1. Adatkezelő adatai */}
+              <section>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">1. Adatkezelő adatai</h2>
+                <div className="space-y-2 text-gray-600 dark:text-gray-400 leading-relaxed">
+                  <p><strong>Cégnév:</strong> HoverHire Kft.</p>
+                  <p><strong>Székhely:</strong> 1137 Budapest, Drón utca 12.</p>
+                  <p><strong>Adószám:</strong> 12345678-1-42</p>
+                  <p><strong>Email:</strong> info@hoverhire.hu</p>
+                  <p><strong>Telefon:</strong> +36 30 123 4567</p>
+                  <p><strong>Adatvédelmi tisztviselő:</strong> Dr. Jogász Elek, jogasz@hoverhire.hu</p>
                 </div>
+              </section>
+
+              {/* 2. Fogalommeghatározások */}
+              <section>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">2. Fogalommeghatározások</h2>
+                <div className="space-y-2 text-gray-600 dark:text-gray-400 leading-relaxed">
+                  <p><strong>Személyes adat:</strong> Azonosított vagy azonosítható természetes személyre vonatkozó bármely információ.</p>
+                  <p><strong>Adatkezelés:</strong> A személyes adatokon végzett bármely művelet, beleértve a gyűjtést, rögzítést, tárolást, felhasználást, továbbítást és törlést.</p>
+                  <p><strong>Adatkezelő:</strong> Az a természetes vagy jogi személy, aki az adatkezelés célját és eszközeit meghatározza.</p>
+                  <p><strong>Érintett:</strong> Bármely azonosított vagy azonosítható természetes személy, akinek személyes adatait kezeljük.</p>
+                </div>
+              </section>
+
+              {/* 3. Kezelt adatok köre */}
+              <section>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">3. Kezelt adatok köre</h2>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Regisztráció során kezelt adatok:</h3>
+                    <ul className="list-disc pl-6 space-y-1 text-gray-600 dark:text-gray-400">
+                      <li>Név (kötelező)</li>
+                      <li>Email cím (kötelező)</li>
+                      <li>Telefonszám (opcionális)</li>
+                      <li>Profilkép (opcionális)</li>
+                      <li>Jelszó (hashelt formában tárolva)</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Projektek során kezelt adatok:</h3>
+                    <ul className="list-disc pl-6 space-y-1 text-gray-600 dark:text-gray-400">
+                      <li>Projekt adatok (cím, leírás, helyszín)</li>
+                      <li>Költségkeret és határidő</li>
+                      <li>Ajánlatok és üzenetek</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Technikai adatok:</h3>
+                    <ul className="list-disc pl-6 space-y-1 text-gray-600 dark:text-gray-400">
+                      <li>IP cím</li>
+                      <li>Böngésző típusa és verziója</li>
+                      <li>Látogatott oldalak</li>
+                      <li>Cookie-k</li>
+                    </ul>
+                  </div>
+                </div>
+              </section>
+
+              {/* 4. Adatkezelés célja */}
+              <section>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">4. Adatkezelés célja</h2>
+                <ul className="list-disc pl-6 space-y-1 text-gray-600 dark:text-gray-400">
+                  <li>A regisztráció és a felhasználói fiók kezelése</li>
+                  <li>A szolgáltatások nyújtása (projektek meghirdetése, ajánlattétel, szerződéskötés)</li>
+                  <li>Kapcsolattartás, ügyfélszolgálati tevékenység</li>
+                  <li>A fizetési rendszer működtetése</li>
+                  <li>Jogi kötelezettségek teljesítése (pl. számviteli előírások)</li>
+                  <li>Visszaélések megelőzése, biztonsági intézkedések</li>
+                  <li>Statisztikák készítése, a szolgáltatások fejlesztése</li>
+                </ul>
+              </section>
+
+              {/* 5. Jogalap */}
+              <section>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">5. Az adatkezelés jogalapja</h2>
+                <ul className="list-disc pl-6 space-y-1 text-gray-600 dark:text-gray-400">
+                  <li><strong>Szerződés teljesítése:</strong> regisztráció, projektek kezelése</li>
+                  <li><strong>Jogos érdek:</strong> biztonsági intézkedések, visszaélések megelőzése</li>
+                  <li><strong>Jogi kötelezettség:</strong> számviteli bizonylatok megőrzése</li>
+                  <li><strong>Hozzájárulás:</strong> hírlevél küldése, cookie-k kezelése</li>
+                </ul>
+              </section>
+
+              {/* 6. Adattovábbítás */}
+              <section>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">6. Adattovábbítás</h2>
+                <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-2">
+                  Személyes adatait harmadik fél számára csak a következő esetekben továbbítjuk:
+                </p>
+                <ul className="list-disc pl-6 space-y-1 text-gray-600 dark:text-gray-400">
+                  <li>Tárhelyszolgáltató (DigitalOcean, LLC)</li>
+                  <li>Fizetési szolgáltató (banki átutalások kezelése)</li>
+                  <li>Hatósági megkeresés esetén</li>
+                  <li>Az Ön előzetes hozzájárulásával</li>
+                </ul>
+              </section>
+
+              {/* 7. Adatmegőrzési idő */}
+              <section>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">7. Adatmegőrzési idő</h2>
+                <ul className="list-disc pl-6 space-y-1 text-gray-600 dark:text-gray-400">
+                  <li><strong>Regisztrációs adatok:</strong> a felhasználói fiók törléséig</li>
+                  <li><strong>Projekt adatok:</strong> a projekt lezárását követő 1 évig</li>
+                  <li><strong>Számviteli bizonylatok:</strong> 8 évig</li>
+                  <li><strong>IP cím, napló adatok:</strong> 30 napig</li>
+                </ul>
+              </section>
+
+              {/* 8. Érintettek jogai */}
+              <section>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">8. Az érintettek jogai</h2>
+                <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-2">
+                  Ön az alábbi jogokkal élhet adatkezeléssel kapcsolatban:
+                </p>
+                <ul className="list-disc pl-6 space-y-1 text-gray-600 dark:text-gray-400">
+                  <li>Tájékoztatás kérése a kezelt adatokról</li>
+                  <li>Adatok helyesbítésének kérése</li>
+                  <li>Adatok törlésének kérése</li>
+                  <li>Adatkezelés korlátozásának kérése</li>
+                  <li>Adathordozhatósághoz való jog</li>
+                  <li>Hozzájárulás visszavonása</li>
+                  <li>Panasz benyújtása a felügyeleti hatósághoz</li>
+                </ul>
+                <p className="text-gray-600 dark:text-gray-400 leading-relaxed mt-2">
+                  Jogainak gyakorlásával kapcsolatban az info@hoverhire.hu email címen kereshet meg minket.
+                </p>
+              </section>
+
+              {/* 9. Adatbiztonság */}
+              <section>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">9. Adatbiztonság</h2>
+                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                  Személyes adatait megfelelő technikai és szervezési intézkedésekkel védjük a jogosulatlan hozzáférés, 
+                  megváltoztatás, továbbítás vagy megsemmisítés ellen. Adatai védelme érdekében SSL titkosítást, 
+                  tűzfalakat és biztonságos szervereket alkalmazunk.
+                </p>
+              </section>
+
+              {/* 10. Kapcsolat */}
+              <section>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">10. Kapcsolat</h2>
+                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                  Adatkezeléssel kapcsolatos kérdéseit, észrevételeit az alábbi elérhetőségeken jelezheti:
+                </p>
+                <div className="mt-2 space-y-1 text-gray-600 dark:text-gray-400">
+                  <p><strong>Email:</strong> info@hoverhire.hu</p>
+                  <p><strong>Postacím:</strong> 1137 Budapest, Drón utca 12.</p>
+                  <p><strong>Telefon:</strong> +36 30 123 4567</p>
+                </div>
+              </section>
+
+              <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Jelen adatvédelmi tájékoztató 2024. január 1-jén lép hatályba. Fenntartjuk a jogot a tájékoztató módosítására, 
+                  amelyről a Felhasználókat előzetesen értesítjük.
+                </p>
               </div>
             </div>
-          </div>
-
-          {/* Verzió információk */}
-          <div className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
-            <p>Utolsó frissítés: 2024. január 1.</p>
-            <p>Verziószám: 2.0.0</p>
           </div>
         </div>
       </div>

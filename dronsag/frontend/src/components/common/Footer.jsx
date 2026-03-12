@@ -86,43 +86,23 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Közösségi média - IKONOKKAL */}
+          {/* Közösségi média */}
           <div className="transition-all duration-700">
             <h4 className="text-white dark:text-white font-semibold mb-4 transition-all duration-700">Kövess minket</h4>
             <div className="flex flex-wrap gap-3">
-              <a 
-                href="#" 
-                className="w-10 h-10 bg-gray-800 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 dark:hover:bg-blue-600 transition-all duration-300"
-                aria-label="Facebook"
-              >
+              <a href="#" className="w-10 h-10 bg-gray-800 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 dark:hover:bg-blue-600 transition-all duration-300">
                 <FaFacebookF className="text-gray-300 dark:text-gray-300 text-lg" />
               </a>
-              <a 
-                href="#" 
-                className="w-10 h-10 bg-gray-800 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 dark:hover:bg-blue-600 transition-all duration-300"
-                aria-label="Instagram"
-              >
+              <a href="#" className="w-10 h-10 bg-gray-800 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 dark:hover:bg-blue-600 transition-all duration-300">
                 <FaInstagram className="text-gray-300 dark:text-gray-300 text-lg" />
               </a>
-              <a 
-                href="#" 
-                className="w-10 h-10 bg-gray-800 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 dark:hover:bg-blue-600 transition-all duration-300"
-                aria-label="YouTube"
-              >
+              <a href="#" className="w-10 h-10 bg-gray-800 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 dark:hover:bg-blue-600 transition-all duration-300">
                 <FaYoutube className="text-gray-300 dark:text-gray-300 text-lg" />
               </a>
-              <a 
-                href="#" 
-                className="w-10 h-10 bg-gray-800 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 dark:hover:bg-blue-600 transition-all duration-300"
-                aria-label="Twitter"
-              >
+              <a href="#" className="w-10 h-10 bg-gray-800 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 dark:hover:bg-blue-600 transition-all duration-300">
                 <FaTwitter className="text-gray-300 dark:text-gray-300 text-lg" />
               </a>
-              <a 
-                href="#" 
-                className="w-10 h-10 bg-gray-800 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 dark:hover:bg-blue-600 transition-all duration-300"
-                aria-label="LinkedIn"
-              >
+              <a href="#" className="w-10 h-10 bg-gray-800 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 dark:hover:bg-blue-600 transition-all duration-300">
                 <FaLinkedinIn className="text-gray-300 dark:text-gray-300 text-lg" />
               </a>
             </div>
@@ -165,7 +145,7 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* Alsó rész */}
+      {/* Alsó rész - JAVÍTVA */}
       <div className="border-t border-gray-800 dark:border-gray-800 bg-gray-950 dark:bg-black transition-all duration-700 py-4">
         <div className="container mx-auto px-6 transition-all duration-700">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
@@ -173,16 +153,17 @@ const Footer = () => {
               © {currentYear} HoverHire. Minden jog fenntartva.
             </div>
             <div className="flex flex-wrap gap-4">
-              <Link to="/aszf" className="text-gray-400 dark:text-gray-500 hover:text-blue-400 dark:hover:text-blue-400 transition-all duration-300">
+              {/* JAVÍTVA: Helyes útvonalak az App.jsx alapján */}
+              <Link to="/terms" className="text-gray-400 dark:text-gray-500 hover:text-blue-400 dark:hover:text-blue-400 transition-all duration-300">
                 ÁSZF
               </Link>
-              <Link to="/adatvedelem" className="text-gray-400 dark:text-gray-500 hover:text-blue-400 dark:hover:text-blue-400 transition-all duration-300">
+              <Link to="/privacy" className="text-gray-400 dark:text-gray-500 hover:text-blue-400 dark:hover:text-blue-400 transition-all duration-300">
                 Adatvédelem
               </Link>
               <Link to="/cookie" className="text-gray-400 dark:text-gray-500 hover:text-blue-400 dark:hover:text-blue-400 transition-all duration-300">
                 Cookie
               </Link>
-              <Link to="/impresszum" className="text-gray-400 dark:text-gray-500 hover:text-blue-400 dark:hover:text-blue-400 transition-all duration-300">
+              <Link to="/impressum" className="text-gray-400 dark:text-gray-500 hover:text-blue-400 dark:hover:text-blue-400 transition-all duration-300">
                 Impresszum
               </Link>
             </div>
