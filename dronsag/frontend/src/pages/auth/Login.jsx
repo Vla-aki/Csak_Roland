@@ -37,7 +37,7 @@ const Login = () => {
     setLoginError('');
   };
 
-  // Validate form - CSAK AZ EMAIL FORMÁTUMOT ELLENŐRIZZÜK
+  // Validate form - csak az email formátumot ellenőrizzük
   const validateForm = () => {
     const newErrors = {};
     
@@ -49,10 +49,6 @@ const Login = () => {
     
     if (!formData.password) {
       newErrors.password = 'A jelszó megadása kötelező';
-    }
-    
-    if (!formData.role) {
-      newErrors.role = 'Válassz szerepkört';
     }
     
     return newErrors;
@@ -72,33 +68,22 @@ const Login = () => {
     setLoginError('');
     
     try {
-      // BÁRMILYEN JELSZÓT ELFOGADUNK
-      // Itt csak szimuláljuk a bejelentkezést
-      setTimeout(() => {
-        const userData = {
-          id: Date.now(),
-          name: formData.email.split('@')[0], // Az email első része lesz a név
-          email: formData.email,
-          role: formData.role,
-          verified: true,
-          createdAt: new Date().toISOString()
-        };
-        
-        // Mentés a localStorage-ba és context-be
-        login(userData);
-        
+      // API hívás a backend felé
+      const result = await login(formData.email, formData.password, formData.role);
+      
+      if (result.success) {
         // Átirányítás a megfelelő dashboardra
         if (formData.role === 'customer') {
           navigate('/dashboard');
         } else {
           navigate('/drone-dashboard');
         }
-        
-        setIsLoading(false);
-      }, 1000);
-      
+      } else {
+        setLoginError(result.error || 'Hibás email cím vagy jelszó');
+      }
     } catch (error) {
-      setLoginError('Hiba történt a bejelentkezés során');
+      setLoginError('Hiba történt a bejelentkezés során. Kérlek próbáld újra később.');
+    } finally {
       setIsLoading(false);
     }
   };
@@ -198,9 +183,6 @@ const Login = () => {
                 {errors.password && (
                   <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.password}</p>
                 )}
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Bármilyen jelszó megfelel (még nincs adatbázis)
-                </p>
               </div>
 
               {/* Szerepkör választás */}
@@ -249,9 +231,6 @@ const Login = () => {
                     </p>
                   </button>
                 </div>
-                {errors.role && (
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.role}</p>
-                )}
               </div>
 
               {/* Emlékezz rám */}
@@ -312,13 +291,6 @@ const Login = () => {
                 </p>
               </div>
             </form>
-          </div>
-
-          {/* Információ */}
-          <div className="mt-6 text-center">
-            <p className="text-xs text-gray-500 dark:text-gray-500 transition-all duration-700">
-              ⚡ Fejlesztői mód: bármilyen jelszóval bejelentkezhetsz, a szerepkör kiválasztásával.
-            </p>
           </div>
         </div>
       </div>
