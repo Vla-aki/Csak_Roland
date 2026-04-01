@@ -1,496 +1,479 @@
 // src/pages/Profile.jsx
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCamera, FaSave, FaStar, FaCheckCircle, FaAward, FaClock, FaEuroSign } from 'react-icons/fa';
+import React, { useState, useRef } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
-import { useAuth } from '../contexts/AuthContext';
+import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaInfoCircle, FaMoneyBillWave, FaClock, FaStar, FaBriefcase, FaSave, FaTags, FaCamera, FaPlus, FaTimes, FaCalendarAlt, FaCheckCircle, FaEdit } from 'react-icons/fa';
 
 const Profile = () => {
   const { user } = useAuth();
-  const [isEditing, setIsEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState('profile');
   
-  // Profil adatok (mock)
-  const [profileData, setProfileData] = useState({
-    name: user?.name || 'Kovács Péter',
-    email: user?.email || 'peter.kovacs@example.com',
-    phone: '+36 30 123 4567',
-    location: 'Budapest, Magyarország',
-    bio: 'Profi drónpilóta 8 év tapasztalattal. DJI Inspire 2, Mavic 3, hőkamera. Ingatlanfotózás, ipari ellenőrzés, rendezvények specialista.',
-    skills: ['légifotó', 'ingatlan', 'ipari ellenőrzés', 'hőkamera', 'videózás', 'DJI'],
-    languages: ['magyar (anyanyelvi)', 'angol (középfok)'],
-    hourlyRate: 45,
-    availability: 'azonnal',
-    verified: true,
-    memberSince: '2020. március',
-    completedJobs: 187,
-    rating: 4.9,
-    reviews: 234
+  // State az űrlap adatainak tárolására (kezdeti értékek a bejelentkezett user adataiból)
+  const [formData, setFormData] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    location: user?.location || '',
+    bio: user?.bio || '',
+    hourly_rate: user?.hourly_rate || '',
+    availability: user?.availability || '',
+    skills: user?.skills || [], // A user_skills táblából
+    portfolio: user?.portfolio || [], // A portfolio táblából
+    profile_image: user?.profile_image || '' 
   });
 
-  const [portfolio, setPortfolio] = useState([
-    { id: 1, title: 'Luxus villa fotózás', image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400', category: 'ingatlan' },
-    { id: 2, title: 'Ipari csarnok ellenőrzés', image: 'https://images.unsplash.com/photo-1581091226033-d5c48150dbaa?w=400', category: 'ipari' },
-    { id: 3, title: 'Balaton légifotó', image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400', category: 'táj' },
-    { id: 4, title: 'Esküvői felvétel', image: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=400', category: 'rendezvény' },
-    { id: 5, title: 'Mezőgazdasági terület', image: 'https://images.unsplash.com/photo-1464226180484-05c6aa40e80a?w=400', category: 'mezőgazdaság' },
-    { id: 6, title: 'Napelempark diagnosztika', image: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=400', category: 'ipari' }
-  ]);
+  // Profilkép kezeléséhez szükséges állapotok
+  const fileInputRef = useRef(null);
+  const [profileImagePreview, setProfileImagePreview] = useState(user?.profile_image || null);
 
-  const [reviews, setReviews] = useState([
-    {
-      id: 1,
-      clientName: 'Ingatlan.com Zrt.',
-      clientImage: 'https://randomuser.me/api/portraits/men/1.jpg',
-      rating: 5,
-      date: '2026.02.15.',
-      comment: 'Kiváló munka, pontos, gyors. A képek lenyűgözőek lettek. Mindenképp újra dolgozunk együtt.',
-      projectTitle: 'Drónfotózás ingatlanhoz - 10 ingatlan'
-    },
-    {
-      id: 2,
-      clientName: 'Győri Ipari Park',
-      clientImage: 'https://randomuser.me/api/portraits/men/2.jpg',
-      rating: 5,
-      date: '2026.01.20.',
-      comment: 'Profi felszerelés, részletes szakvélemény. Pontosan a megbeszélt határidőre elkészült.',
-      projectTitle: 'Ipari csarnok ellenőrzése'
-    },
-    {
-      id: 3,
-      clientName: 'Kiskunsági Mezőgazdasági Zrt.',
-      clientImage: 'https://randomuser.me/api/portraits/women/3.jpg',
-      rating: 4,
-      date: '2025.12.10.',
-      comment: 'Jó minőségű NDVI elemzés, részletes jelentés. Ajánlom!',
-      projectTitle: 'Mezőgazdasági terület térképezés'
-    }
-  ]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [newSkill, setNewSkill] = useState('');
 
-  const [certificates, setCertificates] = useState([
-    { id: 1, name: 'Drónpilóta jogosítvány', issuer: 'Nemzeti Közlekedési Hatóság', date: '2025', file: 'cert1.pdf' },
-    { id: 2, name: 'Hőkamerás tanúsítvány', issuer: 'FLIR Academy', date: '2024', file: 'cert2.pdf' },
-    { id: 3, name: 'Munkavédelmi oktatás', issuer: 'Munkavédelmi Hivatal', date: '2024', file: 'cert3.pdf' }
-  ]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState({ type: '', text: '' });
 
-  const handleInputChange = (e) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
-    setProfileData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = () => {
-    // TODO: API hívás
+  // Szerkesztés megszakítása és adatok visszaállítása
+  const handleCancel = () => {
+    setFormData({
+      name: user?.name || '',
+      email: user?.email || '',
+      phone: user?.phone || '',
+      location: user?.location || '',
+      bio: user?.bio || '',
+      hourly_rate: user?.hourly_rate || '',
+      availability: user?.availability || '',
+      skills: user?.skills || [],
+      portfolio: user?.portfolio || [],
+      profile_image: user?.profile_image || ''
+    });
     setIsEditing(false);
   };
+  
+  // Szakterület hozzáadása
+  const handleAddSkill = () => {
+    if (newSkill.trim() && !formData.skills.includes(newSkill.trim())) {
+      setFormData(prev => ({ ...prev, skills: [...prev.skills, newSkill.trim()] }));
+      setNewSkill('');
+    }
+  };
 
-  const renderStars = (rating) => {
-    return Array(5).fill(0).map((_, i) => (
-      <FaStar key={i} className={i < rating ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-600'} />
-    ));
+  // Szakterület törlése
+  const handleRemoveSkill = (skillToRemove) => {
+    setFormData(prev => ({ ...prev, skills: prev.skills.filter(s => s !== skillToRemove) }));
+  };
+
+  // Képkiválasztó megnyitása
+  const handleImageClick = () => {
+    fileInputRef.current.click();
+  };
+
+  // Kép betöltése és előnézet generálása
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileImagePreview(reader.result);
+        setFormData(prev => ({ ...prev, profile_image: reader.result })); // Elküldjük a base64 kódot
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSaving(true);
+    setSaveMessage({ type: '', text: '' });
+
+    try {
+      const token = localStorage.getItem('token');
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      
+      const response = await fetch(`${apiUrl}/auth/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+         setSaveMessage({ type: 'success', text: 'A profil adatai sikeresen frissítve lettek!' });
+        setIsEditing(false); // Visszaváltunk olvasási nézetbe újratöltés nélkül
+        setTimeout(() => window.location.reload(), 1000); // Újratöltjük az oldalt, hogy a Navbar is frissüljön
+      } else {
+
+        setSaveMessage({ type: 'error', text: result.message || 'Hiba történt a mentés során.' });
+      }
+    } catch (error) {
+      setSaveMessage({ type: 'error', text: 'Hálózati hiba történt a mentés során. Kérlek próbáld újra!' });
+    } finally {
+      setIsSaving(false);
+      setTimeout(() => setSaveMessage({ type: '', text: '' }), 3000);
+    }
+  };
+
+  if (!user) return null; // Biztonsági ellenőrzés, ha nincs user, a PrivateRoute úgyis kivédi
+
+  // Csatlakozás dátumának formázása
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Ismeretlen';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('hu-HU', { year: 'numeric', month: 'long', day: 'numeric' });
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 transition-all duration-700">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-700 flex flex-col">
       <Navbar />
       
-      <div className="pt-24 pb-16 px-4">
-        <div className="container mx-auto max-w-7xl">
-          
-          {/* Profil fejléc */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-8 transition-all duration-700">
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-              {/* Profilkép */}
-              <div className="relative">
-                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-4xl font-bold">
-                  {profileData.name.split(' ').map(n => n[0]).join('')}
-                </div>
-                <button className="absolute bottom-0 right-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white hover:bg-blue-700 transition-all duration-300">
-                  <FaCamera className="text-sm" />
-                </button>
-              </div>
+      <div className="flex-1 container mx-auto px-4 pt-24 pb-16 max-w-6xl">
+        
+        {/* Fejléc */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white transition-colors duration-700">Profil beállítások</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2 transition-colors duration-700">Kezeld a személyes adataidat és a szakmai profilodat.</p>
+        </div>
 
-              {/* Alapadatok */}
-              <div className="flex-1">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-                        {profileData.name}
-                      </h1>
-                      {profileData.verified && (
-                        <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 text-sm rounded-full flex items-center gap-1">
-                          <FaCheckCircle /> Ellenőrzött
-                        </span>
-                      )}
+        <div className="flex flex-col lg:flex-row gap-8">
+          
+          {/* Bal oldali sáv: Statisztikák és Névjegykártya */}
+          <div className="lg:w-1/3 space-y-6">
+            {/* Névjegykártya */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-colors duration-700 text-center">
+              
+              {/* Kattintható Profilkép */}
+              <div 
+            className={`relative w-24 h-24 mx-auto rounded-full mb-4 shadow-lg shadow-blue-600/30 overflow-hidden ${isEditing ? 'cursor-pointer group' : ''}`}
+            onClick={isEditing ? handleImageClick : undefined}
+              >
+                {profileImagePreview ? (
+                  <img src={profileImagePreview} alt="Profil" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-blue-600 flex items-center justify-center text-white text-3xl font-bold">
+                    {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                )}
+                
+                {/* Hover overlay (Kép cseréje) */}
+                <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <FaCamera className="text-white text-xl mb-1" />
+                  <span className="text-white text-[10px] font-medium uppercase tracking-wider">Módosítás</span>
+                </div>
+              </div>
+              
+              {/* Rejtett fájl beviteli mező */}
+              <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
+
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white transition-colors duration-700">{formData.name}</h2>
+              <p className="text-blue-600 dark:text-blue-400 font-medium mt-1">
+                {user.role === 'driver' ? 'Drónpilóta' : 'Megbízó'}
+              </p>
+              <div className="mt-4 inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-full text-sm font-medium">
+                <span className="w-2 h-2 rounded-full bg-green-500"></span> Aktív fiók
+              </div>
+              
+              <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                <FaCalendarAlt /> Tag ekkortól: {formatDate(user.member_since)}
+              </div>
+            </div>
+
+            {/* Statisztikák (Csak olvasható, az adatbázisból jön) */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-colors duration-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 transition-colors duration-700">Statisztikák</h3>
+              
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl transition-colors duration-700">
+                  <div className="flex items-center gap-3 text-gray-600 dark:text-gray-300">
+                    <FaStar className="text-yellow-400 text-xl" />
+                    <span className="font-medium">Értékelés</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-lg font-bold text-gray-900 dark:text-white block">
+                      {user.rating ? Number(user.rating).toFixed(1) : 'Új'}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {user.reviews_count || 0} vélemény
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl transition-colors duration-700">
+                  <div className="flex items-center gap-3 text-gray-600 dark:text-gray-300">
+                    <FaBriefcase className="text-blue-500 text-xl" />
+                    <span className="font-medium">Elvégzett munkák</span>
+                  </div>
+                  <span className="text-lg font-bold text-gray-900 dark:text-white">
+                    {user.completed_jobs || 0}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Jobb oldali sáv: Szerkeszthető űrlap */}
+          <div className="lg:w-2/3">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 sm:p-8 transition-colors duration-700">
+              
+              {saveMessage.text && (
+                <div className={`mb-6 p-4 rounded-lg flex items-center gap-3 ${
+                  saveMessage.type === 'success' ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+                }`}>
+                  {saveMessage.type === 'success' ? <FaCheckCircle /> : <FaInfoCircle />}
+                  <p className="font-medium">{saveMessage.text}</p>
+                </div>
+              )}
+
+              {!isEditing ? (
+                /* --- OLVASÁSI NÉZET --- */
+                <div className="space-y-8">
+                  <div className="flex justify-between items-center border-b border-gray-100 dark:border-gray-700 pb-3 transition-colors duration-700">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white transition-colors duration-700">Személyes adatok</h3>
+                    <button 
+                      onClick={() => setIsEditing(true)} 
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors font-medium text-sm"
+                    >
+                      <FaEdit /> Profil szerkesztése
+                    </button>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Teljes név</p>
+                      <p className="font-medium text-gray-900 dark:text-white">{formData.name || '-'}</p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-                      <div className="flex items-center gap-1">
-                        {renderStars(Math.floor(profileData.rating))}
-                        <span className="ml-1 font-medium">{profileData.rating}</span>
-                        <span className="text-gray-500 dark:text-gray-500">({profileData.reviews} értékelés)</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <FaClock className="text-gray-400" />
-                        <span>Tag {profileData.memberSince}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <FaCheckCircle className="text-green-500" />
-                        <span>{profileData.completedJobs} sikeres projekt</span>
-                      </div>
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Email cím</p>
+                      <p className="font-medium text-gray-900 dark:text-white">{formData.email || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Telefonszám</p>
+                      <p className="font-medium text-gray-900 dark:text-white">{formData.phone || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Helyszín</p>
+                      <p className="font-medium text-gray-900 dark:text-white">{formData.location || '-'}</p>
                     </div>
                   </div>
                   
-                  {!isEditing ? (
-                    <button
-                      onClick={() => setIsEditing(true)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300"
-                    >
-                      Profil szerkesztése
-                    </button>
-                  ) : (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handleSave}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-300 flex items-center gap-2"
-                      >
-                        <FaSave /> Mentés
-                      </button>
-                      <button
-                        onClick={() => setIsEditing(false)}
-                        className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-300"
-                      >
-                        Mégse
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Gyors statisztika */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{profileData.completedJobs}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Elvégzett munka</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{profileData.rating}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Értékelés</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{profileData.hourlyRate} €</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Óradíj</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{profileData.skills.length}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Szakértelem</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Tabok */}
-          <div className="flex border-b border-gray-200 dark:border-gray-700 mb-8 overflow-x-auto">
-            <button
-              onClick={() => setActiveTab('profile')}
-              className={`px-6 py-3 font-medium text-sm whitespace-nowrap transition-all duration-300 ${
-                activeTab === 'profile'
-                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400'
-              }`}
-            >
-              Profil adatok
-            </button>
-            <button
-              onClick={() => setActiveTab('portfolio')}
-              className={`px-6 py-3 font-medium text-sm whitespace-nowrap transition-all duration-300 ${
-                activeTab === 'portfolio'
-                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400'
-              }`}
-            >
-              Portfólió ({portfolio.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('reviews')}
-              className={`px-6 py-3 font-medium text-sm whitespace-nowrap transition-all duration-300 ${
-                activeTab === 'reviews'
-                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400'
-              }`}
-            >
-              Értékelések ({reviews.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('certificates')}
-              className={`px-6 py-3 font-medium text-sm whitespace-nowrap transition-all duration-300 ${
-                activeTab === 'certificates'
-                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400'
-              }`}
-            >
-              Tanúsítványok
-            </button>
-          </div>
-
-          {/* Profil adatok tab */}
-          {activeTab === 'profile' && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-700">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Személyes adatok</h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    <FaUser className="inline mr-2" />
-                    Teljes név
-                  </label>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      name="name"
-                      value={profileData.name}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-600 dark:focus:border-blue-400 text-gray-900 dark:text-white"
-                    />
-                  ) : (
-                    <p className="text-gray-900 dark:text-white">{profileData.name}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    <FaEnvelope className="inline mr-2" />
-                    Email cím
-                  </label>
-                  {isEditing ? (
-                    <input
-                      type="email"
-                      name="email"
-                      value={profileData.email}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-600 dark:focus:border-blue-400 text-gray-900 dark:text-white"
-                    />
-                  ) : (
-                    <p className="text-gray-900 dark:text-white">{profileData.email}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    <FaPhone className="inline mr-2" />
-                    Telefonszám
-                  </label>
-                  {isEditing ? (
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={profileData.phone}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-600 dark:focus:border-blue-400 text-gray-900 dark:text-white"
-                    />
-                  ) : (
-                    <p className="text-gray-900 dark:text-white">{profileData.phone}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    <FaMapMarkerAlt className="inline mr-2" />
-                    Helyszín
-                  </label>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      name="location"
-                      value={profileData.location}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-600 dark:focus:border-blue-400 text-gray-900 dark:text-white"
-                    />
-                  ) : (
-                    <p className="text-gray-900 dark:text-white">{profileData.location}</p>
-                  )}
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Bemutatkozás
-                  </label>
-                  {isEditing ? (
-                    <textarea
-                      name="bio"
-                      value={profileData.bio}
-                      onChange={handleInputChange}
-                      rows="4"
-                      className="w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-600 dark:focus:border-blue-400 text-gray-900 dark:text-white"
-                    />
-                  ) : (
-                    <p className="text-gray-600 dark:text-gray-400">{profileData.bio}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Szakértelem</h3>
-                <div className="flex flex-wrap gap-2 mb-6">
-                  {profileData.skills.map((skill, index) => (
-                    <span key={index} className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 rounded-full text-sm">
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      <FaEuroSign className="inline mr-2" />
-                      Óradíj
-                    </label>
-                    {isEditing ? (
-                      <input
-                        type="number"
-                        name="hourlyRate"
-                        value={profileData.hourlyRate}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-600 dark:focus:border-blue-400 text-gray-900 dark:text-white"
-                      />
-                    ) : (
-                      <p className="text-gray-900 dark:text-white">{profileData.hourlyRate} €/óra</p>
-                    )}
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Bemutatkozás</p>
+                    <p className="text-gray-900 dark:text-white whitespace-pre-wrap">{formData.bio || 'Még nem adtál meg bemutatkozást.'}</p>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Elérhetőség
-                    </label>
-                    {isEditing ? (
-                      <select
-                        name="availability"
-                        value={profileData.availability}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-600 dark:focus:border-blue-400 text-gray-900 dark:text-white"
-                      >
-                        <option value="azonnal">Azonnal</option>
-                        <option value="1 hét">1 héten belül</option>
-                        <option value="2 hét">2 héten belül</option>
-                        <option value="1 hónap">1 hónapon belül</option>
-                      </select>
-                    ) : (
-                      <p className="text-gray-900 dark:text-white">{profileData.availability}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Portfólió tab */}
-          {activeTab === 'portfolio' && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-700">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Portfólió</h2>
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300">
-                  + Új kép hozzáadása
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {portfolio.map((item) => (
-                  <div key={item.id} className="group relative overflow-hidden rounded-lg aspect-square">
-                    <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end">
-                      <div className="p-4 w-full">
-                        <p className="text-white font-medium">{item.title}</p>
-                        <p className="text-white/80 text-sm">{item.category}</p>
-                      </div>
-                    </div>
-                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300 flex gap-2">
-                      <button className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white hover:bg-blue-700">
-                        ✎
-                      </button>
-                      <button className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white hover:bg-red-700">
-                        ×
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Értékelések tab */}
-          {activeTab === 'reviews' && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-700">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Értékelések</h2>
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl font-bold text-yellow-400">{profileData.rating}</span>
-                  <div className="flex">{renderStars(Math.floor(profileData.rating))}</div>
-                  <span className="text-gray-500 dark:text-gray-400">({profileData.reviews} értékelés)</span>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                {reviews.map((review) => (
-                  <div key={review.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                    <div className="flex items-start gap-4">
-                      <img src={review.clientImage} alt={review.clientName} className="w-10 h-10 rounded-full" />
-                      <div className="flex-1">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                          <div>
-                            <h3 className="font-semibold text-gray-900 dark:text-white">{review.clientName}</h3>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{review.projectTitle}</p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="flex">{renderStars(review.rating)}</div>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">{review.date}</span>
-                          </div>
+                  {user.role === 'driver' && (
+                    <>
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-700 pb-3 pt-4 transition-colors duration-700">Szakmai adatok</h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Irányadó óradíj</p>
+                          <p className="font-medium text-gray-900 dark:text-white">{formData.hourly_rate ? `${formData.hourly_rate} Ft / óra` : '-'}</p>
                         </div>
-                        <p className="text-gray-600 dark:text-gray-400 text-sm">{review.comment}</p>
+                        <div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Elérhetőség</p>
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {formData.availability === 'full_time' ? 'Teljes munkaidőben elérhető' : 
+                             formData.availability === 'part_time' ? 'Részmunkaidőben (Hétvégén / Esténként)' : 
+                             formData.availability === 'unavailable' ? 'Jelenleg nem vállalok új munkát' : '-'}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
 
-              <div className="mt-6 text-center">
-                <button className="text-blue-600 dark:text-blue-400 hover:underline">
-                  Összes értékelés megtekintése (234)
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Tanúsítványok tab */}
-          {activeTab === 'certificates' && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-700">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Tanúsítványok</h2>
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300">
-                  + Új hozzáadása
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {certificates.map((cert) => (
-                  <div key={cert.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <FaAward className="text-3xl text-yellow-500" />
                       <div>
-                        <h3 className="font-semibold text-gray-900 dark:text-white">{cert.name}</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{cert.issuer} • {cert.date}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Szakterületek</p>
+                        <div className="flex flex-wrap gap-2">
+                          {formData.skills && formData.skills.length > 0 ? (
+                            formData.skills.map((skill, idx) => (
+                              <span key={idx} className="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium border border-blue-200 dark:border-blue-800/50">
+                                {skill}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-sm text-gray-500 italic">Még nem adtál meg szakterületet.</span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="mt-8 border-t border-gray-100 dark:border-gray-700 pt-6">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 font-medium">Portfólió munkák</p>
+                        <div className="p-8 border border-dashed border-gray-300 dark:border-gray-700 rounded-xl text-center bg-gray-50 dark:bg-gray-800/50 flex flex-col items-center justify-center">
+                          <FaCamera className="text-3xl text-gray-400 mb-2" />
+                          <p className="text-gray-500 dark:text-gray-400 text-sm">Még nincsenek feltöltve portfólió munkák.</p>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : (
+                /* --- SZERKESZTŐ ŰRLAP --- */
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  
+                  <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-3 transition-colors duration-700">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Személyes adatok szerkesztése</h3>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Teljes név</label>
+                    <div className="relative">
+                      <FaUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input type="text" name="name" value={formData.name} onChange={handleChange} required
+                        className="w-full pl-11 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors duration-500" />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email cím (Bejelentkezéshez)</label>
+                    <div className="relative">
+                      <FaEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input type="email" name="email" value={formData.email} onChange={handleChange} required disabled
+                        className="w-full pl-11 pr-4 py-2.5 bg-gray-100 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-500 dark:text-gray-400 cursor-not-allowed transition-colors duration-500" />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Az email címed nem módosítható.</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Telefonszám</label>
+                    <div className="relative">
+                      <FaPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input type="tel" name="phone" value={formData.phone} onChange={handleChange}
+                        className="w-full pl-11 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors duration-500" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Helyszín (Város / Megye)</label>
+                    <div className="relative">
+                      <FaMapMarkerAlt className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input type="text" name="location" value={formData.location} onChange={handleChange} placeholder="Pl. Budapest"
+                        className="w-full pl-11 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors duration-500" />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Rövid bemutatkozás</label>
+                  <textarea name="bio" value={formData.bio} onChange={handleChange} rows="4" placeholder="Írj magadról pár sort a megbízóknak..."
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors duration-500 resize-none"></textarea>
+                </div>
+
+                {/* Pilóta specifikus beállítások */}
+                {user.role === 'driver' && (
+                  <>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-700 pb-3 pt-4 transition-colors duration-700">Szakmai adatok</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Irányadó óradíj (Ft/óra)</label>
+                        <div className="relative">
+                          <FaMoneyBillWave className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                          <input type="number" name="hourly_rate" value={formData.hourly_rate} onChange={handleChange} placeholder="Pl. 15000"
+                            className="w-full pl-11 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors duration-500" />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Elérhetőség</label>
+                        <div className="relative">
+                          <FaClock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                          <select name="availability" value={formData.availability} onChange={handleChange}
+                            className="w-full pl-11 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors duration-500 appearance-none">
+                            <option value="">Válassz elérhetőséget...</option>
+                            <option value="full_time">Teljes munkaidőben elérhető</option>
+                            <option value="part_time">Részmunkaidőben (Hétvégén / Esténként)</option>
+                            <option value="unavailable">Jelenleg nem vállalok új munkát</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
-                    <button className="px-3 py-1 text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400 rounded-lg hover:bg-blue-600 hover:text-white transition-all duration-300 text-sm">
-                      Letöltés
-                    </button>
-                  </div>
-                ))}
-              </div>
+
+                    {/* Szakterületek / Készségek */}
+                    <div className="mt-6">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Szakterületek (pl. Légifotózás, Földmérés)</label>
+                      <div className="flex gap-2 mb-3">
+                        <div className="relative flex-1">
+                          <FaTags className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                          <input 
+                            type="text" 
+                            value={newSkill} 
+                            onChange={(e) => setNewSkill(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddSkill(); } }}
+                            placeholder="Írj be egy szakterületet és nyomj Entert..."
+                            className="w-full pl-11 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
+                          />
+                        </div>
+                        <button 
+                          type="button" 
+                          onClick={handleAddSkill}
+                          className="px-4 py-2.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 font-medium flex items-center gap-2 transition-colors"
+                        >
+                          <FaPlus /> Hozzáad
+                        </button>
+                      </div>
+                      
+                      {/* Címkék listája */}
+                      <div className="flex flex-wrap gap-2">
+                        {formData.skills.map((skill, idx) => (
+                          <span key={idx} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium border border-blue-200 dark:border-blue-800/50">
+                            {skill}
+                            <button type="button" onClick={() => handleRemoveSkill(skill)} className="text-blue-400 hover:text-blue-600 dark:hover:text-blue-200 focus:outline-none">
+                              <FaTimes />
+                            </button>
+                          </span>
+                        ))}
+                        {formData.skills.length === 0 && (
+                          <p className="text-sm text-gray-500 italic">Még nem adtál meg szakterületet.</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Portfólió */}
+                    <div className="mt-8 border-t border-gray-100 dark:border-gray-700 pt-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Portfólió munkák</label>
+                        <button type="button" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"><FaPlus /> Új munka feltöltése</button>
+                      </div>
+                      <div className="p-8 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl text-center bg-gray-50 dark:bg-gray-800/50">
+                        <FaCamera className="mx-auto text-3xl text-gray-400 mb-3" />
+                        <p className="text-gray-600 dark:text-gray-400 text-sm">Töltsd fel a legjobb képeidet/videóidat ide, hogy a megbízók lássák mire vagy képes!</p>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <div className="pt-6 border-t border-gray-100 dark:border-gray-700 flex justify-end">
+                  <button 
+                    type="submit" 
+                    disabled={isSaving}
+                    className={`flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-medium transition-all duration-200 ${
+                      isSaving ? 'opacity-70 cursor-not-allowed' : 'hover:bg-blue-700 shadow-md hover:shadow-lg active:scale-95'
+                    }`}
+                  >
+                    {isSaving ? (
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      <><FaSave /> Változások mentése</>
+                    )}
+                  </button>
+                </div>
+              </form>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
-
+      
       <Footer />
     </div>
   );

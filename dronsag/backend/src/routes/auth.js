@@ -101,11 +101,11 @@ router.post('/register', async (req, res) => {
 
 // Bejelentkezés
 router.post('/login', async (req, res) => {
-    console.log('🔑 Bejelentkezési kérés:', req.body);
+        console.log('🔑 Bejelentkezési kérés:', req.body);
     
-    const { email, phone, password, role } = req.body;
+    const { email, phone, password } = req.body;
 
-    if ((!email && !phone) || !password || !role) {
+    if ((!email && !phone) || !password) {
         return res.status(400).json({ message: 'Minden kötelező mezőt ki kell tölteni!' });
     }
 
@@ -114,11 +114,11 @@ router.post('/login', async (req, res) => {
         let userValues = [];
         
         if (email) {
-            userQuery = 'SELECT * FROM users WHERE email = ? AND role = ?';
-            userValues = [email, role];
+            userQuery = 'SELECT * FROM users WHERE email = ?';
+            userValues = [email];
         } else {
-            userQuery = 'SELECT * FROM users WHERE phone = ? AND role = ?';
-            userValues = [phone, role];
+            userQuery = 'SELECT * FROM users WHERE phone = ?';
+            userValues = [phone];
         }
 
         const [users] = await pool.query(userQuery, userValues);
@@ -140,6 +140,13 @@ router.post('/login', async (req, res) => {
             { expiresIn: '7d' }
         );
 
+        // Szakterületek lekérése, ha a felhasználó pilóta
+        let skills = [];
+        if (user.role === 'driver') {
+            const [skillRows] = await pool.query('SELECT skill FROM user_skills WHERE user_id = ?', [user.id]);
+            skills = skillRows.map(row => row.skill);
+        }
+
         console.log('✅ Bejelentkezés sikeres:', user.email || user.phone);
 
         res.json({
@@ -155,15 +162,59 @@ router.post('/login', async (req, res) => {
                 verified: user.verified === 1,
                 location: user.location,
                 bio: user.bio,
+                profile_image: user.profile_image,
                 hourly_rate: user.hourly_rate,
                 availability: user.availability,
                 completed_jobs: user.completed_jobs,
-                rating: user.rating
+                rating: user.rating,
+                reviews_count: user.reviews_count,
+                member_since: user.member_since,
+                skills: skills
             }
         });
 
     } catch (error) {
         console.error('❌ Bejelentkezési hiba:', error);
+        res.status(500).json({ message: 'Szerver hiba: ' + error.message });
+    }
+});
+
+// Profil frissítése
+router.put('/profile', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ message: 'Nincs jogosultságod a művelethez!' });
+        }
+        
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'titkos_kulcs');
+        const userId = decoded.id;
+
+        const { name, phone, location, bio, hourly_rate, availability, skills, profile_image } = req.body;
+
+        // Felhasználó alap adatainak frissítése
+        const updateQuery = `
+            UPDATE users 
+            SET name = ?, phone = ?, location = ?, bio = ?, hourly_rate = ?, availability = ?, profile_image = ?
+            WHERE id = ?
+        `;
+        await pool.query(updateQuery, [
+            name, phone || null, location || null, bio || null, hourly_rate || null, availability || null, profile_image || null, userId
+        ]);
+
+        // Szakterületek frissítése (régi törlése, újak beszúrása)
+        if (skills && Array.isArray(skills)) {
+            await pool.query('DELETE FROM user_skills WHERE user_id = ?', [userId]);
+            if (skills.length > 0) {
+                const skillValues = skills.map(skill => [userId, skill]);
+                await pool.query('INSERT INTO user_skills (user_id, skill) VALUES ?', [skillValues]);
+            }
+        }
+
+        res.json({ success: true, message: 'Profil sikeresen frissítve!' });
+    } catch (error) {
+        console.error('❌ Profil frissítési hiba:', error);
         res.status(500).json({ message: 'Szerver hiba: ' + error.message });
     }
 });

@@ -7,7 +7,7 @@ echo.
 
 echo [1/3] Backend és adatbázis indítása...
 cd /d C:\Csak_Roland
-docker-compose up -d
+docker-compose up -d mysql phpmyadmin backend
 echo ✓ Backend fut a háttérben
 echo.
 
