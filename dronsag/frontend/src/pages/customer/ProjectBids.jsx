@@ -1,5 +1,5 @@
 // src/pages/customer/ProjectBids.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { FaArrowLeft, FaEuroSign, FaStar, FaCheckCircle, FaTimesCircle, FaUserCircle, FaCalendar, FaComment } from 'react-icons/fa';
 import Navbar from '../../components/common/Navbar';
@@ -8,86 +8,39 @@ import Footer from '../../components/common/Footer';
 const ProjectBids = () => {
   const { projectId } = useParams();
   const [sortBy, setSortBy] = useState('price');
-  const [selectedBid, setSelectedBid] = useState(null);
+  const [project, setProject] = useState(null);
+  const [bids, setBids] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Projekt adatok (mock)
-  const project = {
-    id: projectId,
-    title: "Drónfotózás ingatlanhoz - 10 ingatlan",
-    budget: 250,
-    budgetType: "fix",
-    location: "Budapest",
-    deadline: "2026.03.15.",
-    description: "Budapesti luxusingatlanok fotózásához keresek profi drónost. 10 különböző helyszín, 20-30 kép/ingatlan."
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        
+        const [projRes, bidsRes] = await Promise.all([
+          fetch(`${apiUrl}/projects/${projectId}`),
+          fetch(`${apiUrl}/projects/${projectId}/bids`, { headers: { 'Authorization': `Bearer ${token}` } })
+        ]);
+        
+        const projData = await projRes.json();
+        const bidsData = await bidsRes.json();
+        
+        if (projData.success) setProject(projData.project);
+        if (bidsData.success) setBids(bidsData.bids);
+      } catch (error) {
+        console.error("Hiba az adatok lekérésekor:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [projectId]);
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('hu-HU', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
-
-  // Ajánlatok (mock)
-  const bids = [
-    {
-      id: 201,
-      pilotName: "Kovács Péter",
-      pilotRating: 4.9,
-      pilotReviews: 234,
-      pilotImage: "https://randomuser.me/api/portraits/men/32.jpg",
-      pilotVerified: true,
-      amount: 230,
-      amountType: "fix",
-      estimatedDays: 3,
-      submittedDate: "2026.03.02.",
-      message: "8 éves tapasztalat ingatlanfotózásban, professzionális felszereléssel (DJI Inspire 2, Mavic 3). Gyors utómunka, 24 órán belül képek átadása. Referenciáim között számos luxusingatlan található.",
-      skills: ["légifotó", "ingatlan", "DJI", "utómunka"],
-      status: "pending",
-      featured: true
-    },
-    {
-      id: 202,
-      pilotName: "Nagy Eszter",
-      pilotRating: 5.0,
-      pilotReviews: 178,
-      pilotImage: "https://randomuser.me/api/portraits/women/44.jpg",
-      pilotVerified: true,
-      amount: 260,
-      amountType: "fix",
-      estimatedDays: 4,
-      submittedDate: "2026.03.01.",
-      message: "Kreatív megközelítés, egyedi kompozíciók. 5+ év tapasztalat, 300+ sikeres projekt. Külön figyelmet fordítok az ingatlanok legelőnyösebb szögeinek megtalálására.",
-      skills: ["légifotó", "kreatív", "ingatlan", "kompozíció"],
-      status: "pending",
-      featured: false
-    },
-    {
-      id: 203,
-      pilotName: "Szabó István",
-      pilotRating: 4.8,
-      pilotReviews: 156,
-      pilotImage: "https://randomuser.me/api/portraits/men/45.jpg",
-      pilotVerified: true,
-      amount: 210,
-      amountType: "fix",
-      estimatedDays: 5,
-      submittedDate: "2026.03.03.",
-      message: "Versenyképes áron vállalom a munkát. 6 éve foglalkozom drónozással, megbízható, pontos munka. A képeket szerkesztve, retusálva adom át.",
-      skills: ["légifotó", "ingatlan", "retusálás"],
-      status: "pending",
-      featured: false
-    },
-    {
-      id: 204,
-      pilotName: "Kiss Anna",
-      pilotRating: 5.0,
-      pilotReviews: 145,
-      pilotImage: "https://randomuser.me/api/portraits/women/63.jpg",
-      pilotVerified: true,
-      amount: 280,
-      amountType: "fix",
-      estimatedDays: 3,
-      submittedDate: "2026.03.02.",
-      message: "Luxusingatlanokra specializálódtam, komplett fotócsomagot kínálok drónnal + földi géppel. 4K videó is készíthető igény esetén.",
-      skills: ["légifotó", "luxus", "ingatlan", "videó"],
-      status: "accepted",
-      featured: true
-    }
-  ];
 
   const getStatusBadge = (status) => {
     switch(status) {
@@ -117,6 +70,18 @@ const ProjectBids = () => {
     console.log('Ajánlat elutasítva:', bidId);
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!project) {
+    return <div className="pt-32 text-center text-gray-500">Projekt nem található.</div>;
+  }
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 transition-all duration-700">
       <Navbar />
@@ -139,8 +104,8 @@ const ProjectBids = () => {
                 </h1>
                 <div className="flex flex-wrap items-center gap-4 text-sm">
                   <span className="text-gray-600 dark:text-gray-400">{project.location}</span>
-                  <span className="text-gray-600 dark:text-gray-400">Költségkeret: {project.budget} € / {project.budgetType === 'fix' ? 'fix' : 'óra'}</span>
-                  <span className="text-gray-600 dark:text-gray-400">Határidő: {project.deadline}</span>
+                  <span className="text-gray-600 dark:text-gray-400">Költségkeret: {parseInt(project.budget).toLocaleString('hu-HU')} Ft / {project.budget_type === 'fix' ? 'fix' : 'óra'}</span>
+                  <span className="text-gray-600 dark:text-gray-400">Határidő: {formatDate(project.deadline)}</span>
                 </div>
               </div>
               <div className="text-right">
@@ -232,9 +197,8 @@ const ProjectBids = () => {
                       )}
                       <div className="space-y-2 text-sm">
                         <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                          <FaEuroSign className="text-gray-400" />
-                          <span className="font-medium text-gray-900 dark:text-white">{bid.amount} €</span>
-                          <span>/{bid.amountType === 'fix' ? 'fix' : 'óra'}</span>
+                          <span className="font-bold text-gray-900 dark:text-white">{parseInt(bid.amount).toLocaleString('hu-HU')} Ft</span>
+                          <span>/{project.budget_type === 'fix' ? 'fix' : 'óra'}</span>
                         </div>
                         <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                           <FaCalendar className="text-gray-400" />
@@ -242,7 +206,7 @@ const ProjectBids = () => {
                         </div>
                         <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                           <FaComment className="text-gray-400" />
-                          <span>Benyújtva: {bid.submittedDate}</span>
+                          <span>Benyújtva: {formatDate(bid.submittedDate)}</span>
                         </div>
                       </div>
                     </div>

@@ -12,6 +12,7 @@ echo.
 
 echo Frontend terminálok bezárása...
 taskkill /f /im cmd.exe /fi "windowtitle eq *npm run dev*"
+taskkill /f /im node.exe /t 2>nul
 echo.
 
 echo ========================================

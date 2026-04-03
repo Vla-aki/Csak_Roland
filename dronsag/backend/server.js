@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const authRoutes = require('./src/routes/auth');
+const projectRoutes = require('./src/routes/projects'); // ÚJ SOR: Importáljuk a projektek végpontjait
 
 dotenv.config();
 
@@ -14,11 +15,12 @@ app.use(cors({
     origin: 'http://localhost:5173',
     credentials: true
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/projects', projectRoutes); // ÚJ SOR: Bekötjük az URL-t a projektekhez
 
 // Test route
 app.get('/api/test', (req, res) => {

@@ -4,44 +4,50 @@ import { Link } from 'react-router-dom';
 import { FaPlus, FaClipboardList, FaFileAlt, FaChartLine, FaBell, FaUserCircle } from 'react-icons/fa';
 import Navbar from '../../components/common/Navbar';
 import Footer from '../../components/common/Footer';
+import { useAuth } from '../../contexts/AuthContext';
 
 const CustomerDashboard = () => {
+  const { user } = useAuth();
   const [stats, setStats] = useState({
-    activeProjects: 3,
-    totalProposals: 12,
-    completedProjects: 8,
-    totalSpent: 2450
+    activeProjects: 0,
+    totalProposals: 0,
+    completedProjects: 0,
+    totalSpent: 0
   });
 
-  const [recentProjects, setRecentProjects] = useState([
-    {
-      id: 1,
-      title: "Drónfotózás ingatlanhoz - 10 ingatlan",
-      status: "active",
-      proposals: 5,
-      budget: 250,
-      deadline: "2026.03.15.",
-      client: "Ingatlan.com Zrt."
-    },
-    {
-      id: 2,
-      title: "Ipari csarnok ellenőrzése",
-      status: "pending",
-      proposals: 2,
-      budget: 65,
-      deadline: "2026.03.20.",
-      client: "Győri Ipari Park"
-    },
-    {
-      id: 3,
-      title: "Mezőgazdasági terület térképezés",
-      status: "completed",
-      proposals: 8,
-      budget: 480,
-      deadline: "2026.02.28.",
-      client: "Kiskunsági Mg. Zrt."
-    }
-  ]);
+  const [recentProjects, setRecentProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        const response = await fetch(`${apiUrl}/projects/my-projects`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          const projs = data.projects;
+          setRecentProjects(projs.slice(0, 3)); // Csak az utolsó 3
+          
+          let active = 0, completed = 0, proposals = 0;
+          projs.forEach(p => {
+            if (p.status === 'active') active++;
+            if (p.status === 'completed') completed++;
+            proposals += p.proposals_count;
+          });
+          setStats({ activeProjects: active, totalProposals: proposals, completedProjects: completed, totalSpent: 0 });
+        }
+      } catch (error) {
+        console.error("Hiba a dashboard lekérésekor:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboardData();
+  }, []);
 
   const [notifications, setNotifications] = useState([
     {
@@ -77,6 +83,11 @@ const CustomerDashboard = () => {
     }
   };
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('hu-HU', { year: 'numeric', month: 'short', day: 'numeric' });
+  };
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 transition-all duration-700">
       <Navbar />
@@ -88,7 +99,7 @@ const CustomerDashboard = () => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
             <div>
               <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2 transition-all duration-700">
-                Üdvözöljük, Kovács János! 👋
+                Üdvözlünk, {user?.name.split(' ')[0]}! 👋
               </h1>
               <p className="text-gray-600 dark:text-gray-400 transition-all duration-700">
                 Itt követheted nyomon a projektjeidet és az ajánlatokat.
@@ -111,7 +122,7 @@ const CustomerDashboard = () => {
                 <FaClipboardList className="text-blue-600 dark:text-blue-400 text-xl" />
               </div>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.activeProjects}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">+2 az elmúlt héten</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Kiadott projektek</p>
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-700">
@@ -120,7 +131,7 @@ const CustomerDashboard = () => {
                 <FaFileAlt className="text-green-600 dark:text-green-400 text-xl" />
               </div>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalProposals}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">5 új az utolsó 3 napban</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Összes beérkezett jelentkezés</p>
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-700">
@@ -129,7 +140,7 @@ const CustomerDashboard = () => {
                 <FaChartLine className="text-purple-600 dark:text-purple-400 text-xl" />
               </div>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.completedProjects}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">+3 ebben a hónapban</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Sikeresen lezárva</p>
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-700">
@@ -138,7 +149,7 @@ const CustomerDashboard = () => {
                 <span className="text-blue-600 dark:text-blue-400 text-xl font-bold">€</span>
               </div>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalSpent} €</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">átlag 306 €/projekt</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Hamarosan...</p>
             </div>
           </div>
 
@@ -154,16 +165,22 @@ const CustomerDashboard = () => {
                 </div>
 
                 <div className="space-y-4">
-                  {recentProjects.map((project) => (
+                  {loading ? (
+                     <div className="text-center py-4">
+                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                     </div>
+                  ) : recentProjects.length === 0 ? (
+                     <p className="text-gray-500">Még nem adtál fel projektet.</p>
+                  ) : recentProjects.map((project) => (
                     <div key={project.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-all duration-300">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
                           <h3 className="font-semibold text-gray-900 dark:text-white mb-2">{project.title}</h3>
                           <div className="flex flex-wrap items-center gap-3 text-sm">
                             {getStatusBadge(project.status)}
-                            <span className="text-gray-500 dark:text-gray-400">{project.proposals} ajánlat</span>
-                            <span className="text-gray-500 dark:text-gray-400">{project.budget} €</span>
-                            <span className="text-gray-500 dark:text-gray-400">Határidő: {project.deadline}</span>
+                            <span className="text-gray-500 dark:text-gray-400">{project.proposals_count} ajánlat</span>
+                            <span className="text-gray-500 dark:text-gray-400">{parseInt(project.budget).toLocaleString('hu-HU')} Ft</span>
+                            <span className="text-gray-500 dark:text-gray-400">Határidő: {formatDate(project.deadline)}</span>
                           </div>
                         </div>
                         <Link

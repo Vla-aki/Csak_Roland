@@ -105,9 +105,13 @@ const Navbar = () => {
                   onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                   className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 >
-                  <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
-                    {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                  </div>
+                  {user.profile_image ? (
+                    <img src={user.profile_image} alt="Profil" className="w-8 h-8 rounded-full object-cover border border-gray-200 dark:border-gray-700" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
+                      {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                    </div>
+                  )}
                   <span className="hidden lg:block font-medium text-gray-700 dark:text-gray-200 text-sm max-w-[120px] truncate">
                     {user.name}
                   </span>
@@ -195,9 +199,13 @@ const Navbar = () => {
                   <div className="flex flex-col space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
+                      {user.profile_image ? (
+                        <img src={user.profile_image} alt="Profil" className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-700" />
+                      ) : (
                         <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg">
                           {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
                         </div>
+                      )}
                         <div>
                           <p className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-[150px]">{user.name}</p>
                           <p className="text-xs text-gray-500 truncate max-w-[150px]">{user.email || user.phone}</p>

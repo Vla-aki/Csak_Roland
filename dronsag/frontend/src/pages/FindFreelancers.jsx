@@ -1,7 +1,7 @@
 // src/pages/FindFreelancers.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaSearch, FaMapMarkerAlt, FaEuroSign, FaStar, FaFilter, FaCheckCircle, FaAward } from 'react-icons/fa';
+import { FaSearch, FaMapMarkerAlt, FaEuroSign, FaStar, FaFilter, FaCheckCircle, FaAward, FaTimes } from 'react-icons/fa';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
 
@@ -17,6 +17,10 @@ const FindFreelancers = () => {
     availability: 'all',
     verified: false
   });
+  const [freelancers, setFreelancers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedFreelancer, setSelectedFreelancer] = useState(null);
+  const [showFreelancerModal, setShowFreelancerModal] = useState(false);
 
   const categories = [
     { id: 'all', name: 'Összes', count: 528, icon: '👥' },
@@ -27,201 +31,43 @@ const FindFreelancers = () => {
     { id: 'delivery', name: 'Szállítás', count: 55, icon: '📦' }
   ];
 
-  const freelancers = [
-    {
-      id: 1,
-      name: "Kovács Péter",
-      title: "Profi drónpilóta - 8 év tapasztalat",
-      description: "DJI Inspire 2, Mavic 3, hőkamera. Ingatlanfotózás, ipari ellenőrzés, rendezvények specialista.",
-      hourlyRate: 45,
-      location: "Budapest",
-      category: "photography",
-      rating: 4.9,
-      reviews: 234,
-      jobs: 187,
-      verified: true,
-      skills: ["ingatlan", "ipari", "hőkamera", "DJI"],
-      image: "https://randomuser.me/api/portraits/men/32.jpg",
-      featured: true,
-      availability: "azonnal",
-      completedProjects: 187,
-      memberSince: "2020"
-    },
-    {
-      id: 2,
-      name: "Nagy Eszter",
-      title: "Kreatív drónvideós - rendezvények, esküvők",
-      description: "Kreatív megközelítés, professzionális utómunka. 5+ év tapasztalat, 300+ esemény.",
-      hourlyRate: 55,
-      location: "Győr",
-      category: "videography",
-      rating: 5.0,
-      reviews: 178,
-      jobs: 256,
-      verified: true,
-      skills: ["esküvő", "rendezvény", "kreatív", "utómunka"],
-      image: "https://randomuser.me/api/portraits/women/44.jpg",
-      featured: true,
-      availability: "1 hét",
-      completedProjects: 256,
-      memberSince: "2019"
-    },
-    {
-      id: 3,
-      name: "Szabó István",
-      title: "Ipari drónspecialista - hőkamera, szerkezetvizsgálat",
-      description: "Mérnöki végzettség, ipari létesítmények ellenőrzése, részletes műszaki jelentések.",
-      hourlyRate: 65,
-      location: "Miskolc",
-      category: "inspection",
-      rating: 4.8,
-      reviews: 156,
-      jobs: 234,
-      verified: true,
-      skills: ["ipari", "hőkamera", "mérnöki", "jelentés"],
-      image: "https://randomuser.me/api/portraits/men/45.jpg",
-      featured: false,
-      availability: "3 nap",
-      completedProjects: 234,
-      memberSince: "2018"
-    },
-    {
-      id: 4,
-      name: "Tóth Gábor",
-      title: "Térképezési szakértő - NDVI, 3D modellek",
-      description: "Agrármérnöki végzettség, precíziós mezőgazdaság, NDVI elemzések, topográfiai térképek.",
-      hourlyRate: 50,
-      location: "Szeged",
-      category: "mapping",
-      rating: 4.9,
-      reviews: 98,
-      jobs: 145,
-      verified: true,
-      skills: ["NDVI", "3D", "agrár", "térkép"],
-      image: "https://randomuser.me/api/portraits/men/52.jpg",
-      featured: false,
-      availability: "azonnal",
-      completedProjects: 145,
-      memberSince: "2021"
-    },
-    {
-      id: 5,
-      name: "Varga Balázs",
-      title: "Drónos szállítás - logisztika, sürgősségi",
-      description: "Speciális szállítási engedélyek, 30kg-ig, gyógyszer- és dokumentumszállítás.",
-      hourlyRate: 40,
-      location: "Budapest",
-      category: "delivery",
-      rating: 4.7,
-      reviews: 67,
-      jobs: 189,
-      verified: true,
-      skills: ["szállítás", "logisztika", "gyors"],
-      image: "https://randomuser.me/api/portraits/men/62.jpg",
-      featured: false,
-      availability: "2 nap",
-      completedProjects: 189,
-      memberSince: "2022"
-    },
-    {
-      id: 6,
-      name: "Kiss Anna",
-      title: "Luxus ingatlanfotós - drón + földi fotózás",
-      description: "Luxusingatlanokra specializálódva, komplett fotócsomag drónnal + földi géppel.",
-      hourlyRate: 60,
-      location: "Budapest",
-      category: "photography",
-      rating: 5.0,
-      reviews: 145,
-      jobs: 312,
-      verified: true,
-      skills: ["luxus", "ingatlan", "fotózás", "utómunka"],
-      image: "https://randomuser.me/api/portraits/women/63.jpg",
-      featured: true,
-      availability: "1 hét",
-      completedProjects: 312,
-      memberSince: "2017"
-    },
-    {
-      id: 7,
-      name: "Molnár Dávid",
-      title: "Drónos rendezvényfotós",
-      description: "Koncertek, fesztiválok, sportesemények drónos rögzítése. Gyors, dinamikus felvételek.",
-      hourlyRate: 48,
-      location: "Debrecen",
-      category: "videography",
-      rating: 4.8,
-      reviews: 89,
-      jobs: 156,
-      verified: false,
-      skills: ["rendezvény", "koncert", "sport", "gyors"],
-      image: "https://randomuser.me/api/portraits/men/72.jpg",
-      featured: false,
-      availability: "azonnal",
-      completedProjects: 156,
-      memberSince: "2023"
-    },
-    {
-      id: 8,
-      name: "Farkas Katalin",
-      title: "Hőkamerás diagnosztika specialista",
-      description: "Épületdiagnosztika, napelempark ellenőrzés, ipari létesítmények hőkamerás vizsgálata.",
-      hourlyRate: 58,
-      location: "Pécs",
-      category: "inspection",
-      rating: 4.9,
-      reviews: 112,
-      jobs: 178,
-      verified: true,
-      skills: ["hőkamera", "diagnosztika", "épület", "ipari"],
-      image: "https://randomuser.me/api/portraits/women/68.jpg",
-      featured: true,
-      availability: "3 nap",
-      completedProjects: 178,
-      memberSince: "2019"
-    },
-    {
-      id: 9,
-      name: "Balogh Tamás",
-      title: "Mezőgazdasági drónspecialista",
-      description: "Precíziós mezőgazdaság, NDVI elemzések, termésbecslés, permetezés.",
-      hourlyRate: 52,
-      location: "Székesfehérvár",
-      category: "mapping",
-      rating: 4.7,
-      reviews: 76,
-      jobs: 134,
-      verified: true,
-      skills: ["mezőgazdaság", "NDVI", "permetezés", "termésbecslés"],
-      image: "https://randomuser.me/api/portraits/men/55.jpg",
-      featured: false,
-      availability: "1 hét",
-      completedProjects: 134,
-      memberSince: "2020"
-    }
-  ];
+  useEffect(() => {
+    const fetchPilots = async () => {
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        const response = await fetch(`${apiUrl}/auth/pilots`);
+        const data = await response.json();
+        if (data.success) {
+          setFreelancers(data.pilots);
+        }
+      } catch (error) {
+        console.error('Hiba a pilóták lekérésekor:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPilots();
+  }, []);
 
   const getAvailabilityBadge = (availability) => {
     switch(availability) {
-      case 'azonnal':
-        return <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 text-xs rounded-full">Azonnal</span>;
-      case '1 hét':
-        return <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-600 dark:text-yellow-400 text-xs rounded-full">1 héten belül</span>;
-      case '2 nap':
-        return <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 text-xs rounded-full">2 napon belül</span>;
-      case '3 nap':
-        return <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 text-xs rounded-full">3 napon belül</span>;
+      case 'full_time':
+        return <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 text-xs rounded-full">Teljes munkaidő</span>;
+      case 'part_time':
+        return <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-600 dark:text-yellow-400 text-xs rounded-full">Részmunkaidő</span>;
+      case 'unavailable':
+        return <span className="px-2 py-1 bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 text-xs rounded-full">Nem elérhető</span>;
       default:
-        return <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs rounded-full">{availability}</span>;
+        return <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs rounded-full">{availability || 'Ismeretlen'}</span>;
     }
   };
 
   const filteredFreelancers = freelancers.filter(f => {
     if (selectedCategory !== 'all' && f.category !== selectedCategory) return false;
-    if (searchQuery && !f.name.toLowerCase().includes(searchQuery.toLowerCase()) && 
-        !f.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !f.description.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-    if (filters.location && !f.location.toLowerCase().includes(filters.location.toLowerCase())) return false;
+    if (searchQuery && !(f.name || '').toLowerCase().includes(searchQuery.toLowerCase()) && 
+        !(f.title || '').toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !(f.description || '').toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (filters.location && !(f.location || '').toLowerCase().includes(filters.location.toLowerCase())) return false;
     if (filters.minRate && f.hourlyRate < parseInt(filters.minRate)) return false;
     if (filters.maxRate && f.hourlyRate > parseInt(filters.maxRate)) return false;
     if (filters.availability !== 'all' && f.availability !== filters.availability) return false;
@@ -411,13 +257,21 @@ const FindFreelancers = () => {
           </div>
 
           {/* Pilóták grid */}
-          {sortedFreelancers.length > 0 ? (
+          {loading ? (
+            <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="text-gray-500 dark:text-gray-400 mt-4">Pilóták betöltése az adatbázisból...</p>
+            </div>
+          ) : sortedFreelancers.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {sortedFreelancers.map((f) => (
                 <div
                   key={f.id}
-                  className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-xl transition-all duration-300 cursor-pointer group"
-                  onClick={() => window.location.href = `/freelancer/${f.id}`}
+                  className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-xl transition-all duration-300 cursor-pointer group flex flex-col h-full"
+                  onClick={() => {
+                    setSelectedFreelancer(f);
+                    setShowFreelancerModal(true);
+                  }}
                 >
                   <div className="p-6">
                     <div className="flex items-start gap-4 mb-4">
@@ -520,6 +374,92 @@ const FindFreelancers = () => {
       </div>
 
       <Footer />
+
+      {/* ===== PILÓTA MODAL ===== */}
+      {showFreelancerModal && selectedFreelancer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all duration-700" onClick={() => setShowFreelancerModal(false)}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="p-6 sm:p-8">
+              <div className="flex items-center justify-between mb-6 border-b border-gray-100 dark:border-gray-700 pb-4">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{selectedFreelancer.name}</h2>
+                <button
+                  onClick={() => setShowFreelancerModal(false)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                >
+                  <FaTimes size={24} />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row items-start gap-6">
+                  <img src={selectedFreelancer.image} alt={selectedFreelancer.name} className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-blue-50 dark:border-blue-900/30 object-cover shadow-md" />
+                  <div>
+                    <h3 className="text-xl font-semibold text-blue-600 dark:text-blue-400 mb-2">{selectedFreelancer.title}</h3>
+                    <div className="flex flex-wrap items-center gap-4 mb-3">
+                      <div className="flex items-center gap-1">
+                        <span className="text-yellow-400 text-lg">★</span>
+                        <span className="font-bold text-gray-900 dark:text-white">{selectedFreelancer.rating}</span>
+                        <span className="text-sm text-gray-500">({selectedFreelancer.reviews} értékelés)</span>
+                      </div>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">{selectedFreelancer.completedProjects} sikeres projekt</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 text-sm">
+                      <FaMapMarkerAlt /> {selectedFreelancer.location || 'Ismeretlen'}
+                      <span className="mx-2">•</span>
+                  <span className="text-green-600 dark:text-green-400 font-medium">
+                    {selectedFreelancer.availability === 'full_time' ? 'Teljes munkaidő' : 
+                     selectedFreelancer.availability === 'part_time' ? 'Részmunkaidő' : 
+                     selectedFreelancer.availability === 'unavailable' ? 'Nem elérhető' : 
+                     selectedFreelancer.availability || 'Ismeretlen'}
+                  </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Bemutatkozás</h3>
+                  <p className="text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{selectedFreelancer.description || 'A pilóta még nem adott meg bemutatkozást.'}</p>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Szakterületek</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedFreelancer.skills && selectedFreelancer.skills.length > 0 ? selectedFreelancer.skills.map((skill, i) => (
+                      <span key={i} className="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm font-medium rounded-full border border-blue-200 dark:border-blue-800/50">
+                        {skill}
+                      </span>
+                    )) : <span className="text-gray-500 italic">Nincs megadva szakterület.</span>}
+                  </div>
+                </div>
+
+            {selectedFreelancer.portfolio && selectedFreelancer.portfolio.length > 0 && (
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Portfólió</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {selectedFreelancer.portfolio.map((img, i) => (
+                    <img key={i} src={img} alt={`Portfolio ${i}`} className="w-full h-32 object-cover rounded-lg shadow-sm border border-gray-200 dark:border-gray-700" />
+                  ))}
+                </div>
+              </div>
+            )}
+
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Irányadó óradíj</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-white">{selectedFreelancer.hourlyRate || 0} <span className="text-lg text-gray-500">Ft / óra</span></p>
+                  </div>
+                  <Link
+                    to="/messages"
+                    className="w-full sm:w-auto px-8 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-md text-center"
+                  >
+                    Kapcsolatfelvétel
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

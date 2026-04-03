@@ -1,5 +1,5 @@
 // src/pages/Profile.jsx
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
@@ -24,10 +24,34 @@ const Profile = () => {
 
   // Profilkép kezeléséhez szükséges állapotok
   const fileInputRef = useRef(null);
+  const portfolioFileInputRef = useRef(null);
   const [profileImagePreview, setProfileImagePreview] = useState(user?.profile_image || null);
 
+  // Amikor betöltődik a user adat (vagy ha módosul), beállítjuk az űrlap és a profilkép értékeit
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        location: user.location || '',
+        bio: user.bio || '',
+        hourly_rate: user.hourly_rate || '',
+        availability: user.availability || '',
+        skills: user.skills || [],
+        portfolio: user.portfolio || [],
+        profile_image: user.profile_image || ''
+      });
+      setProfileImagePreview(user.profile_image || null);
+    }
+  }, [user]);
+
   const [isEditing, setIsEditing] = useState(false);
-  const [newSkill, setNewSkill] = useState('');
+  const [selectedSkill, setSelectedSkill] = useState('');
+  const [customSkill, setCustomSkill] = useState('');
+
+  const [showRoleModal, setShowRoleModal] = useState(false);
+  const [roleSwitchLoading, setRoleSwitchLoading] = useState(false);
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState({ type: '', text: '' });
@@ -56,9 +80,11 @@ const Profile = () => {
   
   // Szakterület hozzáadása
   const handleAddSkill = () => {
-    if (newSkill.trim() && !formData.skills.includes(newSkill.trim())) {
-      setFormData(prev => ({ ...prev, skills: [...prev.skills, newSkill.trim()] }));
-      setNewSkill('');
+    const skillToAdd = selectedSkill === 'Egyéb' ? customSkill.trim() : selectedSkill;
+    if (skillToAdd && !formData.skills.includes(skillToAdd)) {
+      setFormData(prev => ({ ...prev, skills: [...prev.skills, skillToAdd] }));
+      setCustomSkill('');
+      setSelectedSkill('');
     }
   };
 
@@ -85,6 +111,27 @@ const Profile = () => {
     }
   };
 
+  // Portfólió képkiválasztó megnyitása
+  const handlePortfolioClick = () => {
+    portfolioFileInputRef.current.click();
+  };
+
+  // Portfólió képek betöltése
+  const handlePortfolioChange = (e) => {
+    const files = Array.from(e.target.files);
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({ ...prev, portfolio: [...prev.portfolio, reader.result] }));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleRemovePortfolioItem = (index) => {
+    setFormData(prev => ({ ...prev, portfolio: prev.portfolio.filter((_, i) => i !== index) }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSaving(true);
@@ -106,6 +153,18 @@ const Profile = () => {
       const result = await response.json();
 
       if (response.ok) {
+         // Frissítjük a böngésző helyi tárolójában lévő felhasználói adatokat, mielőtt újratölt a lap
+         const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+         const finalUser = result.updatedUser ? { ...currentUser, ...result.updatedUser } : { ...currentUser, ...formData };
+         
+         try {
+           localStorage.setItem('user', JSON.stringify(finalUser));
+         } catch (e) {
+           // Ha a képek miatt betelt a localStorage (QuotaExceededError), a képek nélkül mentjük a gyorsítótárba
+           finalUser.portfolio = [];
+           localStorage.setItem('user', JSON.stringify(finalUser));
+         }
+
          setSaveMessage({ type: 'success', text: 'A profil adatai sikeresen frissítve lettek!' });
         setIsEditing(false); // Visszaváltunk olvasási nézetbe újratöltés nélkül
         setTimeout(() => window.location.reload(), 1000); // Újratöltjük az oldalt, hogy a Navbar is frissüljön
@@ -118,6 +177,37 @@ const Profile = () => {
     } finally {
       setIsSaving(false);
       setTimeout(() => setSaveMessage({ type: '', text: '' }), 3000);
+    }
+  };
+
+  const handleRoleSwitch = async () => {
+    setRoleSwitchLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const newRole = user.role === 'driver' ? 'customer' : 'driver';
+      
+      const response = await fetch(`${apiUrl}/auth/switch-role`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ newRole })
+      });
+      const result = await response.json();
+      if (response.ok) {
+        localStorage.setItem('token', result.token);
+        localStorage.setItem('user', JSON.stringify(result.user));
+        window.location.href = result.user.role === 'driver' ? '/drone-dashboard' : '/dashboard';
+      } else {
+        alert(result.message || 'Hiba történt a váltás során.');
+      }
+    } catch (error) {
+      alert('Hálózati hiba történt.');
+    } finally {
+      setRoleSwitchLoading(false);
+      setShowRoleModal(false);
     }
   };
 
@@ -174,7 +264,7 @@ const Profile = () => {
 
           <h2 className="text-xl font-bold text-gray-900 dark:text-white transition-colors duration-700">{formData.name}</h2>
               <p className="text-blue-600 dark:text-blue-400 font-medium mt-1">
-                {user.role === 'driver' ? 'Drónpilóta' : 'Megbízó'}
+                {user.role === 'driver' ? (formData.skills && formData.skills.length > 0 ? formData.skills.join(' • ') : 'Drónpilóta') : 'Megbízó'}
               </p>
               <div className="mt-4 inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-full text-sm font-medium">
                 <span className="w-2 h-2 rounded-full bg-green-500"></span> Aktív fiók
@@ -214,6 +304,15 @@ const Profile = () => {
                     {user.completed_jobs || 0}
                   </span>
                 </div>
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
+                <button 
+                  onClick={() => setShowRoleModal(true)}
+                  className="w-full px-4 py-2 border-2 border-red-500 text-red-600 dark:text-red-400 font-medium rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                >
+                  Váltás {user.role === 'driver' ? 'Megbízó' : 'Drónpilóta'} fiókra
+                </button>
               </div>
             </div>
           </div>
@@ -304,10 +403,18 @@ const Profile = () => {
                       
                       <div className="mt-8 border-t border-gray-100 dark:border-gray-700 pt-6">
                         <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 font-medium">Portfólió munkák</p>
+                      {formData.portfolio && formData.portfolio.length > 0 ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                          {formData.portfolio.map((img, idx) => (
+                            <img key={idx} src={img} alt={`Portfolio ${idx}`} className="w-full h-32 object-cover rounded-xl shadow-sm border border-gray-200 dark:border-gray-700" />
+                          ))}
+                        </div>
+                      ) : (
                         <div className="p-8 border border-dashed border-gray-300 dark:border-gray-700 rounded-xl text-center bg-gray-50 dark:bg-gray-800/50 flex flex-col items-center justify-center">
                           <FaCamera className="text-3xl text-gray-400 mb-2" />
                           <p className="text-gray-500 dark:text-gray-400 text-sm">Még nincsenek feltöltve portfólió munkák.</p>
                         </div>
+                      )}
                       </div>
                     </>
                   )}
@@ -399,16 +506,33 @@ const Profile = () => {
                     <div className="mt-6">
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Szakterületek (pl. Légifotózás, Földmérés)</label>
                       <div className="flex gap-2 mb-3">
-                        <div className="relative flex-1">
-                          <FaTags className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                          <input 
-                            type="text" 
-                            value={newSkill} 
-                            onChange={(e) => setNewSkill(e.target.value)}
-                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddSkill(); } }}
-                            placeholder="Írj be egy szakterületet és nyomj Entert..."
-                            className="w-full pl-11 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
-                          />
+                        <div className="relative flex-1 flex flex-col sm:flex-row gap-2">
+                          <div className="relative flex-1">
+                            <FaTags className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
+                            <select 
+                              value={selectedSkill} 
+                              onChange={(e) => setSelectedSkill(e.target.value)}
+                              className="w-full pl-11 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white appearance-none"
+                            >
+                              <option value="">Válassz szakterületet...</option>
+                              <option value="Drónfotós">Drónfotós</option>
+                              <option value="Drónvideós">Drónvideós</option>
+                              <option value="Ipari ellenőr">Ipari ellenőr</option>
+                              <option value="Térképező / Földmérő">Térképező / Földmérő</option>
+                              <option value="Mezőgazdasági drónos">Mezőgazdasági drónos</option>
+                              <option value="FPV pilóta">FPV pilóta</option>
+                              <option value="Egyéb">Egyéb (saját megadása)</option>
+                            </select>
+                          </div>
+                          {selectedSkill === 'Egyéb' && (
+                            <input 
+                              type="text" 
+                              value={customSkill} 
+                              onChange={(e) => setCustomSkill(e.target.value)}
+                              placeholder="Írd be a sajátod..."
+                              className="w-full sm:w-1/2 px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
+                            />
+                          )}
                         </div>
                         <button 
                           type="button" 
@@ -439,12 +563,31 @@ const Profile = () => {
                     <div className="mt-8 border-t border-gray-100 dark:border-gray-700 pt-6">
                       <div className="flex items-center justify-between mb-4">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Portfólió munkák</label>
-                        <button type="button" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"><FaPlus /> Új munka feltöltése</button>
+                      <button type="button" onClick={handlePortfolioClick} className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"><FaPlus /> Új munka feltöltése</button>
+                      <input type="file" ref={portfolioFileInputRef} onChange={handlePortfolioChange} accept="image/*" multiple className="hidden" />
                       </div>
-                      <div className="p-8 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl text-center bg-gray-50 dark:bg-gray-800/50">
+                    {formData.portfolio && formData.portfolio.length > 0 ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        {formData.portfolio.map((img, idx) => (
+                          <div key={idx} className="relative group rounded-xl overflow-hidden shadow-sm border border-gray-200 dark:border-gray-700">
+                            <img src={img} alt={`Portfolio ${idx}`} className="w-full h-32 object-cover" />
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                              <button type="button" onClick={() => handleRemovePortfolioItem(idx)} className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700">
+                                <FaTimes />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        <div onClick={handlePortfolioClick} className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl flex items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors h-32">
+                          <FaPlus className="text-3xl text-gray-400" />
+                        </div>
+                      </div>
+                    ) : (
+                      <div onClick={handlePortfolioClick} className="p-8 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl text-center bg-gray-50 dark:bg-gray-800/50 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                         <FaCamera className="mx-auto text-3xl text-gray-400 mb-3" />
                         <p className="text-gray-600 dark:text-gray-400 text-sm">Töltsd fel a legjobb képeidet/videóidat ide, hogy a megbízók lássák mire vagy képes!</p>
                       </div>
+                    )}
                     </div>
                   </>
                 )}
@@ -475,6 +618,37 @@ const Profile = () => {
       </div>
       
       <Footer />
+
+      {/* ===== SZEREPKÖR VÁLTÁS MODAL ===== */}
+      {showRoleModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full shadow-2xl p-6">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+              Biztosan szerepkört váltasz?
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              {user.role === 'driver' 
+                ? 'Ha átváltasz Megbízó fiókra, az eddigi pilóta adataid (szakterületek, óradíj, elérhetőség) törlődni fognak az adatbázisból!' 
+                : 'Ha átváltasz Pilóta fiókra, új adatokat kell majd megadnod a profilodban (óradíj, szakterületek), hogy a megbízók megtaláljanak.'}
+            </p>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setShowRoleModal(false)}
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium"
+              >
+                Mégse
+              </button>
+              <button 
+                onClick={handleRoleSwitch}
+                disabled={roleSwitchLoading}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 font-medium"
+              >
+                {roleSwitchLoading ? 'Váltás folyamatban...' : 'Igen, váltok'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

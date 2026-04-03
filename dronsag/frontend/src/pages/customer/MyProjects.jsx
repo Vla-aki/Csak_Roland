@@ -1,5 +1,5 @@
 // src/pages/customer/MyProjects.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaPlus, FaEye, FaEdit, FaTrash, FaFilter, FaSearch } from 'react-icons/fa';
 import Navbar from '../../components/common/Navbar';
@@ -9,79 +9,34 @@ const MyProjects = () => {
   const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const projects = [
-    {
-      id: 1,
-      title: "Drónfotózás ingatlanhoz - 10 ingatlan",
-      description: "Budapesti luxusingatlanok fotózásához keresek profi drónost...",
-      budget: 250,
-      budgetType: "fix",
-      location: "Budapest",
-      category: "photography",
-      status: "active",
-      postedDate: "2026.03.01.",
-      deadline: "2026.03.15.",
-      proposals: 8,
-      views: 45
-    },
-    {
-      id: 2,
-      title: "Ipari csarnok ellenőrzése",
-      description: "5000m2-es ipari csarnok tetőszerkezetének ellenőrzése...",
-      budget: 65,
-      budgetType: "hourly",
-      location: "Győr",
-      category: "inspection",
-      status: "active",
-      postedDate: "2026.03.02.",
-      deadline: "2026.03.20.",
-      proposals: 3,
-      views: 28
-    },
-    {
-      id: 3,
-      title: "Mezőgazdasági terület térképezés",
-      description: "120 hektáros búzatábla NDVI elemzése, 3D modell...",
-      budget: 480,
-      budgetType: "fix",
-      location: "Bács-Kiskun",
-      category: "mapping",
-      status: "active",
-      postedDate: "2026.02.28.",
-      deadline: "2026.03.25.",
-      proposals: 5,
-      views: 62
-    },
-    {
-      id: 4,
-      title: "Esküvői drónvideó",
-      description: "Esküvői helyszín és ceremónia drónos felvétele...",
-      budget: 120,
-      budgetType: "hourly",
-      location: "Visegrád",
-      category: "videography",
-      status: "pending",
-      postedDate: "2026.03.03.",
-      deadline: "2026.04.01.",
-      proposals: 0,
-      views: 15
-    },
-    {
-      id: 5,
-      title: "Napelempark ellenőrzés",
-      description: "5MW-s napelempark paneljeinek ellenőrzése hőkamerával...",
-      budget: 1800,
-      budgetType: "fix",
-      location: "Kecskemét",
-      category: "inspection",
-      status: "completed",
-      postedDate: "2026.02.25.",
-      deadline: "2026.03.10.",
-      proposals: 6,
-      views: 89
-    }
-  ];
+  useEffect(() => {
+    const fetchMyProjects = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        const response = await fetch(`${apiUrl}/projects/my-projects`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        if (data.success) {
+          setProjects(data.projects);
+        }
+      } catch (error) {
+        console.error("Hiba a projektek lekérésekor:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMyProjects();
+  }, []);
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('hu-HU', { year: 'numeric', month: 'short', day: 'numeric' });
+  };
 
   const getStatusBadge = (status) => {
     switch(status) {
@@ -184,7 +139,7 @@ const MyProjects = () => {
                         : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
-                    Aktív (3)
+                    Aktív ({projects.filter(p => p.status === 'active').length})
                   </button>
                   <button
                     onClick={() => setFilter('pending')}
@@ -194,7 +149,7 @@ const MyProjects = () => {
                         : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
-                    Függőben (1)
+                    Függőben ({projects.filter(p => p.status === 'pending').length})
                   </button>
                   <button
                     onClick={() => setFilter('completed')}
@@ -204,7 +159,7 @@ const MyProjects = () => {
                         : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
-                    Befejezett (1)
+                    Befejezett ({projects.filter(p => p.status === 'completed').length})
                   </button>
                 </div>
               </div>
@@ -212,7 +167,12 @@ const MyProjects = () => {
           </div>
 
           {/* Projektek lista */}
-          {filteredProjects.length > 0 ? (
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="text-gray-500 dark:text-gray-400 mt-4">Projektek betöltése...</p>
+            </div>
+          ) : filteredProjects.length > 0 ? (
             <div className="space-y-4">
               {filteredProjects.map((project) => (
                 <div
@@ -233,14 +193,14 @@ const MyProjects = () => {
                           <div className="flex flex-wrap items-center gap-3 text-sm">
                             {getStatusBadge(project.status)}
                             <span className="text-gray-500 dark:text-gray-400">
-                              {project.budget} € / {project.budgetType === 'fix' ? 'fix' : 'óra'}
+                              {parseInt(project.budget).toLocaleString('hu-HU')} Ft / {project.budget_type === 'fix' ? 'fix' : 'óra'}
                             </span>
                             <span className="text-gray-500 dark:text-gray-400">{project.location}</span>
                             <span className="text-gray-500 dark:text-gray-400">
-                              {project.proposals} ajánlat
+                              {project.proposals_count} ajánlat
                             </span>
                             <span className="text-gray-500 dark:text-gray-400">
-                              {project.views} megtekintés
+                              Feladva: {formatDate(project.created_at)}
                             </span>
                           </div>
                         </div>
@@ -275,13 +235,13 @@ const MyProjects = () => {
                     </div>
                   </div>
 
-                  {project.proposals > 0 && (
+                  {project.proposals_count > 0 && (
                     <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                       <Link
-                        to={`/project/${project.id}/proposals`}
+                        to={`/project/${project.id}/bids`}
                         className="inline-flex items-center text-sm text-blue-600 dark:text-blue-400 hover:underline"
                       >
-                        {project.proposals} ajánlat megtekintése →
+                        {project.proposals_count} ajánlat megtekintése →
                       </Link>
                     </div>
                   )}

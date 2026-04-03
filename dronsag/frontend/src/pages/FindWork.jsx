@@ -1,524 +1,294 @@
 // src/pages/FindWork.jsx
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { FaSearch, FaMapMarkerAlt, FaEuroSign, FaCalendar, FaFilter, FaStar, FaClock } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { FaSearch, FaMapMarkerAlt, FaMoneyBillWave, FaClock, FaTags, FaBriefcase, FaFilter, FaTimes, FaCheckCircle, FaInfoCircle } from 'react-icons/fa';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
+import { useAuth } from '../contexts/AuthContext';
 
 const FindWork = () => {
+  const { user } = useAuth();
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState('newest');
-  const [filters, setFilters] = useState({
-    location: '',
-    minBudget: '',
-    maxBudget: '',
-    budgetType: 'all'
-  });
+  const navigate = useNavigate();
 
-  const categories = [
-    { id: 'all', name: 'Összes', count: 1247, icon: '📋' },
-    { id: 'photography', name: 'Légifotó', count: 432, icon: '📷' },
-    { id: 'videography', name: 'Videózás', count: 356, icon: '🎥' },
-    { id: 'inspection', name: 'Ellenőrzés', count: 289, icon: '🔍' },
-    { id: 'mapping', name: 'Térképezés', count: 178, icon: '🗺️' },
-    { id: 'delivery', name: 'Szállítás', count: 92, icon: '📦' }
-  ];
+  // Ajánlattételhez (Bidding) szükséges állapotok
+  const [biddingProject, setBiddingProject] = useState(null);
+  const [bidData, setBidData] = useState({ amount: '', estimated_days: '', message: '' });
+  const [bidStatus, setBidStatus] = useState({ loading: false, message: '', type: '' });
 
-  const projects = [
-    {
-      id: 1,
-      title: "Drónfotózás ingatlanhoz - 10 ingatlan",
-      description: "Budapesti luxusingatlanok fotózásához keresek profi drónost. 10 különböző helyszín, 20-30 kép/ingatlan.",
-      budget: 250,
-      budgetType: "fix",
-      location: "Budapest",
-      category: "photography",
-      postedDate: "2026.03.01.",
-      deadline: "2026.03.15.",
-      skills: ["légifotó", "ingatlan", "photoshop"],
-      client: {
-        name: "Ingatlan.com Zrt.",
-        rating: 4.9,
-        verified: true
-      },
-      featured: true,
-      bids: 8,
-      urgency: "normal"
-    },
-    {
-      id: 2,
-      title: "Ipari csarnok ellenőrzése - szerkezetvizsgálat",
-      description: "5000m2-es ipari csarnok tetőszerkezetének ellenőrzése hőkamerás drónnal. Részletes jelentés kell, fotókkal.",
-      budget: 65,
-      budgetType: "hourly",
-      location: "Győr",
-      category: "inspection",
-      postedDate: "2026.03.02.",
-      deadline: "2026.03.20.",
-      skills: ["hőkamera", "ipari", "szerkezetvizsgálat"],
-      client: {
-        name: "Győri Ipari Park",
-        rating: 4.7,
-        verified: true
-      },
-      featured: false,
-      bids: 3,
-      urgency: "urgent"
-    },
-    {
-      id: 3,
-      title: "Mezőgazdasági terület térképezés - NDVI elemzés",
-      description: "120 hektáros búzatábla NDVI elemzése, 3D modell készítése. Részletes jelentés a növényegészségügyi állapotról.",
-      budget: 480,
-      budgetType: "fix",
-      location: "Bács-Kiskun",
-      category: "mapping",
-      postedDate: "2026.02.28.",
-      deadline: "2026.03.25.",
-      skills: ["NDVI", "térképezés", "mezőgazdaság"],
-      client: {
-        name: "Kiskunsági Mezőgazdasági Zrt.",
-        rating: 4.8,
-        verified: true
-      },
-      featured: true,
-      bids: 5,
-      urgency: "normal"
-    },
-    {
-      id: 4,
-      title: "Esküvői drónvideó - 8 órás rendezvény",
-      description: "Esküvői helyszín és ceremónia drónos felvétele. 8 órás rendezvény, 3-5 perces összeállítás kell.",
-      budget: 120,
-      budgetType: "hourly",
-      location: "Visegrád",
-      category: "videography",
-      postedDate: "2026.03.03.",
-      deadline: "2026.04.01.",
-      skills: ["esküvő", "videózás", "utómunka"],
-      client: {
-        name: "Kovácsék",
-        rating: 5.0,
-        verified: false
-      },
-      featured: false,
-      bids: 12,
-      urgency: "normal"
-    },
-    {
-      id: 5,
-      title: "Napelempark ellenőrzés - hőkamerás diagnosztika",
-      description: "5MW-s napelempark paneljeinek ellenőrzése hőkamerával. Hibás panelek azonosítása, részletes jelentés.",
-      budget: 1800,
-      budgetType: "fix",
-      location: "Kecskemét",
-      category: "inspection",
-      postedDate: "2026.02.25.",
-      deadline: "2026.03.10.",
-      skills: ["napelem", "hőkamera", "diagnosztika"],
-      client: {
-        name: "Magyar Napelem Kft.",
-        rating: 4.6,
-        verified: true
-      },
-      featured: true,
-      bids: 6,
-      urgency: "urgent"
-    },
-    {
-      id: 6,
-      title: "Reklámfilm drónfelvételek - autó reklám",
-      description: "Autóreklámhoz kellenek dinamikus drónfelvételek. 2 nap forgatás, Balaton környékén.",
-      budget: 95,
-      budgetType: "hourly",
-      location: "Balatonfüred",
-      category: "videography",
-      postedDate: "2026.03.01.",
-      deadline: "2026.03.18.",
-      skills: ["reklám", "autó", "dinamikus"],
-      client: {
-        name: "Creative Studio Budapest",
-        rating: 4.9,
-        verified: true
-      },
-      featured: false,
-      bids: 9,
-      urgency: "normal"
-    },
-    {
-      id: 7,
-      title: "Tóparti ingatlan drónfotózása",
-      description: "Balaton-parti nyaraló fotózása madártávlatból. 20-30 kép, reggeli és esti fények.",
-      budget: 180,
-      budgetType: "fix",
-      location: "Balatonfüred",
-      category: "photography",
-      postedDate: "2026.03.04.",
-      deadline: "2026.03.22.",
-      skills: ["légifotó", "ingatlan", "táj"],
-      client: {
-        name: "Horváth Csaba",
-        rating: 4.5,
-        verified: false
-      },
-      featured: false,
-      bids: 2,
-      urgency: "normal"
-    },
-    {
-      id: 8,
-      title: "Építkezés heti monitorozása",
-      description: "Új lakópark építésének heti dokumentálása drónnal. 3 hónapon keresztül, heti 1 alkalom.",
-      budget: 3200,
-      budgetType: "fix",
-      location: "Debrecen",
-      category: "videography",
-      postedDate: "2026.03.02.",
-      deadline: "2026.03.30.",
-      skills: ["építkezés", "dokumentáció", "heti rendszeresség"],
-      client: {
-        name: "Lakópark Kft.",
-        rating: 4.8,
-        verified: true
-      },
-      featured: true,
-      bids: 4,
-      urgency: "normal"
-    },
-    {
-      id: 9,
-      title: "Drónos csomagszállítás - sürgősségi",
-      description: "Gyógyszer szállítása budapesti kórházak között. Napi 3-5 szállítás, rugalmas időbeosztás.",
-      budget: 45,
-      budgetType: "hourly",
-      location: "Budapest",
-      category: "delivery",
-      postedDate: "2026.03.05.",
-      deadline: "2026.03.12.",
-      skills: ["szállítás", "gyors", "megbízható"],
-      client: {
-        name: "MediExpress Kft.",
-        rating: 4.7,
-        verified: true
-      },
-      featured: false,
-      bids: 1,
-      urgency: "urgent"
-    }
-  ];
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        const response = await fetch(`${apiUrl}/projects`);
+        const data = await response.json();
+        
+        if (data.success) {
+          setProjects(data.projects);
+        }
+      } catch (error) {
+        console.error('Hiba a projektek lekérésekor:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const getUrgencyBadge = (urgency) => {
-    switch(urgency) {
-      case 'urgent':
-        return <span className="px-2 py-1 bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 text-xs rounded-full flex items-center gap-1"><FaClock /> Sürgős</span>;
-      default:
-        return null;
-    }
+    fetchProjects();
+  }, []);
+
+  // Keresés szűrése a frontend oldalon
+  const filteredProjects = projects.filter(project => 
+    project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    project.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    project.location.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Dátum formázó
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('hu-HU', { year: 'numeric', month: 'short', day: 'numeric' });
   };
 
-  const filteredProjects = projects.filter(project => {
-    if (selectedCategory !== 'all' && project.category !== selectedCategory) return false;
-    if (searchQuery && !project.title.toLowerCase().includes(searchQuery.toLowerCase()) && 
-        !project.description.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-    if (filters.location && !project.location.toLowerCase().includes(filters.location.toLowerCase())) return false;
-    if (filters.minBudget && project.budget < parseInt(filters.minBudget)) return false;
-    if (filters.maxBudget && project.budget > parseInt(filters.maxBudget)) return false;
-    if (filters.budgetType !== 'all' && project.budgetType !== filters.budgetType) return false;
-    return true;
-  });
+  // Kategória fordító
+  const getCategoryName = (cat) => {
+    const cats = {
+      'photography': 'Légifotózás',
+      'videography': 'Drónvideózás',
+      'inspection': 'Ipari ellenőrzés',
+      'mapping': 'Térképezés és 3D',
+      'delivery': 'Drónos szállítás'
+    };
+    return cats[cat] || cat;
+  };
 
-  const sortedProjects = [...filteredProjects].sort((a, b) => {
-    if (sortBy === 'newest') return new Date(b.postedDate) - new Date(a.postedDate);
-    if (sortBy === 'oldest') return new Date(a.postedDate) - new Date(b.postedDate);
-    if (sortBy === 'budget-high') return b.budget - a.budget;
-    if (sortBy === 'budget-low') return a.budget - b.budget;
-    if (sortBy === 'deadline') return new Date(a.deadline) - new Date(b.deadline);
-    return 0;
-  });
+  const handleOpenBidModal = (project) => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    if (user.role !== 'driver') {
+      alert('Csak pilótaként regisztrált felhasználók jelentkezhetnek munkákra!');
+      return;
+    }
+    setBiddingProject(project);
+    setBidData({ amount: project.budget || '', estimated_days: '', message: '' });
+    setBidStatus({ loading: false, message: '', type: '' });
+  };
 
-  const clearFilters = () => {
-    setFilters({
-      location: '',
-      minBudget: '',
-      maxBudget: '',
-      budgetType: 'all'
-    });
-    setSelectedCategory('all');
-    setSearchQuery('');
+  const handleBidSubmit = async (e) => {
+    e.preventDefault();
+    setBidStatus({ loading: true, message: '', type: '' });
+
+    try {
+      const token = localStorage.getItem('token');
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${apiUrl}/projects/${biddingProject.id}/bids`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(bidData)
+      });
+      const result = await response.json();
+
+      if (response.ok) {
+        setBidStatus({ loading: false, message: 'Ajánlat sikeresen elküldve a megbízónak!', type: 'success' });
+        setTimeout(() => setBiddingProject(null), 2000); // 2 mp után bezárja az ablakot
+      } else {
+        setBidStatus({ loading: false, message: result.message || 'Hiba történt.', type: 'error' });
+      }
+    } catch (error) {
+      setBidStatus({ loading: false, message: 'Hálózati hiba történt.', type: 'error' });
+    }
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 transition-all duration-700">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-700 flex flex-col">
       <Navbar />
       
-      <div className="pt-24 pb-16 px-4">
-        <div className="container mx-auto max-w-7xl">
+      <div className="flex-1 container mx-auto px-4 pt-24 pb-16 max-w-6xl">
+        {/* Fejléc */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white transition-colors duration-700">Elérhető munkák</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2 transition-colors duration-700">
+            Böngéssz a megbízók által feladott legfrissebb drónos projektek között és küldd el az ajánlatodat!
+          </p>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-8">
           
-          {/* Fejléc */}
-          <div className="mb-8">
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4 transition-all duration-700">
-              Munka keresés
-            </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-400 transition-all duration-700">
-              Tallózz a legfrissebb projektek között, és találd meg a számodra legmegfelelőbb munkát.
-            </p>
+          {/* Bal oldali szűrősáv */}
+          <div className="lg:w-1/4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 sticky top-24 transition-colors duration-700">
+              <div className="flex items-center gap-2 mb-4 border-b border-gray-100 dark:border-gray-700 pb-3">
+                <FaFilter className="text-blue-600 dark:text-blue-400" />
+                <h2 className="font-bold text-gray-900 dark:text-white">Keresés és Szűrők</h2>
+              </div>
+              
+              <div className="mb-5">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Kulcsszó</label>
+                <div className="relative">
+                  <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input 
+                    type="text" 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Pl. esküvő, Budapest..." 
+                    className="w-full pl-9 pr-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm text-gray-900 dark:text-white"
+                  />
+                </div>
+              </div>
+              
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-4 italic">
+                További részletes szűrők (kategória, ár) hamarosan...
+              </p>
+            </div>
           </div>
 
-          {/* Kereső és szűrők */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-8 transition-all duration-700">
-            <div className="flex flex-col lg:flex-row gap-4">
-              <div className="flex-1 relative">
-                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Keresés projektek között..."
-                  className="w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-600 dark:focus:border-blue-400 text-gray-900 dark:text-white transition-all duration-700"
-                />
+          {/* Jobb oldali lista: Projektek */}
+          <div className="lg:w-3/4">
+            {loading ? (
+              <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="text-gray-500 dark:text-gray-400 mt-4">Munkák betöltése...</p>
               </div>
-              <div className="flex gap-2">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="px-4 py-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-600 dark:focus:border-blue-400 text-gray-900 dark:text-white transition-all duration-700"
-                >
-                  <option value="newest">Legújabb</option>
-                  <option value="oldest">Legrégebbi</option>
-                  <option value="budget-high">Ár szerint csökkenő</option>
-                  <option value="budget-low">Ár szerint növekvő</option>
-                  <option value="deadline">Határidő szerint</option>
-                </select>
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-300 flex items-center gap-2"
-                >
-                  <FaFilter />
-                  Szűrők
-                </button>
+            ) : filteredProjects.length > 0 ? (
+              <div className="space-y-4">
+                <div className="text-sm text-gray-500 dark:text-gray-400 mb-2 font-medium">
+                  {filteredProjects.length} db projekt található
+                </div>
+                
+                {filteredProjects.map(project => (
+                  <div key={project.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md transition-all duration-300">
+                    <div className="flex flex-col sm:flex-row justify-between gap-4">
+                      
+                      {/* Projekt infók */}
+                      <div className="flex-1">
+                        <Link to={`/project/${project.id}`} className="text-xl font-bold text-blue-600 dark:text-blue-400 hover:underline mb-1 block">
+                          {project.title}
+                        </Link>
+                        <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3 flex flex-wrap items-center gap-2">
+                          <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded-md text-gray-700 dark:text-gray-300">{getCategoryName(project.category)}</span>
+                          <span>•</span>
+                          <span>Feladva: {formatDate(project.created_at)}</span>
+                        </div>
+                        
+                        <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3">
+                          {project.description}
+                        </p>
+                        
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {project.skills_required && project.skills_required.map((skill, idx) => (
+                            <span key={idx} className="flex items-center gap-1 text-xs px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-md">
+                              <FaTags className="text-[10px]" /> {skill}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {/* Ár és adatok */}
+                      <div className="sm:w-48 flex flex-col sm:items-end justify-between border-t sm:border-t-0 sm:border-l border-gray-100 dark:border-gray-700 pt-4 sm:pt-0 sm:pl-4 mt-4 sm:mt-0">
+                        <div className="space-y-2 w-full">
+                          <div className="flex items-center sm:justify-end gap-2 text-gray-700 dark:text-gray-300 font-bold text-lg">
+                            <FaMoneyBillWave className="text-green-500" />
+                            {parseInt(project.budget).toLocaleString('hu-HU')} Ft {project.budget_type === 'hourly' ? '/ óra' : ''}
+                          </div>
+                          <div className="flex items-center sm:justify-end gap-2 text-sm text-gray-500 dark:text-gray-400">
+                            <FaMapMarkerAlt /> {project.location}
+                          </div>
+                          <div className="flex items-center sm:justify-end gap-2 text-sm text-gray-500 dark:text-gray-400">
+                            <FaClock /> Határidő: {formatDate(project.deadline)}
+                          </div>
+                        </div>
+                        
+                        <button 
+                          onClick={() => handleOpenBidModal(project)}
+                          className="w-full mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm transition-colors shadow-sm active:scale-95"
+                        >
+                          Érdekel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-
-            {showFilters && (
-              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Helyszín
-                    </label>
-                    <input
-                      type="text"
-                      value={filters.location}
-                      onChange={(e) => setFilters({ ...filters, location: e.target.value })}
-                      placeholder="Pl. Budapest"
-                      className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-600 dark:focus:border-blue-400 text-gray-900 dark:text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Minimum ár (€)
-                    </label>
-                    <input
-                      type="number"
-                      value={filters.minBudget}
-                      onChange={(e) => setFilters({ ...filters, minBudget: e.target.value })}
-                      placeholder="0"
-                      className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-600 dark:focus:border-blue-400 text-gray-900 dark:text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Maximum ár (€)
-                    </label>
-                    <input
-                      type="number"
-                      value={filters.maxBudget}
-                      onChange={(e) => setFilters({ ...filters, maxBudget: e.target.value })}
-                      placeholder="1000"
-                      className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-600 dark:focus:border-blue-400 text-gray-900 dark:text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Ár típusa
-                    </label>
-                    <select
-                      value={filters.budgetType}
-                      onChange={(e) => setFilters({ ...filters, budgetType: e.target.value })}
-                      className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-600 dark:focus:border-blue-400 text-gray-900 dark:text-white"
-                    >
-                      <option value="all">Mindegy</option>
-                      <option value="fix">Fix ár</option>
-                      <option value="hourly">Óradíj</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="flex justify-end mt-4">
-                  <button
-                    onClick={clearFilters}
-                    className="px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                  >
-                    Szűrők törlése
-                  </button>
-                </div>
+            ) : (
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-12 text-center">
+                <FaBriefcase className="text-5xl text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Nincs találat</h3>
+                <p className="text-gray-500 dark:text-gray-400">Jelenleg nincs a keresésnek megfelelő elérhető munka.</p>
               </div>
             )}
           </div>
-
-          {/* Kategória szűrők */}
-          <div className="flex flex-wrap gap-2 mb-8">
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
-                  selectedCategory === cat.id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                }`}
-              >
-                <span>{cat.icon}</span>
-                {cat.name} <span className="text-xs opacity-75">({cat.count})</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Találatok száma */}
-          <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-            {sortedProjects.length} projekt találat
-          </div>
-
-          {/* Projektek grid */}
-          {sortedProjects.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sortedProjects.map((project) => (
-                <div
-                  key={project.id}
-                  className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-xl transition-all duration-300 cursor-pointer group relative overflow-hidden"
-                  onClick={() => window.location.href = `/project/${project.id}`}
-                >
-                  {project.featured && (
-                    <div className="absolute top-0 left-0 bg-blue-600 text-white text-xs font-medium px-3 py-1 rounded-br-lg z-10">
-                      Kiemelt
-                    </div>
-                  )}
-                  {getUrgencyBadge(project.urgency) && (
-                    <div className="absolute top-0 right-0">
-                      {getUrgencyBadge(project.urgency)}
-                    </div>
-                  )}
-                  <div className="p-6">
-                    <div className="flex items-start justify-between mb-3">
-                      <span className="text-2xl mr-2">{categories.find(c => c.id === project.category)?.icon}</span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">{project.postedDate}</span>
-                    </div>
-
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-all duration-300 mb-2">
-                      {project.title}
-                    </h3>
-
-                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2">
-                      {project.description}
-                    </p>
-
-                    <div className="flex items-center gap-4 mb-4 text-sm">
-                      <div className="flex items-center gap-1">
-                        <FaEuroSign className="text-gray-400" />
-                        <span className="font-semibold text-gray-900 dark:text-white">{project.budget}</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">/{project.budgetType === 'fix' ? 'fix' : 'óra'}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <FaMapMarkerAlt className="text-gray-400" />
-                        <span className="text-gray-600 dark:text-gray-400">{project.location}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {project.skills.slice(0, 3).map((skill, i) => (
-                        <span key={i} className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs rounded">
-                          {skill}
-                        </span>
-                      ))}
-                      {project.skills.length > 3 && (
-                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs rounded">
-                          +{project.skills.length - 3}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">{project.client.name}</span>
-                        {project.client.verified && (
-                          <span className="text-blue-600 dark:text-blue-400 text-xs">✓</span>
-                        )}
-                        <div className="flex items-center gap-1 ml-2">
-                          <FaStar className="text-yellow-400 text-xs" />
-                          <span className="text-xs text-gray-600 dark:text-gray-400">{project.client.rating}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                        <FaCalendar className="text-gray-400" />
-                        <span>{project.deadline}</span>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 flex items-center justify-between text-xs">
-                      <span className="text-gray-500 dark:text-gray-400">{project.bids} ajánlat</span>
-                      <Link
-                        to={`/project/${project.id}`}
-                        className="text-blue-600 dark:text-blue-400 hover:underline"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        Részletek →
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-              <p className="text-gray-500 dark:text-gray-400 mb-4">Nincs találat a keresési feltételeknek megfelelően.</p>
-              <button
-                onClick={clearFilters}
-                className="text-blue-600 dark:text-blue-400 hover:underline"
-              >
-                Szűrők törlése
-              </button>
-            </div>
-          )}
-
-          {/* Lapozás */}
-          {sortedProjects.length > 0 && (
-            <div className="mt-8 flex justify-center">
-              <nav className="flex items-center gap-2">
-                <button className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300">
-                  ←
-                </button>
-                <button className="w-10 h-10 flex items-center justify-center rounded-lg bg-blue-600 text-white">1</button>
-                <button className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300">
-                  2
-                </button>
-                <button className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300">
-                  3
-                </button>
-                <span className="text-gray-500 dark:text-gray-400">...</span>
-                <button className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300">
-                  12
-                </button>
-                <button className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300">
-                  →
-                </button>
-              </nav>
-            </div>
-          )}
         </div>
       </div>
-
       <Footer />
+
+      {/* AJÁNLATTÉTEL (BIDDING) MODAL */}
+      {biddingProject && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden">
+            <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-700">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Ajánlattétel</h3>
+              <button onClick={() => setBiddingProject(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                <FaTimes size={20} />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800">
+                <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">{biddingProject.title}</h4>
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  Költségkeret: <strong>{parseInt(biddingProject.budget).toLocaleString('hu-HU')} Ft</strong> ({biddingProject.budget_type === 'hourly' ? 'óradíj' : 'fix összeg'})
+                </p>
+              </div>
+
+              {bidStatus.message && (
+                <div className={`mb-6 p-4 rounded-lg flex items-center gap-3 ${bidStatus.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                  {bidStatus.type === 'success' ? <FaCheckCircle /> : <FaInfoCircle />}
+                  <p className="text-sm font-medium">{bidStatus.message}</p>
+                </div>
+              )}
+
+              <form onSubmit={handleBidSubmit} className="space-y-5">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ajánlott összeg (Ft)</label>
+                    <input 
+                      type="number" required min="1"
+                      value={bidData.amount} onChange={(e) => setBidData({...bidData, amount: e.target.value})}
+                      className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Becsült idő (Nap)</label>
+                    <input 
+                      type="number" required min="1"
+                      value={bidData.estimated_days} onChange={(e) => setBidData({...bidData, estimated_days: e.target.value})}
+                      className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" 
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Üzenet a megbízónak</label>
+                  <textarea 
+                    required rows="4" placeholder="Győzd meg a megbízót, miért téged válasszon..."
+                    value={bidData.message} onChange={(e) => setBidData({...bidData, message: e.target.value})}
+                    className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 resize-none" 
+                  />
+                </div>
+                
+                <button 
+                  type="submit" disabled={bidStatus.loading || bidStatus.type === 'success'}
+                  className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-all"
+                >
+                  {bidStatus.loading ? 'Küldés...' : 'Ajánlat elküldése'}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
