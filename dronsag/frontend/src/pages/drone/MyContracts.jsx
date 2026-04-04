@@ -1,5 +1,5 @@
 // src/pages/drone/MyContracts.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaFileContract, FaEuroSign, FaCalendar, FaCheckCircle, FaClock, FaStar, FaDownload, FaPrint } from 'react-icons/fa';
 import Navbar from '../../components/common/Navbar';
@@ -7,109 +7,44 @@ import Footer from '../../components/common/Footer';
 
 const MyContracts = () => {
   const [filter, setFilter] = useState('all');
+  const [contracts, setContracts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const contracts = [
-    {
-      id: 1001,
-      projectId: 101,
-      projectTitle: "Napelempark ellenőrzés - hőkamerás diagnosztika",
-      clientName: "Magyar Napelem Kft.",
-      clientRating: 4.6,
-      startDate: "2026.03.01.",
-      endDate: "2026.03.05.",
-      amount: 1800,
-      status: "active",
-      paymentStatus: "pending",
-      paymentDue: "2026.03.12.",
-      description: "5MW-s napelempark paneljeinek ellenőrzése hőkamerával. Részletes diagnosztikai jelentés készítése.",
-      milestones: [
-        { id: 1, name: "Helyszíni felmérés", status: "completed", date: "2026.03.01." },
-        { id: 2, name: "Hőkamerás felvételek", status: "completed", date: "2026.03.02." },
-        { id: 3, name: "Diagnosztikai jelentés", status: "completed", date: "2026.03.04." },
-        { id: 4, name: "Végső átadás", status: "active", date: "2026.03.05." }
-      ]
-    },
-    {
-      id: 1002,
-      projectId: 102,
-      projectTitle: "Drónfotózás ingatlanhoz - 10 ingatlan",
-      clientName: "Ingatlan.com Zrt.",
-      clientRating: 4.9,
-      startDate: "2026.03.10.",
-      endDate: "2026.03.15.",
-      amount: 250,
-      status: "pending",
-      paymentStatus: "pending",
-      paymentDue: "2026.03.22.",
-      description: "10 budapesti luxusingatlan fotózása, 20-30 kép/ingatlan, utómunka.",
-      milestones: [
-        { id: 1, name: "Első 5 ingatlan fotózása", status: "pending", date: "2026.03.10." },
-        { id: 2, name: "Második 5 ingatlan fotózása", status: "pending", date: "2026.03.12." },
-        { id: 3, name: "Utómunka", status: "pending", date: "2026.03.14." },
-        { id: 4, name: "Képek átadása", status: "pending", date: "2026.03.15." }
-      ]
-    },
-    {
-      id: 1003,
-      projectId: 103,
-      projectTitle: "Ipari csarnok ellenőrzése",
-      clientName: "Győri Ipari Park",
-      clientRating: 4.7,
-      startDate: "2026.02.20.",
-      endDate: "2026.02.25.",
-      amount: 520,
-      status: "completed",
-      paymentStatus: "paid",
-      paymentDate: "2026.02.28.",
-      description: "5000m2-es ipari csarnok tetőszerkezetének ellenőrzése, szerkezetvizsgálat.",
-      milestones: [
-        { id: 1, name: "Előkészületek", status: "completed", date: "2026.02.20." },
-        { id: 2, name: "Helyszíni ellenőrzés", status: "completed", date: "2026.02.21." },
-        { id: 3, name: "Szerkezetvizsgálat", status: "completed", date: "2026.02.22." },
-        { id: 4, name: "Jelentés készítése", status: "completed", date: "2026.02.24." },
-        { id: 5, name: "Végső átadás", status: "completed", date: "2026.02.25." }
-      ]
-    },
-    {
-      id: 1004,
-      projectId: 104,
-      projectTitle: "Mezőgazdasági terület térképezés",
-      clientName: "Kiskunsági Mezőgazdasági Zrt.",
-      clientRating: 4.8,
-      startDate: "2026.03.15.",
-      endDate: "2026.03.20.",
-      amount: 480,
-      status: "pending",
-      paymentStatus: "pending",
-      paymentDue: "2026.03.27.",
-      description: "120 hektáros búzatábla NDVI elemzése, 3D modell készítése.",
-      milestones: [
-        { id: 1, name: "Terepbejárás", status: "pending", date: "2026.03.15." },
-        { id: 2, name: "Drónos felvételezés", status: "pending", date: "2026.03.16." },
-        { id: 3, name: "Adatfeldolgozás", status: "pending", date: "2026.03.18." },
-        { id: 4, name: "Jelentés és 3D modell", status: "pending", date: "2026.03.20." }
-      ]
-    },
-    {
-      id: 1005,
-      projectId: 105,
-      projectTitle: "Esküvői drónvideó",
-      clientName: "Kovácsék",
-      clientRating: 5.0,
-      startDate: "2026.02.14.",
-      endDate: "2026.02.16.",
-      amount: 450,
-      status: "completed",
-      paymentStatus: "paid",
-      paymentDate: "2026.02.20.",
-      description: "Esküvői helyszín és ceremónia drónos felvétele, 3 perces összeállítás.",
-      milestones: [
-        { id: 1, name: "Előkészület", status: "completed", date: "2026.02.14." },
-        { id: 2, name: "Felvételek", status: "completed", date: "2026.02.15." },
-        { id: 3, name: "Utómunka", status: "completed", date: "2026.02.16." }
-      ]
-    }
-  ];
+  useEffect(() => {
+    const fetchContracts = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        const response = await fetch(`${apiUrl}/contracts`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        if (data.success) {
+          const formatted = data.contracts.map(c => ({
+            id: c.id,
+            projectId: c.project_id,
+            projectTitle: c.projectTitle,
+            clientName: c.otherPartyName,
+            clientRating: c.otherPartyRating || 5.0,
+            startDate: new Date(c.created_at).toLocaleDateString('hu-HU'),
+            endDate: c.end_date ? new Date(c.end_date).toLocaleDateString('hu-HU') : '-',
+            amount: parseInt(c.amount),
+            status: c.status,
+            paymentStatus: c.payment_status,
+            paymentDue: c.payment_date ? new Date(c.payment_date).toLocaleDateString('hu-HU') : '-',
+            description: c.description,
+            milestones: []
+          }));
+          setContracts(formatted);
+        }
+      } catch (error) {
+        console.error('Hiba a szerződések lekérésekor:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchContracts();
+  }, []);
 
   const getStatusBadge = (status) => {
     switch(status) {
@@ -265,7 +200,12 @@ const MyContracts = () => {
           </div>
 
           {/* Szerződések lista */}
-          <div className="space-y-6">
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            </div>
+          ) : (
+            <div className="space-y-6">
             {filteredContracts.map((contract) => (
               <div
                 key={contract.id}
@@ -328,35 +268,37 @@ const MyContracts = () => {
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">{contract.description}</p>
 
                   {/* Mérföldkövek */}
-                  <div>
-                    <h4 className="font-medium text-gray-900 dark:text-white mb-3">Mérföldkövek</h4>
-                    <div className="space-y-3">
-                      {contract.milestones.map((milestone, index) => (
-                        <div key={milestone.id} className="flex items-center gap-3">
-                          <div className="flex-shrink-0">
-                            {getMilestoneStatus(milestone.status)}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                              <p className={`text-sm ${
-                                milestone.status === 'completed' 
-                                  ? 'text-gray-900 dark:text-white' 
-                                  : milestone.status === 'active'
-                                  ? 'text-blue-600 dark:text-blue-400 font-medium'
-                                  : 'text-gray-500 dark:text-gray-400'
-                              }`}>
-                                {milestone.name}
-                              </p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">{milestone.date}</p>
+                  {contract.milestones && contract.milestones.length > 0 && (
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-white mb-3">Mérföldkövek</h4>
+                      <div className="space-y-3">
+                        {contract.milestones.map((milestone, index) => (
+                          <div key={milestone.id} className="flex items-center gap-3">
+                            <div className="flex-shrink-0">
+                              {getMilestoneStatus(milestone.status)}
                             </div>
-                            {index < contract.milestones.length - 1 && (
-                              <div className="ml-2 mt-1 w-0.5 h-4 bg-gray-200 dark:bg-gray-700"></div>
-                            )}
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between">
+                                <p className={`text-sm ${
+                                  milestone.status === 'completed' 
+                                    ? 'text-gray-900 dark:text-white' 
+                                    : milestone.status === 'active'
+                                    ? 'text-blue-600 dark:text-blue-400 font-medium'
+                                    : 'text-gray-500 dark:text-gray-400'
+                                }`}>
+                                  {milestone.name}
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{milestone.date}</p>
+                              </div>
+                              {index < contract.milestones.length - 1 && (
+                                <div className="ml-2 mt-1 w-0.5 h-4 bg-gray-200 dark:bg-gray-700"></div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Akciógombok */}
                   <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 flex flex-wrap gap-3">
@@ -382,6 +324,7 @@ const MyContracts = () => {
               </div>
             ))}
           </div>
+          )}
 
           {/* Ha nincs szerződés */}
           {filteredContracts.length === 0 && (

@@ -4,6 +4,8 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const authRoutes = require('./src/routes/auth');
 const projectRoutes = require('./src/routes/projects'); // ÚJ SOR: Importáljuk a projektek végpontjait
+const bidRoutes = require('./src/routes/bids');
+const contractRoutes = require('./src/routes/contracts');
 
 dotenv.config();
 
@@ -21,6 +23,8 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes); // ÚJ SOR: Bekötjük az URL-t a projektekhez
+app.use('/api/bids', bidRoutes);
+app.use('/api/contracts', contractRoutes);
 
 // Test route
 app.get('/api/test', (req, res) => {

@@ -60,14 +60,44 @@ const ProjectBids = () => {
     return 0;
   });
 
-  const handleAcceptBid = (bidId) => {
-    // TODO: API hívás
-    console.log('Ajánlat elfogadva:', bidId);
+  const handleAcceptBid = async (bidId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const res = await fetch(`${apiUrl}/contracts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ bidId })
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        setBids(bids.map(b => b.id === bidId ? { ...b, status: 'accepted' } : { ...b, status: 'rejected' }));
+        alert('Ajánlat sikeresen elfogadva! A szerződés létrejött.');
+      } else {
+        alert(data.message || 'Hiba történt!');
+      }
+    } catch (error) {
+      console.error('Hiba az ajánlat elfogadásakor:', error);
+    }
   };
 
-  const handleRejectBid = (bidId) => {
-    // TODO: API hívás
-    console.log('Ajánlat elutasítva:', bidId);
+  const handleRejectBid = async (bidId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const res = await fetch(`${apiUrl}/bids/${bidId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ status: 'rejected' })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBids(bids.map(b => b.id === bidId ? { ...b, status: 'rejected' } : b));
+      }
+    } catch (error) {
+      console.error('Hiba az ajánlat elutasításakor:', error);
+    }
   };
 
   if (loading) {

@@ -1,5 +1,5 @@
 // src/pages/drone/MyBids.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaEuroSign, FaCalendar, FaClock, FaCheckCircle, FaTimesCircle, FaHourglassHalf } from 'react-icons/fa';
 import Navbar from '../../components/common/Navbar';
@@ -7,90 +7,44 @@ import Footer from '../../components/common/Footer';
 
 const MyBids = () => {
   const [filter, setFilter] = useState('all');
+  const [bids, setBids] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const bids = [
-    {
-      id: 1,
-      projectId: 101,
-      projectTitle: "Esküvői drónvideó - 8 órás rendezvény",
-      projectLocation: "Visegrád",
-      bidAmount: 550,
-      bidType: "fix",
-      submittedDate: "2026.03.04.",
-      status: "pending",
-      deadline: "2026.04.01.",
-      clientName: "Kovácsék",
-      clientRating: 5.0,
-      message: "Vállalom a teljes rendezvény rögzítését, 2 kamerával és drónnal. Utómunka Adobe Premiere-ben.",
-      estimatedDuration: "3 nap"
-    },
-    {
-      id: 2,
-      projectId: 102,
-      projectTitle: "Napelempark ellenőrzés - hőkamerás diagnosztika",
-      projectLocation: "Kecskemét",
-      bidAmount: 1600,
-      bidType: "fix",
-      submittedDate: "2026.02.26.",
-      status: "accepted",
-      deadline: "2026.03.10.",
-      clientName: "Magyar Napelem Kft.",
-      clientRating: 4.6,
-      message: "5 éve foglalkozom napelemparkok hőkamerás ellenőrzésével. Részletes diagnosztikai jelentést készítek.",
-      estimatedDuration: "2 nap",
-      acceptedDate: "2026.02.28."
-    },
-    {
-      id: 3,
-      projectId: 103,
-      projectTitle: "Ipari csarnok ellenőrzése",
-      projectLocation: "Győr",
-      bidAmount: 70,
-      bidType: "hourly",
-      submittedDate: "2026.03.01.",
-      status: "rejected",
-      deadline: "2026.03.20.",
-      clientName: "Győri Ipari Park",
-      clientRating: 4.7,
-      message: "Vállalom a szerkezetvizsgálatot, rendelkezem a szükséges engedélyekkel.",
-      estimatedDuration: "8 óra",
-      rejectedDate: "2026.03.03.",
-      rejectionReason: "Másik ajánlattevőt választottak"
-    },
-    {
-      id: 4,
-      projectId: 104,
-      projectTitle: "Drónfotózás ingatlanhoz - 10 ingatlan",
-      projectLocation: "Budapest",
-      bidAmount: 230,
-      bidType: "fix",
-      submittedDate: "2026.03.02.",
-      status: "pending",
-      deadline: "2026.03.15.",
-      clientName: "Ingatlan.com Zrt.",
-      clientRating: 4.9,
-      message: "8 éves tapasztalat ingatlanfotózásban, gyors utómunka, 24 órán belül képek.",
-      estimatedDuration: "2 nap"
-    },
-    {
-      id: 5,
-      projectId: 105,
-      projectTitle: "Mezőgazdasági terület térképezés",
-      projectLocation: "Bács-Kiskun",
-      bidAmount: 450,
-      bidType: "fix",
-      submittedDate: "2026.02.28.",
-      status: "completed",
-      deadline: "2026.03.25.",
-      clientName: "Kiskunsági Mezőgazdasági Zrt.",
-      clientRating: 4.8,
-      message: "NDVI elemzés, 3D modell, részletes talajtérkép készítése.",
-      estimatedDuration: "3 nap",
-      completedDate: "2026.03.05.",
-      paymentStatus: "paid",
-      paymentAmount: 450
-    }
-  ];
+  useEffect(() => {
+    const fetchMyBids = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        const response = await fetch(`${apiUrl}/bids/my-bids`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        if (data.success) {
+          const formatted = data.bids.map(b => ({
+            id: b.id,
+            projectId: b.projectId,
+            projectTitle: b.projectTitle,
+            projectLocation: b.projectLocation,
+            bidAmount: parseInt(b.bidAmount),
+            bidType: b.bidType,
+            submittedDate: new Date(b.submittedDate).toLocaleDateString('hu-HU'),
+            status: b.status,
+            deadline: new Date(b.deadline).toLocaleDateString('hu-HU'),
+            clientName: b.clientName,
+            clientRating: b.clientRating || 5.0,
+            message: b.message,
+            estimatedDuration: `${b.estimatedDuration || 1} nap`
+          }));
+          setBids(formatted);
+        }
+      } catch (error) {
+        console.error('Hiba az ajánlatok lekérésekor:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMyBids();
+  }, []);
 
   const getStatusBadge = (status) => {
     switch(status) {
@@ -239,7 +193,12 @@ const MyBids = () => {
           </div>
 
           {/* Ajánlatok lista */}
-          <div className="space-y-4">
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            </div>
+          ) : (
+            <div className="space-y-4">
             {filteredBids.map((bid) => (
               <div
                 key={bid.id}
@@ -318,6 +277,7 @@ const MyBids = () => {
               </div>
             ))}
           </div>
+          )}
 
           {/* Összes bevétel */}
           <div className="mt-8 bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg p-6 text-white">

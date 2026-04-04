@@ -1,5 +1,5 @@
 // src/pages/drone/AvailableProjects.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaMapMarkerAlt, FaEuroSign, FaCalendar, FaFilter, FaSearch, FaStar } from 'react-icons/fa';
 import Navbar from '../../components/common/Navbar';
@@ -15,6 +15,8 @@ const AvailableProjects = () => {
     location: '',
     budgetType: 'all'
   });
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const categories = [
     { id: 'all', name: 'Összes', count: 1247, icon: '📋' },
@@ -25,160 +27,42 @@ const AvailableProjects = () => {
     { id: 'delivery', name: 'Szállítás', count: 92, icon: '📦' }
   ];
 
-  const projects = [
-    {
-      id: 1,
-      title: "Drónfotózás ingatlanhoz - 10 ingatlan",
-      description: "Budapesti luxusingatlanok fotózásához keresek profi drónost. 10 különböző helyszín, 20-30 kép/ingatlan.",
-      budget: 250,
-      budgetType: "fix",
-      location: "Budapest",
-      category: "photography",
-      postedDate: "2026.03.01.",
-      deadline: "2026.03.15.",
-      skills: ["légifotó", "ingatlan", "photoshop"],
-      client: {
-        name: "Ingatlan.com Zrt.",
-        rating: 4.9,
-        verified: true
-      },
-      featured: true,
-      bids: 8
-    },
-    {
-      id: 2,
-      title: "Ipari csarnok ellenőrzése - szerkezetvizsgálat",
-      description: "5000m2-es ipari csarnok tetőszerkezetének ellenőrzése hőkamerás drónnal. Részletes jelentés kell, fotókkal.",
-      budget: 65,
-      budgetType: "hourly",
-      location: "Győr",
-      category: "inspection",
-      postedDate: "2026.03.02.",
-      deadline: "2026.03.20.",
-      skills: ["hőkamera", "ipari", "szerkezetvizsgálat"],
-      client: {
-        name: "Győri Ipari Park",
-        rating: 4.7,
-        verified: true
-      },
-      featured: false,
-      bids: 3
-    },
-    {
-      id: 3,
-      title: "Mezőgazdasági terület térképezés - NDVI elemzés",
-      description: "120 hektáros búzatábla NDVI elemzése, 3D modell készítése. Részletes jelentés a növényegészségügyi állapotról.",
-      budget: 480,
-      budgetType: "fix",
-      location: "Bács-Kiskun",
-      category: "mapping",
-      postedDate: "2026.02.28.",
-      deadline: "2026.03.25.",
-      skills: ["NDVI", "térképezés", "mezőgazdaság"],
-      client: {
-        name: "Kiskunsági Mezőgazdasági Zrt.",
-        rating: 4.8,
-        verified: true
-      },
-      featured: true,
-      bids: 5
-    },
-    {
-      id: 4,
-      title: "Esküvői drónvideó - 8 órás rendezvény",
-      description: "Esküvői helyszín és ceremónia drónos felvétele. 8 órás rendezvény, 3-5 perces összeállítás kell.",
-      budget: 120,
-      budgetType: "hourly",
-      location: "Visegrád",
-      category: "videography",
-      postedDate: "2026.03.03.",
-      deadline: "2026.04.01.",
-      skills: ["esküvő", "videózás", "utómunka"],
-      client: {
-        name: "Kovácsék",
-        rating: 5.0,
-        verified: false
-      },
-      featured: false,
-      bids: 12
-    },
-    {
-      id: 5,
-      title: "Napelempark ellenőrzés - hőkamerás diagnosztika",
-      description: "5MW-s napelempark paneljeinek ellenőrzése hőkamerával. Hibás panelek azonosítása, részletes jelentés.",
-      budget: 1800,
-      budgetType: "fix",
-      location: "Kecskemét",
-      category: "inspection",
-      postedDate: "2026.02.25.",
-      deadline: "2026.03.10.",
-      skills: ["napelem", "hőkamera", "diagnosztika"],
-      client: {
-        name: "Magyar Napelem Kft.",
-        rating: 4.6,
-        verified: true
-      },
-      featured: true,
-      bids: 6
-    },
-    {
-      id: 6,
-      title: "Reklámfilm drónfelvételek - autó reklám",
-      description: "Autóreklámhoz kellenek dinamikus drónfelvételek. 2 nap forgatás, Balaton környékén.",
-      budget: 95,
-      budgetType: "hourly",
-      location: "Balatonfüred",
-      category: "videography",
-      postedDate: "2026.03.01.",
-      deadline: "2026.03.18.",
-      skills: ["reklám", "autó", "dinamikus"],
-      client: {
-        name: "Creative Studio Budapest",
-        rating: 4.9,
-        verified: true
-      },
-      featured: false,
-      bids: 9
-    },
-    {
-      id: 7,
-      title: "Tóparti ingatlan drónfotózása",
-      description: "Balaton-parti nyaraló fotózása madártávlatból. 20-30 kép, reggeli és esti fények.",
-      budget: 180,
-      budgetType: "fix",
-      location: "Balatonfüred",
-      category: "photography",
-      postedDate: "2026.03.04.",
-      deadline: "2026.03.22.",
-      skills: ["légifotó", "ingatlan", "táj"],
-      client: {
-        name: "Horváth Csaba",
-        rating: 4.5,
-        verified: false
-      },
-      featured: false,
-      bids: 2
-    },
-    {
-      id: 8,
-      title: "Építkezés heti monitorozása",
-      description: "Új lakópark építésének heti dokumentálása drónnal. 3 hónapon keresztül, heti 1 alkalom.",
-      budget: 3200,
-      budgetType: "fix",
-      location: "Debrecen",
-      category: "videography",
-      postedDate: "2026.03.02.",
-      deadline: "2026.03.30.",
-      skills: ["építkezés", "dokumentáció", "heti rendszeresség"],
-      client: {
-        name: "Lakópark Kft.",
-        rating: 4.8,
-        verified: true
-      },
-      featured: true,
-      bids: 4
-    }
-  ];
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        const response = await fetch(`${apiUrl}/projects`);
+        const data = await response.json();
+        if (data.success) {
+          const formatted = data.projects.map(p => ({
+            id: p.id,
+            title: p.title,
+            description: p.description,
+            budget: p.budget,
+            budgetType: p.budget_type,
+            location: p.location,
+            category: p.category,
+            postedDate: new Date(p.created_at).toLocaleDateString('hu-HU'),
+            deadline: new Date(p.deadline).toLocaleDateString('hu-HU'),
+            skills: p.skills_required || [],
+            client: {
+              name: p.customer_name,
+              rating: 5.0,
+              verified: true
+            },
+            featured: false,
+            bids: p.proposals_count
+          }));
+          setProjects(formatted);
+        }
+      } catch (error) {
+        console.error('Hiba a projektek lekérésekor:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProjects();
+  }, []);
 
   const filteredProjects = projects.filter(project => {
     if (selectedCategory !== 'all' && project.category !== selectedCategory) return false;
@@ -328,7 +212,12 @@ const AvailableProjects = () => {
           </div>
 
           {/* Projektek grid */}
-          {filteredProjects.length > 0 ? (
+          {loading ? (
+            <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="text-gray-500 dark:text-gray-400 mt-4">Projektek betöltése...</p>
+            </div>
+          ) : filteredProjects.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredProjects.map((project) => (
                 <div
