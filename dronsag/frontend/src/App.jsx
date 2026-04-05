@@ -20,6 +20,7 @@ import Cookie from './pages/Cookie';
 
 // Customer pages
 import CustomerDashboard from './pages/customer/Dashboard';
+import ContractWorkspace from './pages/ContractWorkspace';
 import CreateProject from './pages/customer/CreateProject';
 import MyProjects from './pages/customer/MyProjects';
 import ProjectBids from './pages/customer/ProjectBids';
@@ -54,6 +55,11 @@ function App() {
           <Route path="/profile" element={
             <PrivateRoute>
               <Profile />
+            </PrivateRoute>
+          } />
+          <Route path="/contract/:id" element={
+            <PrivateRoute>
+              <ContractWorkspace />
             </PrivateRoute>
           } />
           <Route path="/messages" element={

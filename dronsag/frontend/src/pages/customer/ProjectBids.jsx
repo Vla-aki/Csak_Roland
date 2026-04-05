@@ -1,12 +1,13 @@
 // src/pages/customer/ProjectBids.jsx
 import React, { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaEuroSign, FaStar, FaCheckCircle, FaTimesCircle, FaUserCircle, FaCalendar, FaComment } from 'react-icons/fa';
 import Navbar from '../../components/common/Navbar';
 import Footer from '../../components/common/Footer';
 
 const ProjectBids = () => {
   const { projectId } = useParams();
+  const navigate = useNavigate();
   const [sortBy, setSortBy] = useState('price');
   const [project, setProject] = useState(null);
   const [bids, setBids] = useState([]);
@@ -72,8 +73,7 @@ const ProjectBids = () => {
       const data = await res.json();
       
       if (data.success) {
-        setBids(bids.map(b => b.id === bidId ? { ...b, status: 'accepted' } : { ...b, status: 'rejected' }));
-        alert('Ajánlat sikeresen elfogadva! A szerződés létrejött.');
+        navigate(`/contract/${data.contractId}`);
       } else {
         alert(data.message || 'Hiba történt!');
       }

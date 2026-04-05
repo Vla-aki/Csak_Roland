@@ -21,6 +21,8 @@ const FindFreelancers = () => {
   const [loading, setLoading] = useState(true);
   const [selectedFreelancer, setSelectedFreelancer] = useState(null);
   const [showFreelancerModal, setShowFreelancerModal] = useState(false);
+  const [pilotReviews, setPilotReviews] = useState([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
 
   const categories = [
     { id: 'all', name: 'Összes', count: 528, icon: '👥' },
@@ -100,6 +102,17 @@ const FindFreelancers = () => {
     return Array(5).fill(0).map((_, i) => (
       <FaStar key={i} className={i < Math.floor(rating) ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-600'} />
     ));
+  };
+
+  const fetchPilotReviews = async (pilotId) => {
+    setLoadingReviews(true);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const res = await fetch(`${apiUrl}/auth/pilots/${pilotId}/reviews`);
+      const data = await res.json();
+      if (data.success) setPilotReviews(data.reviews);
+    } catch (e) { console.error(e); }
+    setLoadingReviews(false);
   };
 
   return (
@@ -270,6 +283,7 @@ const FindFreelancers = () => {
                   className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-xl transition-all duration-300 cursor-pointer group flex flex-col h-full"
                   onClick={() => {
                     setSelectedFreelancer(f);
+                    fetchPilotReviews(f.id);
                     setShowFreelancerModal(true);
                   }}
                 >
@@ -442,6 +456,28 @@ const FindFreelancers = () => {
                 </div>
               </div>
             )}
+
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Értékelések ({selectedFreelancer.reviews})</h3>
+                  {loadingReviews ? (
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                  ) : pilotReviews.length > 0 ? (
+                    <div className="space-y-4">
+                      {pilotReviews.map(review => (
+                        <div key={review.id} className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl">
+                          <div className="flex items-center gap-3 mb-2">
+                            <img src={review.reviewerImage} className="w-8 h-8 rounded-full" alt="" />
+                            <div>
+                              <p className="text-sm font-bold text-gray-900 dark:text-white">{review.reviewerName}</p>
+                              <div className="flex items-center gap-2"><div className="flex">{renderStars(review.rating)}</div> <span className="text-xs text-gray-500">{review.date}</span></div>
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-600 dark:text-gray-300 italic">"{review.comment}"</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : <p className="text-gray-500 italic">Még nem kapott szöveges értékelést.</p>}
+                </div>
 
                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div>

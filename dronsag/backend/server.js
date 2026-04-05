@@ -6,6 +6,8 @@ const authRoutes = require('./src/routes/auth');
 const projectRoutes = require('./src/routes/projects'); // ÚJ SOR: Importáljuk a projektek végpontjait
 const bidRoutes = require('./src/routes/bids');
 const contractRoutes = require('./src/routes/contracts');
+const messageRoutes = require('./src/routes/messages');
+const notificationRoutes = require('./src/routes/notifications');
 
 dotenv.config();
 
@@ -25,6 +27,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes); // ÚJ SOR: Bekötjük az URL-t a projektekhez
 app.use('/api/bids', bidRoutes);
 app.use('/api/contracts', contractRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Test route
 app.get('/api/test', (req, res) => {

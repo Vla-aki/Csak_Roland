@@ -1,98 +1,71 @@
 // src/pages/drone/Earnings.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaEuroSign, FaCalendar, FaDownload, FaChartLine, FaCheckCircle, FaClock } from 'react-icons/fa';
 import Navbar from '../../components/common/Navbar';
 import Footer from '../../components/common/Footer';
 
 const Earnings = () => {
-  const [period, setPeriod] = useState('month');
+  const [period, setPeriod] = useState('all');
+  const [earnings, setEarnings] = useState({
+    total: 0, pending: 0, paid: 0, thisMonth: 0, lastMonth: 0, averagePerProject: 0, projectsCompleted: 0
+  });
+  const [transactions, setTransactions] = useState([]);
+  const [monthlyData, setMonthlyData] = useState([]);
 
-  // Bevételi adatok (mock)
-  const earnings = {
-    total: 15480,
-    pending: 2350,
-    paid: 13130,
-    thisMonth: 3240,
-    lastMonth: 2850,
-    averagePerProject: 412,
-    projectsCompleted: 42
-  };
+  useEffect(() => {
+    const fetchEarnings = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        const res = await fetch(`${apiUrl}/contracts`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        
+        if (data.success) {
+          let total = 0, pending = 0, paid = 0, thisMonth = 0;
+          const now = new Date();
+          
+          const formattedTransactions = data.contracts.map(c => {
+            const amount = Number(c.amount);
+            const isPaid = c.payment_status === 'paid' || c.status === 'completed';
+            
+            if (isPaid) {
+              paid += amount;
+              total += amount;
+              const d = new Date(c.created_at);
+              if (d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
+                thisMonth += amount;
+              }
+            } else {
+              pending += amount;
+            }
+            
+            return {
+              id: c.id, project: c.projectTitle, client: c.otherPartyName,
+              amount, date: new Date(c.created_at).toLocaleDateString('hu-HU'),
+              status: isPaid ? 'paid' : 'pending', paymentMethod: 'Banki átutalás'
+            };
+          });
+          
+          setTransactions(formattedTransactions);
+          setEarnings({
+            total, pending, paid, thisMonth, lastMonth: 0,
+            averagePerProject: total > 0 ? Math.round(total / data.contracts.length) : 0,
+            projectsCompleted: data.contracts.filter(c => c.status === 'completed').length
+          });
 
-  const transactions = [
-    {
-      id: 1,
-      project: 'Napelempark ellenőrzés',
-      client: 'Magyar Napelem Kft.',
-      amount: 1800,
-      date: '2026.03.05.',
-      status: 'paid',
-      paymentMethod: 'Banki átutalás'
-    },
-    {
-      id: 2,
-      project: 'Drónfotózás ingatlanhoz',
-      client: 'Ingatlan.com Zrt.',
-      amount: 250,
-      date: '2026.03.01.',
-      status: 'paid',
-      paymentMethod: 'Banki átutalás'
-    },
-    {
-      id: 3,
-      project: 'Ipari csarnok ellenőrzése',
-      client: 'Győri Ipari Park',
-      amount: 520,
-      date: '2026.02.28.',
-      status: 'paid',
-      paymentMethod: 'Banki átutalás'
-    },
-    {
-      id: 4,
-      project: 'Mezőgazdasági terület térképezés',
-      client: 'Kiskunsági Mg. Zrt.',
-      amount: 480,
-      date: '2026.02.25.',
-      status: 'paid',
-      paymentMethod: 'Banki átutalás'
-    },
-    {
-      id: 5,
-      project: 'Esküvői drónvideó',
-      client: 'Kovácsék',
-      amount: 450,
-      date: '2026.02.20.',
-      status: 'paid',
-      paymentMethod: 'Készpénz'
-    },
-    {
-      id: 6,
-      project: 'Ipari csarnok ellenőrzése',
-      client: 'Győri Ipari Park',
-      amount: 520,
-      date: '2026.03.10.',
-      status: 'pending',
-      paymentMethod: 'Banki átutalás'
-    },
-    {
-      id: 7,
-      project: 'Tóparti ingatlan fotózás',
-      client: 'Horváth Csaba',
-      amount: 180,
-      date: '2026.03.12.',
-      status: 'pending',
-      paymentMethod: 'Banki átutalás'
-    }
-  ];
-
-  const monthlyData = [
-    { month: 'Jan', amount: 2150 },
-    { month: 'Feb', amount: 2850 },
-    { month: 'Már', amount: 3240 },
-    { month: 'Ápr', amount: 0 },
-    { month: 'Máj', amount: 0 },
-    { month: 'Jún', amount: 0 }
-  ];
+          setMonthlyData([
+            { month: 'Jan', amount: 0 }, { month: 'Feb', amount: 0 },
+            { month: 'Már', amount: thisMonth }, { month: 'Ápr', amount: 0 },
+            { month: 'Máj', amount: 0 }, { month: 'Jún', amount: 0 }
+          ]);
+        }
+      } catch (error) {
+        console.error('Hiba a bevételek lekérésekor:', error);
+      }
+    };
+    fetchEarnings();
+  }, []);
 
   const getStatusBadge = (status) => {
     switch(status) {

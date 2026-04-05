@@ -1,71 +1,77 @@
 // src/pages/drone/DroneDashboard.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaSearch, FaClipboardList, FaCheckCircle, FaMoneyBillWave, FaStar, FaUserCircle } from 'react-icons/fa';
 import Navbar from '../../components/common/Navbar';
 import Footer from '../../components/common/Footer';
+import { useAuth } from '../../contexts/AuthContext';
 
 const DroneDashboard = () => {
+  const { user } = useAuth();
   const [stats, setStats] = useState({
-    availableProjects: 24,
-    activeBids: 5,
-    completedJobs: 42,
-    totalEarnings: 15480,
-    rating: 4.9
+    availableProjects: 0,
+    activeBids: 0,
+    completedJobs: 0,
+    totalEarnings: 0,
+    rating: 0
   });
 
-  const [recommendedProjects, setRecommendedProjects] = useState([
-    {
-      id: 1,
-      title: "Drónfotózás ingatlanhoz - 10 ingatlan",
-      budget: 250,
-      budgetType: "fix",
-      location: "Budapest",
-      postedDate: "2026.03.01.",
-      deadline: "2026.03.15.",
-      skills: ["légifotó", "ingatlan"],
-      matched: 95
-    },
-    {
-      id: 2,
-      title: "Ipari csarnok ellenőrzése",
-      budget: 65,
-      budgetType: "hourly",
-      location: "Győr",
-      postedDate: "2026.03.02.",
-      deadline: "2026.03.20.",
-      skills: ["hőkamera", "ipari"],
-      matched: 88
-    },
-    {
-      id: 3,
-      title: "Mezőgazdasági terület térképezés",
-      budget: 480,
-      budgetType: "fix",
-      location: "Bács-Kiskun",
-      postedDate: "2026.02.28.",
-      deadline: "2026.03.25.",
-      skills: ["NDVI", "térképezés"],
-      matched: 92
-    }
-  ]);
+  const [recommendedProjects, setRecommendedProjects] = useState([]);
+  const [activeBids, setActiveBids] = useState([]);
 
-  const [activeBids, setActiveBids] = useState([
-    {
-      id: 1,
-      projectTitle: "Esküvői drónvideó",
-      amount: 550,
-      status: "pending",
-      submittedDate: "2026.03.04."
-    },
-    {
-      id: 2,
-      projectTitle: "Napelempark ellenőrzés",
-      amount: 1800,
-      status: "accepted",
-      submittedDate: "2026.02.26."
-    }
-  ]);
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        
+        const [projRes, bidsRes, contractsRes] = await Promise.all([
+          fetch(`${apiUrl}/projects`),
+          fetch(`${apiUrl}/bids/my-bids`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${apiUrl}/contracts`, { headers: { 'Authorization': `Bearer ${token}` } })
+        ]);
+        
+        const projData = await projRes.json();
+        const bidsData = await bidsRes.json();
+        const contractsData = await contractsRes.json();
+        
+        if (projData.success) {
+          setRecommendedProjects(projData.projects.slice(0, 3).map(p => ({
+            id: p.id, title: p.title, budget: p.budget, budgetType: p.budget_type,
+            location: p.location, deadline: new Date(p.deadline).toLocaleDateString('hu-HU'),
+            skills: p.skills_required || [], matched: Math.floor(Math.random() * 20) + 80
+          })));
+        }
+        
+        if (bidsData.success) {
+          setActiveBids(bidsData.bids.filter(b => b.status === 'pending').slice(0, 3).map(b => ({
+            id: b.id, projectTitle: b.projectTitle, amount: b.bidAmount, status: b.status, 
+            submittedDate: new Date(b.submittedDate).toLocaleDateString('hu-HU')
+          })));
+        }
+
+        let completed = 0, earnings = 0;
+        if (contractsData.success) {
+          const completedContracts = contractsData.contracts.filter(c => c.status === 'completed' || c.payment_status === 'paid');
+          completed = completedContracts.length;
+          earnings = completedContracts.reduce((sum, c) => sum + Number(c.amount), 0);
+        }
+        
+        setStats({
+          availableProjects: projData.projects?.length || 0,
+          activeBids: bidsData.bids?.filter(b => b.status === 'pending').length || 0,
+          completedJobs: completed,
+          totalEarnings: earnings,
+          rating: user?.rating || 0
+        });
+
+      } catch (error) {
+        console.error("Hiba a dashboard betöltésekor:", error);
+      }
+    };
+    
+    if (user) fetchDashboardData();
+  }, [user]);
 
   const getBidStatusBadge = (status) => {
     switch(status) {
@@ -91,7 +97,7 @@ const DroneDashboard = () => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
             <div>
               <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2 transition-all duration-700">
-                Üdvözöljük, Kovács Péter! 🚁
+                Üdvözöljük, {user?.name?.split(' ')[0] || 'Pilóta'}! 🚁
               </h1>
               <p className="text-gray-600 dark:text-gray-400 transition-all duration-700">
                 Itt követheted nyomon a jelentkezéseidet és az aktuális projekteket.

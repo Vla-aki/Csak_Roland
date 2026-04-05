@@ -23,13 +23,19 @@ const CustomerDashboard = () => {
       try {
         const token = localStorage.getItem('token');
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-        const response = await fetch(`${apiUrl}/projects/my-projects`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await response.json();
         
-        if (data.success) {
-          const projs = data.projects;
+        const [projRes, contractRes, notifRes] = await Promise.all([
+          fetch(`${apiUrl}/projects/my-projects`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${apiUrl}/contracts`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${apiUrl}/notifications`, { headers: { 'Authorization': `Bearer ${token}` } })
+        ]);
+        
+        const projData = await projRes.json();
+        const contractData = await contractRes.json();
+        const notifData = await notifRes.json();
+        
+        if (projData.success) {
+          const projs = projData.projects;
           setRecentProjects(projs.slice(0, 3)); // Csak az utolsó 3
           
           let active = 0, completed = 0, proposals = 0;
@@ -38,7 +44,18 @@ const CustomerDashboard = () => {
             if (p.status === 'completed') completed++;
             proposals += p.proposals_count;
           });
-          setStats({ activeProjects: active, totalProposals: proposals, completedProjects: completed, totalSpent: 0 });
+          
+          let spent = 0;
+          if (contractData.success) {
+             spent = contractData.contracts.filter(c => c.payment_status === 'paid' || c.status === 'completed').reduce((sum, c) => sum + Number(c.amount), 0);
+          }
+          setStats({ activeProjects: active, totalProposals: proposals, completedProjects: completed, totalSpent: spent });
+        }
+        
+        if (notifData.success && notifData.notifications.length > 0) {
+          setNotifications(notifData.notifications.map(n => ({
+            id: n.id, message: n.message || n.title, time: new Date(n.created_at).toLocaleDateString('hu-HU'), read: n.is_read
+          })));
         }
       } catch (error) {
         console.error("Hiba a dashboard lekérésekor:", error);
@@ -49,26 +66,7 @@ const CustomerDashboard = () => {
     fetchDashboardData();
   }, []);
 
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      message: "Új ajánlat érkezett a 'Drónfotózás ingatlanhoz' projektre",
-      time: "5 perce",
-      read: false
-    },
-    {
-      id: 2,
-      message: "A 'Ipari csarnok ellenőrzése' projekt holnap lejár",
-      time: "2 órája",
-      read: false
-    },
-    {
-      id: 3,
-      message: "Kiss Anna elfogadta az ajánlatod",
-      time: "1 napja",
-      read: true
-    }
-  ]);
+  const [notifications, setNotifications] = useState([]);
 
   const getStatusBadge = (status) => {
     switch(status) {
@@ -206,7 +204,7 @@ const CustomerDashboard = () => {
                 </div>
 
                 <div className="space-y-3">
-                  {notifications.map((notification) => (
+                  {notifications.length > 0 ? notifications.map((notification) => (
                     <div key={notification.id} className={`p-3 rounded-lg transition-all duration-300 ${
                       notification.read 
                         ? 'bg-gray-50 dark:bg-gray-700' 
@@ -215,7 +213,7 @@ const CustomerDashboard = () => {
                       <p className="text-sm text-gray-700 dark:text-gray-300">{notification.message}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{notification.time}</p>
                     </div>
-                  ))}
+                  )) : <p className="text-gray-500 text-sm">Nincsenek új értesítések.</p>}
                 </div>
 
                 <button className="w-full mt-4 text-sm text-blue-600 dark:text-blue-400 hover:underline text-center">

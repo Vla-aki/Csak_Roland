@@ -1,5 +1,5 @@
 // src/pages/Messages.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { FaSearch, FaPaperPlane, FaEllipsisV, FaImage, FaPaperclip, FaSmile, FaCheckCircle, FaClock } from 'react-icons/fa';
 import Navbar from '../components/common/Navbar';
@@ -11,140 +11,66 @@ const Messages = () => {
   const [selectedChat, setSelectedChat] = useState(null);
   const [messageInput, setMessageInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [chats, setChats] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const messagesEndRef = useRef(null);
 
-  // Chat lista (mock)
-  const chats = [
-    {
-      id: 1,
-      name: 'Kovács Péter',
-      role: 'Pilóta',
-      image: 'https://randomuser.me/api/portraits/men/32.jpg',
-      lastMessage: 'Szia! Elküldtem az ajánlatomat a projektedre.',
-      lastMessageTime: '10:45',
-      unread: 2,
-      online: true,
-      verified: true,
-      project: 'Drónfotózás ingatlanhoz'
-    },
-    {
-      id: 2,
-      name: 'Ingatlan.com Zrt.',
-      role: 'Megbízó',
-      image: 'https://randomuser.me/api/portraits/men/1.jpg',
-      lastMessage: 'Rendben, akkor várjuk a képeket!',
-      lastMessageTime: 'Tegnap',
-      unread: 0,
-      online: false,
-      verified: true,
-      project: 'Drónfotózás ingatlanhoz'
-    },
-    {
-      id: 3,
-      name: 'Nagy Eszter',
-      role: 'Pilóta',
-      image: 'https://randomuser.me/api/portraits/women/44.jpg',
-      lastMessage: 'Mikor lenne megfelelő az időpont?',
-      lastMessageTime: 'Tegnap',
-      unread: 0,
-      online: true,
-      verified: true,
-      project: 'Ipari csarnok ellenőrzése'
-    },
-    {
-      id: 4,
-      name: 'Szabó István',
-      role: 'Pilóta',
-      image: 'https://randomuser.me/api/portraits/men/45.jpg',
-      lastMessage: 'Köszönöm a lehetőséget!',
-      lastMessageTime: '2026.03.05.',
-      unread: 0,
-      online: false,
-      verified: true,
-      project: 'Mezőgazdasági terület térképezés'
-    },
-    {
-      id: 5,
-      name: 'Kiss Anna',
-      role: 'Pilóta',
-      image: 'https://randomuser.me/api/portraits/women/63.jpg',
-      lastMessage: 'Elküldtem a szerződéstervezetet.',
-      lastMessageTime: '2026.03.04.',
-      unread: 1,
-      online: false,
-      verified: true,
-      project: 'Esküvői drónvideó'
-    },
-    {
-      id: 6,
-      name: 'Győri Ipari Park',
-      role: 'Megbízó',
-      image: 'https://randomuser.me/api/portraits/men/2.jpg',
-      lastMessage: 'Rendben, várjuk a részletes jelentést.',
-      lastMessageTime: '2026.03.03.',
-      unread: 0,
-      online: false,
-      verified: true,
-      project: 'Ipari csarnok ellenőrzése'
-    }
-  ];
+  const fetchChats = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const res = await fetch(`${apiUrl}/messages/chats`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const data = await res.json();
+      if (data.success) setChats(data.chats);
+    } catch (error) { console.error(error); }
+  };
 
-  // Üzenetek a kiválasztott chathez (mock)
-  const messages = selectedChat ? [
-    {
-      id: 1,
-      senderId: 1,
-      text: 'Szia! Láttam a projektedet, és szívesen elvállalnám a munkát.',
-      time: '10:30',
-      status: 'read'
-    },
-    {
-      id: 2,
-      senderId: 'me',
-      text: 'Szia! Örülök, hogy jelentkeztél. Mikor tudnál kezdeni?',
-      time: '10:32',
-      status: 'read'
-    },
-    {
-      id: 3,
-      senderId: 1,
-      text: 'Már a jövő héten tudnék kezdeni. 10 ingatlanról van szó, ugye?',
-      time: '10:35',
-      status: 'read'
-    },
-    {
-      id: 4,
-      senderId: 'me',
-      text: 'Igen, 10 budapesti ingatlan. Milyen áron dolgozol?',
-      time: '10:38',
-      status: 'read'
-    },
-    {
-      id: 5,
-      senderId: 1,
-      text: 'Szia! Elküldtem az ajánlatomat a projektedre.',
-      time: '10:45',
-      status: 'delivered'
-    },
-    {
-      id: 6,
-      senderId: 1,
-      text: 'Nézd meg kérlek, és ha bármi kérdésed van, nyugodtan írj!',
-      time: '10:46',
-      status: 'delivered'
+  const fetchMessages = async (otherId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const res = await fetch(`${apiUrl}/messages/${otherId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const data = await res.json();
+      if (data.success) setMessages(data.messages);
+    } catch (error) { console.error(error); }
+  };
+
+  useEffect(() => {
+    fetchChats();
+  }, []);
+
+  useEffect(() => {
+    if (selectedChat) {
+      fetchMessages(selectedChat.id);
     }
-  ] : [];
+  }, [selectedChat]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const filteredChats = chats.filter(chat =>
-    chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    chat.project.toLowerCase().includes(searchQuery.toLowerCase())
+    chat.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (messageInput.trim()) {
-      // TODO: API hívás
-      console.log('Üzenet elküldve:', messageInput);
-      setMessageInput('');
+    if (messageInput.trim() && selectedChat) {
+      try {
+        const token = localStorage.getItem('token');
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        const res = await fetch(`${apiUrl}/messages`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ receiverId: selectedChat.id, message: messageInput.trim() })
+        });
+        const data = await res.json();
+        if(data.success) {
+          setMessages(prev => [...prev, data.message]);
+          setMessageInput('');
+          fetchChats();
+        }
+      } catch(e) { console.error(e); }
     }
   };
 
@@ -290,6 +216,7 @@ const Messages = () => {
                       </div>
                     </div>
                   ))}
+                  <div ref={messagesEndRef} />
                 </div>
 
                 {/* Üzenet bevitel */}

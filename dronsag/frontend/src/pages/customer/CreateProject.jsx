@@ -134,15 +134,36 @@ const CreateProject = () => {
     setIsLoading(true);
     
     try {
-      // TODO: API hívás
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const token = localStorage.getItem('token');
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      
+      const response = await fetch(`${apiUrl}/projects`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: formData.title,
+          category: formData.category,
+          description: formData.description,
+          location: formData.location,
+          budget_type: formData.budgetType,
+          budget: formData.budget,
+          deadline: formData.deadline,
+          skills: formData.skills
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Hiba történt a mentés során');
       
       // Sikeres létrehozás után átirányítás a projektek oldalra
       navigate('/my-projects', { 
         state: { message: 'Projekt sikeresen létrehozva!' } 
       });
     } catch (error) {
-      setErrors({ form: 'Hiba történt a projekt létrehozása során' });
+      setErrors({ form: error.message || 'Hiba történt a projekt létrehozása során' });
     } finally {
       setIsLoading(false);
     }

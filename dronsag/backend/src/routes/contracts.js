@@ -70,4 +70,70 @@ router.get('/', authMiddleware, async (req, res) => {
     }
 });
 
+// Egy adott szerződés (munkaterület) részleteinek lekérése
+router.get('/:id', authMiddleware, async (req, res) => {
+    try {
+        const query = `
+            SELECT c.*, 
+                   p.title as projectTitle, p.description as projectDescription, p.location as projectLocation, p.deadline as projectDeadline,
+                   u_cust.name as customerName, u_cust.profile_image as customerImage,
+                   u_drv.name as pilotName, u_drv.profile_image as pilotImage
+            FROM contracts c
+            JOIN projects p ON c.project_id = p.id
+            JOIN users u_cust ON c.customer_id = u_cust.id
+            JOIN users u_drv ON c.driver_id = u_drv.id
+            WHERE c.id = ? AND (c.customer_id = ? OR c.driver_id = ?)
+        `;
+        const [contracts] = await pool.query(query, [req.params.id, req.user.id, req.user.id]);
+        if (contracts.length === 0) return res.status(404).json({ message: 'Szerződés nem található, vagy nincs jogosultságod.' });
+        
+        res.json({ success: true, contract: contracts[0] });
+    } catch (error) {
+        res.status(500).json({ message: 'Hiba a lekérés során: ' + error.message });
+    }
+});
+
+// Szerződés lezárása, kifizetése és értékelése (Csak Megbízó)
+router.put('/:id/complete', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'customer') return res.status(403).json({ message: 'Csak megbízó zárhatja le a munkát!' });
+    
+    const contractId = req.params.id;
+    const { rating, comment } = req.body;
+
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        const [contracts] = await connection.query('SELECT * FROM contracts WHERE id = ?', [contractId]);
+        if (contracts.length === 0) throw new Error('Szerződés nem található!');
+        const contract = contracts[0];
+
+        if (contract.customer_id !== req.user.id) throw new Error('Nincs jogosultságod ehhez a szerződéshez!');
+        if (contract.status === 'completed') throw new Error('A munka már le van zárva!');
+
+        // 1. Szerződés státuszának frissítése (Lezárva, Kifizetve)
+        await connection.query('UPDATE contracts SET status = "completed", payment_status = "paid", completed_at = NOW() WHERE id = ?', [contractId]);
+
+        // 2. Értékelés mentése
+        if (rating) {
+            await connection.query('INSERT INTO reviews (contract_id, reviewer_id, reviewee_id, rating, comment) VALUES (?, ?, ?, ?, ?)', 
+                [contractId, req.user.id, contract.driver_id, rating, comment || null]);
+            
+            // 3. Pilóta átlagának és statisztikáinak frissítése
+            const [pilotReviews] = await connection.query('SELECT AVG(rating) as avg_rating, COUNT(*) as count FROM reviews WHERE reviewee_id = ?', [contract.driver_id]);
+            await connection.query('UPDATE users SET rating = ?, reviews_count = ?, completed_jobs = completed_jobs + 1 WHERE id = ?', 
+                [pilotReviews[0].avg_rating || rating, pilotReviews[0].count || 1, contract.driver_id]);
+        }
+
+        await connection.commit();
+        res.json({ success: true, message: 'Munka sikeresen lezárva és kifizetve!' });
+    } catch (error) {
+        if (connection) await connection.rollback();
+        res.status(500).json({ message: error.message });
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
 module.exports = router;

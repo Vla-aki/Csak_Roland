@@ -1,0 +1,131 @@
+const express = require('express');
+const router = express.Router();
+const mysql = require('mysql2/promise');
+const authMiddleware = require('../middleware/authMiddleware');
+
+const pool = mysql.createPool({
+    host: process.env.DB_HOST || 'dronsag_mysql',
+    user: process.env.DB_USER || 'dronsag_user',
+    password: process.env.DB_PASSWORD || 'dronsag_password',
+    database: process.env.DB_NAME || 'dronsag',
+    waitForConnections: true,
+    connectionLimit: 10
+});
+
+// 1. Chat partnerek és utolsó üzenetek lekérése
+router.get('/chats', authMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        
+        const query = `
+            SELECT 
+                u.id as otherUserId, 
+                u.name, 
+                u.role, 
+                u.profile_image as image, 
+                u.verified,
+                (SELECT message FROM messages m2 WHERE (m2.sender_id = ? AND m2.receiver_id = u.id) OR (m2.sender_id = u.id AND m2.receiver_id = ?) ORDER BY created_at DESC LIMIT 1) as lastMessage,
+                (SELECT created_at FROM messages m2 WHERE (m2.sender_id = ? AND m2.receiver_id = u.id) OR (m2.sender_id = u.id AND m2.receiver_id = ?) ORDER BY created_at DESC LIMIT 1) as lastMessageTime,
+                (SELECT COUNT(*) FROM messages m3 WHERE m3.sender_id = u.id AND m3.receiver_id = ? AND m3.is_read = 0) as unread
+            FROM users u
+            WHERE u.id IN (
+                SELECT sender_id FROM messages WHERE receiver_id = ?
+                UNION
+                SELECT receiver_id FROM messages WHERE sender_id = ?
+            )
+            ORDER BY lastMessageTime DESC
+        `;
+        
+        const [chats] = await pool.query(query, [userId, userId, userId, userId, userId, userId, userId]);
+        
+        const formattedChats = chats.map(c => ({
+            id: c.otherUserId,
+            name: c.name,
+            role: c.role === 'customer' ? 'Megbízó' : 'Pilóta',
+            image: c.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=2563eb&color=fff`,
+            lastMessage: c.lastMessage,
+            lastMessageTime: c.lastMessageTime ? new Date(c.lastMessageTime).toLocaleTimeString('hu-HU', {hour: '2-digit', minute:'2-digit'}) : '',
+            unread: c.unread,
+            online: false,
+            verified: c.verified === 1,
+            project: ''
+        }));
+
+        res.json({ success: true, chats: formattedChats });
+    } catch (error) {
+        res.status(500).json({ message: 'Szerver hiba a chatek lekérésekor.' });
+    }
+});
+
+// 2. Üzenetek lekérése egy adott felhasználóval
+router.get('/:otherUserId', authMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const otherUserId = req.params.otherUserId;
+        await pool.query('UPDATE messages SET is_read = 1, read_at = NOW() WHERE sender_id = ? AND receiver_id = ? AND is_read = 0', [otherUserId, userId]);
+        const [messages] = await pool.query(
+            'SELECT id, sender_id, message as text, created_at as time, is_read FROM messages WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?) ORDER BY created_at ASC',
+            [userId, otherUserId, otherUserId, userId]
+        );
+        const formattedMessages = messages.map(m => ({
+            id: m.id, senderId: m.sender_id === userId ? 'me' : m.sender_id, text: m.text,
+            time: new Date(m.time).toLocaleTimeString('hu-HU', {hour: '2-digit', minute:'2-digit'}), status: m.is_read ? 'read' : 'delivered'
+        }));
+        res.json({ success: true, messages: formattedMessages });
+    } catch (error) {
+        res.status(500).json({ message: 'Szerver hiba az üzenetek lekérésekor.' });
+    }
+});
+
+// 3. Üzenet küldése
+router.post('/', authMiddleware, async (req, res) => {
+    try {
+        const { receiverId, message } = req.body;
+        const [result] = await pool.query('INSERT INTO messages (sender_id, receiver_id, message) VALUES (?, ?, ?)', [req.user.id, receiverId, message]);
+        res.status(201).json({ success: true, message: {
+            id: result.insertId, senderId: 'me', text: message,
+            time: new Date().toLocaleTimeString('hu-HU', {hour: '2-digit', minute:'2-digit'}), status: 'delivered'
+        }});
+    } catch (error) {
+        res.status(500).json({ message: 'Szerver hiba az üzenet küldésekor.' });
+    }
+});
+
+// 4. Üzenetek lekérése EGY ADOTT SZERZŐDÉSHEZ (Munka Munkaterület)
+router.get('/contract/:contractId', authMiddleware, async (req, res) => {
+    try {
+        const [messages] = await pool.query(
+            'SELECT id, sender_id, message as text, created_at as time FROM messages WHERE contract_id = ? ORDER BY created_at ASC',
+            [req.params.contractId]
+        );
+        const formattedMessages = messages.map(m => ({
+            id: m.id, senderId: m.sender_id === req.user.id ? 'me' : m.sender_id, text: m.text,
+            time: new Date(m.time).toLocaleTimeString('hu-HU', {hour: '2-digit', minute:'2-digit'})
+        }));
+        res.json({ success: true, messages: formattedMessages });
+    } catch (error) {
+        res.status(500).json({ message: 'Szerver hiba az üzenetek lekérésekor.' });
+    }
+});
+
+// 5. Üzenet küldése EGY ADOTT SZERZŐDÉSHEZ
+router.post('/contract/:contractId', authMiddleware, async (req, res) => {
+    try {
+        // Ellenőrizzük, hogy a user része-e a szerződésnek
+        const [contracts] = await pool.query('SELECT customer_id, driver_id FROM contracts WHERE id = ? AND (customer_id = ? OR driver_id = ?)', [req.params.contractId, req.user.id, req.user.id]);
+        if (contracts.length === 0) return res.status(403).json({ message: 'Nincs jogosultságod ehhez a beszélgetéshez!' });
+        
+        const contract = contracts[0];
+        const receiverId = req.user.id === contract.customer_id ? contract.driver_id : contract.customer_id;
+
+        const [result] = await pool.query('INSERT INTO messages (sender_id, receiver_id, contract_id, message) VALUES (?, ?, ?, ?)', [req.user.id, receiverId, req.params.contractId, req.body.message]);
+        res.status(201).json({ success: true, message: {
+            id: result.insertId, senderId: 'me', text: req.body.message,
+            time: new Date().toLocaleTimeString('hu-HU', {hour: '2-digit', minute:'2-digit'})
+        }});
+    } catch (error) {
+        res.status(500).json({ message: 'Szerver hiba az üzenet küldésekor.' });
+    }
+});
+
+module.exports = router;
