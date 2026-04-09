@@ -32,6 +32,9 @@ import MyBids from './pages/drone/MyBids';
 import MyContracts from './pages/drone/MyContracts';
 import Earnings from './pages/drone/Earnings';
 
+// Admin pages
+import AdminDashboard from './pages/admin/AdminDashBoard.jsx';
+
 function App() {
   return (
     <Router>
@@ -114,6 +117,13 @@ function App() {
           <Route path="/earnings" element={
             <PrivateRoute requiredRole="driver">
               <Earnings />
+            </PrivateRoute>
+          } />
+
+          {/* Védett oldalak - Admin */}
+          <Route path="/admin/dashboard" element={
+            <PrivateRoute requiredRole="admin">
+              <AdminDashboard />
             </PrivateRoute>
           } />
         </Routes>

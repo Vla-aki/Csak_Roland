@@ -98,16 +98,36 @@ const Profile = () => {
     fileInputRef.current.click();
   };
 
-  // Kép betöltése és előnézet generálása
-  const handleImageChange = (e) => {
+  // Segédfüggvény a fájl szerverre küldéséhez
+  const uploadImage = async (file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    const token = localStorage.getItem('token');
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    
+    const res = await fetch(`${apiUrl}/upload`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData
+    });
+    const data = await res.json();
+    if (data.success) {
+      const baseUrl = apiUrl.replace('/api', '');
+      return `${baseUrl}${data.url}`;
+    }
+    throw new Error('Feltöltési hiba');
+  };
+
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileImagePreview(reader.result);
-        setFormData(prev => ({ ...prev, profile_image: reader.result })); // Elküldjük a base64 kódot
-      };
-      reader.readAsDataURL(file);
+      try {
+        setProfileImagePreview(URL.createObjectURL(file)); // Ideiglenes előnézet
+        const uploadedUrl = await uploadImage(file);
+        setFormData(prev => ({ ...prev, profile_image: uploadedUrl }));
+      } catch (error) {
+        alert('Hiba a kép feltöltésekor!');
+      }
     }
   };
 
@@ -116,16 +136,16 @@ const Profile = () => {
     portfolioFileInputRef.current.click();
   };
 
-  // Portfólió képek betöltése
-  const handlePortfolioChange = (e) => {
+  const handlePortfolioChange = async (e) => {
     const files = Array.from(e.target.files);
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, portfolio: [...prev.portfolio, reader.result] }));
-      };
-      reader.readAsDataURL(file);
-    });
+    for (const file of files) {
+      try {
+        const uploadedUrl = await uploadImage(file);
+        setFormData(prev => ({ ...prev, portfolio: [...prev.portfolio, uploadedUrl] }));
+      } catch (error) {
+        alert('Hiba a portfólió kép feltöltésekor!');
+      }
+    }
   };
 
   const handleRemovePortfolioItem = (index) => {

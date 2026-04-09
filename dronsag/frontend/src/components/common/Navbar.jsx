@@ -126,7 +126,7 @@ const Navbar = () => {
                     </div>
 
                     <Link
-                      to={user.role === 'customer' ? '/dashboard' : '/drone-dashboard'}
+                      to={user.role === 'admin' ? '/admin/dashboard' : user.role === 'customer' ? '/dashboard' : '/drone-dashboard'}
                       onClick={() => setIsProfileMenuOpen(false)}
                       className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                     >
@@ -217,7 +217,7 @@ const Navbar = () => {
                     </div>
                     
                     <div className="flex flex-col space-y-2 mt-4 pt-2 border-t border-gray-100 dark:border-gray-800">
-                      <Link to={user.role === 'customer' ? '/dashboard' : '/drone-dashboard'} onClick={() => setIsOpen(false)} className="flex items-center gap-3 py-2 text-gray-700 dark:text-gray-300">
+                      <Link to={user.role === 'admin' ? '/admin/dashboard' : user.role === 'customer' ? '/dashboard' : '/drone-dashboard'} onClick={() => setIsOpen(false)} className="flex items-center gap-3 py-2 text-gray-700 dark:text-gray-300">
                         <FaCog className="text-gray-400 text-lg" /> Vezérlőpult
                       </Link>
                       <Link to="/profile" onClick={() => setIsOpen(false)} className="flex items-center gap-3 py-2 text-gray-700 dark:text-gray-300">

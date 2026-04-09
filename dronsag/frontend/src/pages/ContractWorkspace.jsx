@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaPaperPlane, FaCheckCircle, FaStar, FaEuroSign, FaMapMarkerAlt, FaClock } from 'react-icons/fa';
+import { FaArrowLeft, FaPaperPlane, FaCheckCircle, FaStar, FaEuroSign, FaMapMarkerAlt, FaClock, FaCreditCard, FaLock, FaSpinner } from 'react-icons/fa';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
 import { useAuth } from '../contexts/AuthContext';
@@ -17,6 +17,7 @@ const ContractWorkspace = () => {
   
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewData, setReviewData] = useState({ rating: 5, comment: '' });
+  const [paymentStep, setPaymentStep] = useState(1);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -47,6 +48,15 @@ const ContractWorkspace = () => {
     const interval = setInterval(fetchData, 3000);
     return () => clearInterval(interval);
   }, [id]);
+
+  // Fizetés szimulálása
+  useEffect(() => {
+    if (paymentStep === 2) {
+      setTimeout(() => {
+        handleCompleteContract();
+      }, 2500); // 2.5 mp "feldolgozás"
+    }
+  }, [paymentStep]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -83,9 +93,8 @@ const ContractWorkspace = () => {
       });
       const data = await res.json();
       if (data.success) {
-        alert('Munka sikeresen lezárva és kifizetve!');
-        setShowReviewModal(false);
-        navigate('/dashboard');
+        setPaymentStep(3); // Sikeres képernyő
+        setTimeout(() => { setShowReviewModal(false); navigate('/dashboard'); }, 2000);
       } else {
         alert(data.message);
       }
@@ -169,20 +178,69 @@ const ContractWorkspace = () => {
 
       {/* Értékelés Modal */}
       {showReviewModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6 shadow-2xl">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Fizetés és Értékelés</h2>
-            <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">A gombra kattintva a letétbe helyezett összeg kifizetésre kerül a pilótának. Kérlek értékeld a munkáját!</p>
-            <div className="flex justify-center gap-2 mb-6">
-              {[1,2,3,4,5].map(star => (
-                <FaStar key={star} className={`text-3xl cursor-pointer transition-colors ${star <= reviewData.rating ? 'text-yellow-400' : 'text-gray-300'}`} onClick={() => setReviewData({...reviewData, rating: star})} />
-              ))}
-            </div>
-            <textarea placeholder="Írj egy rövid véleményt a közös munkáról..." value={reviewData.comment} onChange={e => setReviewData({...reviewData, comment: e.target.value})} className="w-full px-4 py-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white mb-6 resize-none" rows="3"></textarea>
-            <div className="flex justify-end gap-3">
-              <button onClick={() => setShowReviewModal(false)} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 transition-colors">Mégse</button>
-              <button onClick={handleCompleteContract} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">Jóváhagyás és Fizetés</button>
-            </div>
+            {paymentStep === 1 ? (
+              <>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Biztonságos Fizetés</h2>
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-6">
+                  <p className="text-sm text-blue-800 dark:text-blue-200 font-medium flex justify-between items-center">
+                    <span>Fizetendő összeg:</span>
+                    <span className="text-xl font-bold">{parseInt(contract.amount).toLocaleString('hu-HU')} Ft</span>
+                  </p>
+                </div>
+
+                {/* Bankkártya szimuláció */}
+                <div className="space-y-4 mb-6">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Kártyaszám</label>
+                    <div className="relative">
+                      <FaCreditCard className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input type="text" placeholder="0000 0000 0000 0000" className="w-full pl-10 pr-4 py-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Lejárat</label>
+                      <input type="text" placeholder="HH/ÉÉ" className="w-full px-4 py-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">CVC</label>
+                      <input type="text" placeholder="123" className="w-full px-4 py-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mb-6">
+                  <p className="text-sm font-bold text-gray-900 dark:text-white mb-2">Értékeld a pilóta munkáját:</p>
+                  <div className="flex gap-2 mb-3">
+                    {[1,2,3,4,5].map(star => (
+                      <FaStar key={star} className={`text-2xl cursor-pointer transition-colors ${star <= reviewData.rating ? 'text-yellow-400' : 'text-gray-300'}`} onClick={() => setReviewData({...reviewData, rating: star})} />
+                    ))}
+                  </div>
+                  <textarea placeholder="Írj egy rövid véleményt..." value={reviewData.comment} onChange={e => setReviewData({...reviewData, comment: e.target.value})} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none text-sm focus:ring-2 focus:ring-blue-500 outline-none" rows="2"></textarea>
+                </div>
+
+                <div className="flex justify-end gap-3">
+                  <button onClick={() => setShowReviewModal(false)} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 transition-colors">Mégse</button>
+                  <button onClick={() => setPaymentStep(2)} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center gap-2">
+                    <FaLock /> Fizetés Jóváhagyása
+                  </button>
+                </div>
+              </>
+            ) : paymentStep === 2 ? (
+              <div className="text-center py-10">
+                <FaSpinner className="animate-spin text-5xl text-blue-600 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Tranzakció feldolgozása</h3>
+                <p className="text-gray-500 dark:text-gray-400">Kérjük, ne zárd be az ablakot...</p>
+              </div>
+            ) : (
+              <div className="text-center py-10">
+                <FaCheckCircle className="text-5xl text-green-500 mx-auto mb-4 animate-bounce" />
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Sikeres fizetés!</h3>
+                <p className="text-gray-500 dark:text-gray-400 mb-6">A projekt lezárult, a pilóta hamarosan megkapja a díját.</p>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -1,6 +1,6 @@
 // src/pages/FindFreelancers.jsx
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { FaSearch, FaMapMarkerAlt, FaEuroSign, FaStar, FaFilter, FaCheckCircle, FaAward, FaTimes } from 'react-icons/fa';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
@@ -23,6 +23,7 @@ const FindFreelancers = () => {
   const [showFreelancerModal, setShowFreelancerModal] = useState(false);
   const [pilotReviews, setPilotReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
+  const location = useLocation();
 
   const categories = [
     { id: 'all', name: 'Összes', count: 528, icon: '👥' },
@@ -34,6 +35,10 @@ const FindFreelancers = () => {
   ];
 
   useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('q')) setSearchQuery(params.get('q'));
+    if (params.get('category')) setSelectedCategory(params.get('category'));
+
     const fetchPilots = async () => {
       try {
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -49,7 +54,7 @@ const FindFreelancers = () => {
       }
     };
     fetchPilots();
-  }, []);
+  }, [location.search]);
 
   const getAvailabilityBadge = (availability) => {
     switch(availability) {

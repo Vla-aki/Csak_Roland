@@ -49,6 +49,7 @@ services:
     volumes:
       - ./dronsag/backend:/app
       - /app/node_modules
+      - ./uploads:/uploads
     networks:
       - dronsag_network
 

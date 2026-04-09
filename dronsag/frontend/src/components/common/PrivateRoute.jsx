@@ -20,11 +20,13 @@ const PrivateRoute = ({ children, requiredRole }) => {
 
   // Ha van requiredRole, akkor ellenőrizzük a user szerepkörét
   if (requiredRole && user.role !== requiredRole) {
-    // Ha a szerepkör nem megfelelő, átirányítjuk a megfelelő dashboardra
+    // Ha a szerepkör nem megfelelő, átirányítjuk a megfelelő (saját) dashboardjára
     if (user.role === 'customer') {
       return <Navigate to="/dashboard" replace />;
     } else if (user.role === 'driver') {
       return <Navigate to="/drone-dashboard" replace />;
+    } else if (user.role === 'admin') {
+      return <Navigate to="/admin/dashboard" replace />;
     } else {
       return <Navigate to="/" replace />;
     }

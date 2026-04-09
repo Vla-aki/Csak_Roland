@@ -1,6 +1,6 @@
 // src/pages/FindWork.jsx
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FaSearch, FaMapMarkerAlt, FaMoneyBillWave, FaClock, FaTags, FaBriefcase, FaFilter, FaTimes, FaCheckCircle, FaInfoCircle } from 'react-icons/fa';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
@@ -11,7 +11,9 @@ const FindWork = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Ajánlattételhez (Bidding) szükséges állapotok
   const [biddingProject, setBiddingProject] = useState(null);
@@ -19,6 +21,10 @@ const FindWork = () => {
   const [bidStatus, setBidStatus] = useState({ loading: false, message: '', type: '' });
 
   useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('q')) setSearchQuery(params.get('q'));
+    if (params.get('category')) setSelectedCategory(params.get('category'));
+
     const fetchProjects = async () => {
       try {
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -36,14 +42,16 @@ const FindWork = () => {
     };
 
     fetchProjects();
-  }, []);
+  }, [location.search]);
 
   // Keresés szűrése a frontend oldalon
-  const filteredProjects = projects.filter(project => 
-    project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    project.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    project.location.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProjects = projects.filter(project => {
+    const matchesQuery = project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         project.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         project.location.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCat = selectedCategory === 'all' || project.category === selectedCategory;
+    return matchesQuery && matchesCat;
+  });
 
   // Dátum formázó
   const formatDate = (dateString) => {

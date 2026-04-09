@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
 
@@ -7,9 +7,8 @@ const Landing = () => {
   // ========== STATE MANAGEMENT ==========
   const [scrollY, setScrollY] = useState(0);
   const [activeSection, setActiveSection] = useState('hero');
-  const [activeJobCategory, setActiveJobCategory] = useState('all');
-  const [activeFreelancerCategory, setActiveFreelancerCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
   const [selectedJob, setSelectedJob] = useState(null);
   const [selectedFreelancer, setSelectedFreelancer] = useState(null);
   const [showJobModal, setShowJobModal] = useState(false);
@@ -154,7 +153,6 @@ const Landing = () => {
   ];
 
   const filteredJobs = jobs.filter(job => {
-    if (activeJobCategory !== 'all' && job.category !== activeJobCategory) return false;
     if (searchQuery && !job.title.toLowerCase().includes(searchQuery.toLowerCase()) && 
         !job.description.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     if (selectedLocation && !job.location.includes(selectedLocation)) return false;
@@ -173,7 +171,6 @@ const Landing = () => {
   ];
 
   const filteredFreelancers = freelancers.filter(f => {
-    if (activeFreelancerCategory !== 'all' && f.category !== activeFreelancerCategory) return false;
     if (searchQuery && !f.name.toLowerCase().includes(searchQuery.toLowerCase()) && 
         !f.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
         !f.description.toLowerCase().includes(searchQuery.toLowerCase())) return false;
@@ -241,7 +238,9 @@ const Landing = () => {
                     placeholder="Keresés projektek vagy pilóták között..."
                     className="flex-1 px-4 py-3 bg-transparent border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:border-blue-600 dark:focus:border-blue-400 text-gray-900 dark:text-white transition-all duration-700"
                   />
-                  <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 whitespace-nowrap">
+                  <button 
+                    onClick={() => navigate(`/find-work?q=${encodeURIComponent(searchQuery)}`)} 
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 whitespace-nowrap">
                     Keresés
                   </button>
                 </div>
@@ -321,17 +320,13 @@ const Landing = () => {
           <div className="flex flex-wrap gap-2 mb-8">
             <div className="flex flex-wrap gap-2 w-full md:w-auto">
               {jobCategories.map((cat) => (
-                <button
+                <Link
                   key={cat.id}
-                  onClick={() => setActiveJobCategory(cat.id)}
-                  className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 ${
-                    activeJobCategory === cat.id
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                  }`}
+                  to={`/find-work?category=${cat.id}`}
+                  className="px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-blue-600 hover:text-white"
                 >
                   {cat.name} <span className="text-xs opacity-75">({cat.count})</span>
-                </button>
+                </Link>
               ))}
             </div>
             <button
@@ -489,17 +484,13 @@ const Landing = () => {
           {/* Kategória szűrő */}
           <div className="flex flex-wrap gap-2 mb-8">
             {freelancerCategories.map((cat) => (
-              <button
+              <Link
                 key={cat.id}
-                onClick={() => setActiveFreelancerCategory(cat.id)}
-                className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 ${
-                  activeFreelancerCategory === cat.id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
-                }`}
+                to={`/find-freelancers?category=${cat.id}`}
+                className="px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-blue-600 hover:text-white"
               >
                 {cat.name} <span className="text-xs opacity-75">({cat.count})</span>
-              </button>
+              </Link>
             ))}
           </div>
 
@@ -693,12 +684,11 @@ const Landing = () => {
                         <span className="text-sm text-gray-500 transition-all duration-700">({selectedJob.client.reviews} értékelés)</span>
                       </div>
                     </div>
-                    {/* JAVÍTVA: Ez az útvonal nem létezik, átirányítjuk a find-work oldalra */}
                     <Link
                       to="/find-work"
                       className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 text-center"
                     >
-                      Ajánlatot küldök
+                      Részletek és jelentkezés
                     </Link>
                   </div>
                 </div>
@@ -771,12 +761,11 @@ const Landing = () => {
                     <div>
                       <p className="text-sm text-gray-500 transition-all duration-700">Helyszín: {selectedFreelancer.location}</p>
                     </div>
-                    {/* JAVÍTVA: Ez az útvonal nem létezik, átirányítjuk a login oldalra */}
                     <Link
-                      to="/login"
+                      to="/find-freelancers"
                       className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 text-center"
                     >
-                      Kapcsolatfelvétel (Bejelentkezés)
+                      Teljes profil megtekintése
                     </Link>
                   </div>
                 </div>
