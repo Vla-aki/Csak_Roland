@@ -102,7 +102,7 @@ const Earnings = () => {
             </p>
           </div>
 
-          {/* Összegző kártyák */}
+          {/* Összegző */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-700">
               <div className="flex items-center justify-between mb-2">
@@ -141,7 +141,7 @@ const Earnings = () => {
             </div>
           </div>
 
-          {/* Grafikon helyettesítő */}
+          {/* Grafikon */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-8 transition-all duration-700">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">Havi bevételek</h2>

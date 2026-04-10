@@ -18,9 +18,9 @@ const PrivateRoute = ({ children, requiredRole }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // Ha van requiredRole, akkor ellenőrizzük a user szerepkörét
+  // Szerepkör ellenőrzés
   if (requiredRole && user.role !== requiredRole) {
-    // Ha a szerepkör nem megfelelő, átirányítjuk a megfelelő (saját) dashboardjára
+    // Átirányítás
     if (user.role === 'customer') {
       return <Navigate to="/dashboard" replace />;
     } else if (user.role === 'driver') {

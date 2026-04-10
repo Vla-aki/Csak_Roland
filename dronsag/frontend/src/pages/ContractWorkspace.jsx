@@ -44,17 +44,17 @@ const ContractWorkspace = () => {
     };
     fetchData();
     
-    // Egyszerű másodpercenkénti frissítés a chathoz (polling)
+    // Chat frissítés
     const interval = setInterval(fetchData, 3000);
     return () => clearInterval(interval);
   }, [id]);
 
-  // Fizetés szimulálása
+  // Fizetés szimuláció
   useEffect(() => {
     if (paymentStep === 2) {
       setTimeout(() => {
         handleCompleteContract();
-      }, 2500); // 2.5 mp "feldolgozás"
+      }, 2500);
     }
   }, [paymentStep]);
 
@@ -93,7 +93,7 @@ const ContractWorkspace = () => {
       });
       const data = await res.json();
       if (data.success) {
-        setPaymentStep(3); // Sikeres képernyő
+      setPaymentStep(3);
         setTimeout(() => { setShowReviewModal(false); navigate('/dashboard'); }, 2000);
       } else {
         alert(data.message);
@@ -117,7 +117,7 @@ const ContractWorkspace = () => {
           </button>
 
           <div className="flex flex-col lg:flex-row gap-6 flex-1 overflow-hidden">
-            {/* Bal panel: Munka adatai */}
+            {/* Munka adatai */}
             <div className="lg:w-1/3 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col">
               <div className="mb-6 border-b border-gray-100 dark:border-gray-700 pb-6">
                 <div className="flex justify-between items-start mb-2">
@@ -147,7 +147,7 @@ const ContractWorkspace = () => {
               </div>
             </div>
 
-            {/* Jobb panel: Üzenőfal */}
+            {/* Üzenőfal */}
             <div className="lg:w-2/3 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col h-[60vh] lg:h-auto">
               <div className="p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 rounded-t-xl">
                 <h3 className="font-bold text-gray-900 dark:text-white">Munka Megbeszélése</h3>
@@ -190,7 +190,7 @@ const ContractWorkspace = () => {
                   </p>
                 </div>
 
-                {/* Bankkártya szimuláció */}
+                {/* Bankkártya űrlap */}
                 <div className="space-y-4 mb-6">
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Kártyaszám</label>

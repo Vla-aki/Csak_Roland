@@ -12,7 +12,7 @@ const pool = mysql.createPool({
     connectionLimit: 10
 });
 
-// Middleware: Csak adminisztrátoroknak!
+// Admin jogosultság
 const isAdmin = (req, res, next) => {
     if (req.user.role !== 'admin') {
         return res.status(403).json({ message: 'Nincs jogosultságod ehhez a művelethez (Csak Admin)!' });
@@ -20,10 +20,10 @@ const isAdmin = (req, res, next) => {
     next();
 };
 
-// Alkalmazzuk a middleware-eket minden admin route-ra
+// Middleware-ek
 router.use(authMiddleware, isAdmin);
 
-// Összes projekt lekérése az adminnak
+// Projektek lekérése
 router.get('/projects', async (req, res) => {
     try {
         const [projects] = await pool.query('SELECT p.*, u.email as user_email, u.name as user_name FROM projects p JOIN users u ON p.user_id = u.id ORDER BY p.created_at DESC');
@@ -33,7 +33,7 @@ router.get('/projects', async (req, res) => {
     }
 });
 
-// Projekt törlése (bármelyik)
+// Projekt törlése
 router.delete('/projects/:id', async (req, res) => {
     try {
         await pool.query('DELETE FROM projects WHERE id = ?', [req.params.id]);
@@ -43,7 +43,7 @@ router.delete('/projects/:id', async (req, res) => {
     }
 });
 
-// Összes felhasználó lekérése
+// Felhasználók lekérése
 router.get('/users', async (req, res) => {
     try {
         const [users] = await pool.query('SELECT id, name, email, phone, role FROM users ORDER BY id DESC');
@@ -53,7 +53,7 @@ router.get('/users', async (req, res) => {
     }
 });
 
-// Felhasználó törlése (ON DELETE CASCADE miatt mindent visz magával)
+// Felhasználó törlése
 router.delete('/users/:id', async (req, res) => {
     try {
         await pool.query('DELETE FROM users WHERE id = ?', [req.params.id]);

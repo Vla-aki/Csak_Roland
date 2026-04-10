@@ -15,21 +15,21 @@ const pool = mysql.createPool({
     connectionLimit: 10
 });
 
-// POST /api/auth/register - Regisztráció ÉS Automatikus bejelentkezés
+// Regisztráció
 router.post('/register', async (req, res) => {
     const { name, email, password, role, phone } = req.body;
 
     try {
-        // 1. Ellenőrizzük, hogy létezik-e már az email
+        // Email ellenőrzése
         const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
         if (existing.length > 0) {
             return res.status(400).json({ message: 'Ez az email cím már foglalt!' });
         }
 
-        // 2. Jelszó titkosítása
+        // Jelszó titkosítása
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // 3. Új felhasználó beszúrása
+        // Felhasználó mentése
         const [result] = await pool.query(
             'INSERT INTO users (name, email, password, role, phone) VALUES (?, ?, ?, ?, ?)',
             [name, email, hashedPassword, role, phone || null]
@@ -37,14 +37,14 @@ router.post('/register', async (req, res) => {
 
         const newUserId = result.insertId;
 
-        // 4. Token generálása (ugyanaz a folyamat, mint bejelentkezéskor)
+        // Token generálása
         const token = jwt.sign(
             { id: newUserId, role: role },
-            process.env.JWT_SECRET || 'titkos_kulcs', // Ezt a .env-ből kellene venni ideális esetben
+            process.env.JWT_SECRET || 'titkos_kulcs',
             { expiresIn: '1d' }
         );
 
-        // 5. Válasz visszaküldése a token-nel együtt
+        // Válasz küldése
         res.status(201).json({
             message: 'Sikeres regisztráció!',
             token: token,
@@ -56,7 +56,7 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// POST /api/auth/login - Hagyományos bejelentkezés
+// Bejelentkezés
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
@@ -77,7 +77,7 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// GET /api/auth/pilots - Összes pilóta lekérése (Keresőhöz és Landing page-hez)
+// Pilóták lekérése
 router.get('/pilots', async (req, res) => {
     try {
         const query = `
@@ -90,7 +90,7 @@ router.get('/pilots', async (req, res) => {
         `;
         const [pilots] = await pool.query(query);
 
-        // Készségek és adatok formázása minden pilótához
+        // Adatok formázása
         for (let pilot of pilots) {
             const [skills] = await pool.query('SELECT skill FROM user_skills WHERE user_id = ?', [pilot.id]);
             pilot.skills = skills.map(s => s.skill);
@@ -113,7 +113,7 @@ router.get('/pilots', async (req, res) => {
     }
 });
 
-// GET /api/auth/pilots/:id/reviews - Egy pilóta értékeléseinek lekérése
+// Értékelések lekérése
 router.get('/pilots/:id/reviews', async (req, res) => {
     try {
         const [reviews] = await pool.query(`
@@ -134,7 +134,7 @@ router.get('/pilots/:id/reviews', async (req, res) => {
     }
 });
 
-// PUT /api/auth/profile - Profil frissítése
+// Profil frissítése
 router.put('/profile', authMiddleware, async (req, res) => {
     const { name, phone, location, bio, hourly_rate, availability, skills, portfolio, profile_image } = req.body;
     let connection;
@@ -175,7 +175,7 @@ router.put('/profile', authMiddleware, async (req, res) => {
     }
 });
 
-// PUT /api/auth/switch-role - Szerepkör váltás
+// Szerepkör váltás
 router.put('/switch-role', authMiddleware, async (req, res) => {
     const { newRole } = req.body;
     if (!['customer', 'driver'].includes(newRole)) return res.status(400).json({ message: 'Érvénytelen szerepkör!' });

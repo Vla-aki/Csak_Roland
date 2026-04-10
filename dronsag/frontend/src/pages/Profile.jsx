@@ -8,7 +8,7 @@ import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaInfoCircle, FaMoneyBillW
 const Profile = () => {
   const { user } = useAuth();
   
-  // State az űrlap adatainak tárolására (kezdeti értékek a bejelentkezett user adataiból)
+  // Űrlap állapotok
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -22,12 +22,12 @@ const Profile = () => {
     profile_image: user?.profile_image || '' 
   });
 
-  // Profilkép kezeléséhez szükséges állapotok
+  // Profilkép állapotok
   const fileInputRef = useRef(null);
   const portfolioFileInputRef = useRef(null);
   const [profileImagePreview, setProfileImagePreview] = useState(user?.profile_image || null);
 
-  // Amikor betöltődik a user adat (vagy ha módosul), beállítjuk az űrlap és a profilkép értékeit
+  // Adatok betöltése
   useEffect(() => {
     if (user) {
       setFormData({
@@ -61,7 +61,7 @@ const Profile = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Szerkesztés megszakítása és adatok visszaállítása
+  // Szerkesztés megszakítása
   const handleCancel = () => {
     setFormData({
       name: user?.name || '',
@@ -93,45 +93,65 @@ const Profile = () => {
     setFormData(prev => ({ ...prev, skills: prev.skills.filter(s => s !== skillToRemove) }));
   };
 
-  // Képkiválasztó megnyitása
+  // Képkiválasztó
   const handleImageClick = () => {
     fileInputRef.current.click();
   };
 
-  // Segédfüggvény a fájl szerverre küldéséhez
-  const uploadImage = async (file) => {
-    const formData = new FormData();
-    formData.append('image', file);
-    const token = localStorage.getItem('token');
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-    
-    const res = await fetch(`${apiUrl}/upload`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` },
-      body: formData
+  // Kép tömörítése
+  const compressImage = (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Tömörítés 70%-os minőségű JPEG-be
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+          resolve(compressedBase64);
+        };
+      };
     });
-    const data = await res.json();
-    if (data.success) {
-      const baseUrl = apiUrl.replace('/api', '');
-      return `${baseUrl}${data.url}`;
-    }
-    throw new Error('Feltöltési hiba');
   };
 
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
       try {
-        setProfileImagePreview(URL.createObjectURL(file)); // Ideiglenes előnézet
-        const uploadedUrl = await uploadImage(file);
-        setFormData(prev => ({ ...prev, profile_image: uploadedUrl }));
+        const compressedDataUrl = await compressImage(file);
+        setProfileImagePreview(compressedDataUrl);
+        setFormData(prev => ({ ...prev, profile_image: compressedDataUrl }));
       } catch (error) {
-        alert('Hiba a kép feltöltésekor!');
+        alert('Hiba a kép tömörítésekor!');
       }
     }
   };
 
-  // Portfólió képkiválasztó megnyitása
+  // Portfólió képkiválasztó
   const handlePortfolioClick = () => {
     portfolioFileInputRef.current.click();
   };
@@ -140,10 +160,10 @@ const Profile = () => {
     const files = Array.from(e.target.files);
     for (const file of files) {
       try {
-        const uploadedUrl = await uploadImage(file);
-        setFormData(prev => ({ ...prev, portfolio: [...prev.portfolio, uploadedUrl] }));
+        const compressedDataUrl = await compressImage(file);
+        setFormData(prev => ({ ...prev, portfolio: [...prev.portfolio, compressedDataUrl] }));
       } catch (error) {
-        alert('Hiba a portfólió kép feltöltésekor!');
+        alert('Hiba a portfólió kép tömörítésekor!');
       }
     }
   };
@@ -180,14 +200,14 @@ const Profile = () => {
          try {
            localStorage.setItem('user', JSON.stringify(finalUser));
          } catch (e) {
-           // Ha a képek miatt betelt a localStorage (QuotaExceededError), a képek nélkül mentjük a gyorsítótárba
+           // Gyorsítótár ürítése
            finalUser.portfolio = [];
            localStorage.setItem('user', JSON.stringify(finalUser));
          }
 
          setSaveMessage({ type: 'success', text: 'A profil adatai sikeresen frissítve lettek!' });
-        setIsEditing(false); // Visszaváltunk olvasási nézetbe újratöltés nélkül
-        setTimeout(() => window.location.reload(), 1000); // Újratöltjük az oldalt, hogy a Navbar is frissüljön
+        setIsEditing(false);
+        setTimeout(() => window.location.reload(), 1000);
       } else {
 
         setSaveMessage({ type: 'error', text: result.message || 'Hiba történt a mentés során.' });
@@ -231,9 +251,9 @@ const Profile = () => {
     }
   };
 
-  if (!user) return null; // Biztonsági ellenőrzés, ha nincs user, a PrivateRoute úgyis kivédi
+  if (!user) return null;
 
-  // Csatlakozás dátumának formázása
+  // Dátum formázás
   const formatDate = (dateString) => {
     if (!dateString) return 'Ismeretlen';
     const date = new Date(dateString);
@@ -254,12 +274,12 @@ const Profile = () => {
 
         <div className="flex flex-col lg:flex-row gap-8">
           
-          {/* Bal oldali sáv: Statisztikák és Névjegykártya */}
+          {/* Bal sáv */}
           <div className="lg:w-1/3 space-y-6">
             {/* Névjegykártya */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-colors duration-700 text-center">
               
-              {/* Kattintható Profilkép */}
+              {/* Profilkép */}
               <div 
             className={`relative w-24 h-24 mx-auto rounded-full mb-4 shadow-lg shadow-blue-600/30 overflow-hidden ${isEditing ? 'cursor-pointer group' : ''}`}
             onClick={isEditing ? handleImageClick : undefined}
@@ -272,14 +292,14 @@ const Profile = () => {
                   </div>
                 )}
                 
-                {/* Hover overlay (Kép cseréje) */}
+                {/* Kép cseréje */}
                 <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <FaCamera className="text-white text-xl mb-1" />
                   <span className="text-white text-[10px] font-medium uppercase tracking-wider">Módosítás</span>
                 </div>
               </div>
               
-              {/* Rejtett fájl beviteli mező */}
+              {/* Fájl input */}
               <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
 
           <h2 className="text-xl font-bold text-gray-900 dark:text-white transition-colors duration-700">{formData.name}</h2>
@@ -295,7 +315,7 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* Statisztikák (Csak olvasható, az adatbázisból jön) */}
+            {/* Statisztikák */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-colors duration-700">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 transition-colors duration-700">Statisztikák</h3>
               
@@ -337,7 +357,7 @@ const Profile = () => {
             </div>
           </div>
 
-          {/* Jobb oldali sáv: Szerkeszthető űrlap */}
+          {/* Jobb sáv */}
           <div className="lg:w-2/3">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 sm:p-8 transition-colors duration-700">
               
@@ -351,7 +371,7 @@ const Profile = () => {
               )}
 
               {!isEditing ? (
-                /* --- OLVASÁSI NÉZET --- */
+                /* Olvasási nézet */
                 <div className="space-y-8">
                   <div className="flex justify-between items-center border-b border-gray-100 dark:border-gray-700 pb-3 transition-colors duration-700">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white transition-colors duration-700">Személyes adatok</h3>
@@ -440,7 +460,7 @@ const Profile = () => {
                   )}
                 </div>
               ) : (
-                /* --- SZERKESZTŐ ŰRLAP --- */
+                /* Szerkesztő űrlap */
                 <form onSubmit={handleSubmit} className="space-y-6">
                   
                   <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-3 transition-colors duration-700">
@@ -492,7 +512,7 @@ const Profile = () => {
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors duration-500 resize-none"></textarea>
                 </div>
 
-                {/* Pilóta specifikus beállítások */}
+                {/* Pilóta beállítások */}
                 {user.role === 'driver' && (
                   <>
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-700 pb-3 pt-4 transition-colors duration-700">Szakmai adatok</h3>
@@ -522,7 +542,7 @@ const Profile = () => {
                       </div>
                     </div>
 
-                    {/* Szakterületek / Készségek */}
+                    {/* Szakterületek */}
                     <div className="mt-6">
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Szakterületek (pl. Légifotózás, Földmérés)</label>
                       <div className="flex gap-2 mb-3">
@@ -563,7 +583,7 @@ const Profile = () => {
                         </button>
                       </div>
                       
-                      {/* Címkék listája */}
+                      {/* Címkék */}
                       <div className="flex flex-wrap gap-2">
                         {formData.skills.map((skill, idx) => (
                           <span key={idx} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium border border-blue-200 dark:border-blue-800/50">
@@ -639,7 +659,7 @@ const Profile = () => {
       
       <Footer />
 
-      {/* ===== SZEREPKÖR VÁLTÁS MODAL ===== */}
+      {/* Szerepkör váltás modal */}
       {showRoleModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all">
           <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full shadow-2xl p-6">

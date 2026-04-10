@@ -96,7 +96,7 @@ const MyProjects = () => {
             </Link>
           </div>
 
-          {/* Szűrők és kereső */}
+          {/* Szűrők */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-8 transition-all duration-700">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1 relative">
@@ -166,7 +166,7 @@ const MyProjects = () => {
             )}
           </div>
 
-          {/* Projektek lista */}
+          {/* Projektek */}
           {loading ? (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>

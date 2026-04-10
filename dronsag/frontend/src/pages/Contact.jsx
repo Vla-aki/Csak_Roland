@@ -25,7 +25,6 @@ const Contact = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-    // Clear error for this field
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -85,7 +84,7 @@ const Contact = () => {
         consent: false
       });
       
-      // 5 másodperc után eltüntetjük a sikeres üzenetet
+      // Üzenet eltüntetése
       setTimeout(() => setIsSubmitted(false), 5000);
     }, 1500);
   };
@@ -151,7 +150,7 @@ const Contact = () => {
           </div>
         </section>
 
-        {/* Sikeres küldés üzenet */}
+        {/* Siker üzenet */}
         {isSubmitted && (
           <div className="fixed top-24 left-1/2 transform -translate-x-1/2 z-50 bg-green-100 dark:bg-green-900 border border-green-400 dark:border-green-700 text-green-700 dark:text-green-300 px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 animate-fade-in transition-all duration-700">
             <FaCheckCircle className="text-2xl" />
@@ -159,11 +158,11 @@ const Contact = () => {
           </div>
         )}
 
-        {/* Kontakt információk és űrlap */}
+        {/* Információk és űrlap */}
         <section className="py-20 px-4 bg-white dark:bg-gray-800 transition-all duration-700">
           <div className="container mx-auto max-w-7xl">
             <div className="grid lg:grid-cols-2 gap-12">
-              {/* Bal oldal - Kontakt info */}
+              {/* Elérhetőségek */}
               <div className="transition-all duration-700">
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6 transition-all duration-700">
                   Írj nekünk!
@@ -202,7 +201,7 @@ const Contact = () => {
                   ))}
                 </div>
 
-                {/* Térkép helyettesítő */}
+                {/* Térkép */}
                 <div className="bg-gray-200 dark:bg-gray-700 rounded-lg h-64 flex items-center justify-center transition-all duration-700">
                   <div className="text-center">
                     <FaMapMarkerAlt className="text-4xl text-gray-400 mx-auto mb-2 transition-all duration-700" />
@@ -212,7 +211,7 @@ const Contact = () => {
                 </div>
               </div>
 
-              {/* Jobb oldal - Kapcsolatfelvételi űrlap */}
+              {/* Űrlap */}
               <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-8 transition-all duration-700">
                 <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 transition-all duration-700">
                   Küldj üzenetet

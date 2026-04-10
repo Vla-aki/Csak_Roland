@@ -49,7 +49,14 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       const data = await api.register(userData);
-      return { success: true };
+      
+      // Automatikus bejelentkezés regisztráció után
+      localStorage.setItem('user', JSON.stringify(data.user));
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+      }
+      setUser(data.user);
+      return { success: true, user: data.user };
     } catch (error) {
       return { 
         success: false, 

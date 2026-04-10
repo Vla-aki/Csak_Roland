@@ -2,17 +2,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { FaUserCircle, FaSignOutAlt, FaCog } from 'react-icons/fa';
+import { FaUserCircle, FaSignOutAlt, FaCog, FaSun, FaMoon, FaBell } from 'react-icons/fa';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
   
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef(null);
+  const notifRef = useRef(null);
 
   // Scroll effect
   useEffect(() => {
@@ -45,13 +48,34 @@ const Navbar = () => {
       if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
         setIsProfileMenuOpen(false);
       }
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setIsNotifOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Értesítések lekérése
+  useEffect(() => {
+    if (user) {
+      const fetchNotifs = async () => {
+        try {
+          const token = localStorage.getItem('token');
+          const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+          const res = await fetch(`${apiUrl}/notifications`, { headers: { 'Authorization': `Bearer ${token}` }});
+          const data = await res.json();
+          if (data.success) setNotifications(data.notifications);
+        } catch (e) {}
+      };
+      fetchNotifs();
+      const interval = setInterval(fetchNotifs, 15000); // 15 másodpercenként frissít
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
   const toggleDarkMode = () => {
-    if (isDark) {
+    if (document.documentElement.classList.contains('dark')) {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     } else {
@@ -74,20 +98,27 @@ const Navbar = () => {
             <span className="text-blue-600 dark:text-blue-400">HIRE</span>
           </Link>
 
-          {/* Desktop menu */}
+          {/* Szerepkör-alapú Desktop menü */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link to="/find-work" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300">
-              Munka keresés
-            </Link>
-            <Link to="/find-freelancers" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300">
-              Pilóták
-            </Link>
-            <Link to="/about" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300">
-              Rólunk
-            </Link>
-            <Link to="/contact" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300">
-              Kapcsolat
-            </Link>
+            {!user && (
+              <>
+                <Link to="/find-work" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Munkák</Link>
+                <Link to="/find-freelancers" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Pilóták</Link>
+              </>
+            )}
+            
+            {user?.role === 'customer' && (
+              <>
+                <Link to="/find-freelancers" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Pilóták keresése</Link>
+                <Link to="/create-project" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Új munka meghirdetése</Link>
+              </>
+            )}
+
+            {user?.role === 'driver' && (
+              <Link to="/available-projects" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Munkák keresése</Link>
+            )}
+
+            <Link to="/about" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Rólunk</Link>
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
@@ -96,8 +127,36 @@ const Navbar = () => {
               onClick={toggleDarkMode}
               className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300"
             >
-              {isDark ? '☀️' : '🌙'}
+              {isDark ? <FaSun size={18} className="text-yellow-400" /> : <FaMoon size={18} />}
             </button>
+
+            {/* Értesítések Harang ikon */}
+            {user && (
+              <div className="relative" ref={notifRef}>
+                <button onClick={() => setIsNotifOpen(!isNotifOpen)} className="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all">
+                  <FaBell size={18} />
+                  {notifications.filter(n => !n.is_read).length > 0 && (
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+                  )}
+                </button>
+                
+                {isNotifOpen && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-xl py-2 z-50">
+                    <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+                      <h3 className="font-bold text-gray-900 dark:text-white">Értesítések</h3>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      {notifications.length > 0 ? notifications.map(n => (
+                        <div key={n.id} className={`px-4 py-3 border-b border-gray-50 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 ${!n.is_read ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}>
+                          <p className="text-sm text-gray-800 dark:text-gray-200">{n.message || n.title}</p>
+                          <p className="text-xs text-gray-500 mt-1">{new Date(n.created_at).toLocaleDateString('hu-HU')}</p>
+                        </div>
+                      )) : <p className="p-4 text-sm text-gray-500 text-center">Nincs új értesítésed.</p>}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {user ? (
               <div className="relative" ref={profileMenuRef}>
@@ -181,17 +240,23 @@ const Navbar = () => {
         {isOpen && (
           <div className="md:hidden mt-4 py-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex flex-col space-y-4">
-              <Link to="/find-work" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
-                Munka keresés
-              </Link>
-              <Link to="/find-freelancers" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
-                Pilóták
-              </Link>
+              {!user && (
+                <>
+                  <Link to="/find-work" className="text-gray-700 dark:text-gray-300 hover:text-blue-600">Munkák</Link>
+                  <Link to="/find-freelancers" className="text-gray-700 dark:text-gray-300 hover:text-blue-600">Pilóták</Link>
+                </>
+              )}
+              {user?.role === 'customer' && (
+                <>
+                  <Link to="/find-freelancers" className="text-gray-700 dark:text-gray-300 hover:text-blue-600">Pilóták keresése</Link>
+                  <Link to="/create-project" className="text-gray-700 dark:text-gray-300 hover:text-blue-600">Új munka meghirdetése</Link>
+                </>
+              )}
+              {user?.role === 'driver' && (
+                <Link to="/available-projects" className="text-gray-700 dark:text-gray-300 hover:text-blue-600">Munkák keresése</Link>
+              )}
               <Link to="/about" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
                 Rólunk
-              </Link>
-              <Link to="/contact" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
-                Kapcsolat
               </Link>
               
               <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -212,7 +277,7 @@ const Navbar = () => {
                         </div>
                       </div>
                       <button onClick={toggleDarkMode} className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
-                        {isDark ? '☀️' : '🌙'}
+                        {isDark ? <FaSun className="text-yellow-400"/> : <FaMoon />}
                       </button>
                     </div>
                     
@@ -239,7 +304,7 @@ const Navbar = () => {
                       </Link>
                     </div>
                     <button onClick={toggleDarkMode} className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
-                      {isDark ? '☀️' : '🌙'}
+                      {isDark ? <FaSun className="text-yellow-400"/> : <FaMoon />}
                     </button>
                   </div>
                 )}

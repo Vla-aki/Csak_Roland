@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 >nul
 title HoverHire - Leállítás
 echo ========================================
 echo    HOVERHIRE - Rendszer leállítása
@@ -6,7 +7,7 @@ echo ========================================
 echo.
 
 echo Konténerek leállítása...
-cd /d C:\Csak_Roland
+cd /d "%~dp0"
 docker-compose down
 echo.
 

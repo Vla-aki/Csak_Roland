@@ -11,12 +11,12 @@ const authMiddleware = (req, res, next) => {
     const token = authHeader.split(' ')[1];
 
     try {
-        // Ellenőrizzük a tokent és dekódoljuk a payload-ot
+        // Token ellenőrzés
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'titkos_kulcs');
         
-        // Hozzáadjuk a felhasználó adatait a request objektumhoz
+        // User beállítása
         req.user = decoded; 
-        next(); // Továbbengedjük a kérést a következő middleware-re/route handlerre
+        next();
     } catch (error) {
         if (error.name === 'TokenExpiredError') {
             return res.status(401).json({ message: 'A munkameneted lejárt. Kérlek jelentkezz be újra!' });

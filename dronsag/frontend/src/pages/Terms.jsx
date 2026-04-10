@@ -33,7 +33,7 @@ const Terms = () => {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-8 transition-all duration-700">
             <div className="space-y-8">
               
-              {/* 1. Általános rendelkezések */}
+              {/* Általános */}
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">1. Általános rendelkezések</h2>
                 <div className="space-y-3 text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -44,7 +44,7 @@ const Terms = () => {
                 </div>
               </section>
 
-              {/* 2. Fogalommeghatározások */}
+              {/* Fogalmak */}
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">2. Fogalommeghatározások</h2>
                 <div className="space-y-3 text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -57,7 +57,7 @@ const Terms = () => {
                 </div>
               </section>
 
-              {/* 3. Regisztráció */}
+              {/* Regisztráció */}
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">3. Regisztráció</h2>
                 <div className="space-y-3 text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -68,7 +68,7 @@ const Terms = () => {
                 </div>
               </section>
 
-              {/* 4. Projektek meghirdetése */}
+              {/* Projektek */}
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">4. Projektek meghirdetése</h2>
                 <div className="space-y-3 text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -79,7 +79,7 @@ const Terms = () => {
                 </div>
               </section>
 
-              {/* 5. Ajánlattétel */}
+              {/* Ajánlatok */}
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">5. Ajánlattétel</h2>
                 <div className="space-y-3 text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -90,7 +90,7 @@ const Terms = () => {
                 </div>
               </section>
 
-              {/* 6. Fizetés */}
+              {/* Fizetés */}
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">6. Fizetés</h2>
                 <div className="space-y-3 text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -101,7 +101,7 @@ const Terms = () => {
                 </div>
               </section>
 
-              {/* 7. Jutalékok */}
+              {/* Jutalékok */}
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">7. Jutalékok</h2>
                 <div className="space-y-3 text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -112,7 +112,7 @@ const Terms = () => {
                 </div>
               </section>
 
-              {/* 8. Felelősség */}
+              {/* Felelősség */}
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">8. Felelősség</h2>
                 <div className="space-y-3 text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -123,7 +123,7 @@ const Terms = () => {
                 </div>
               </section>
 
-              {/* 9. Vitarendezés */}
+              {/* Vitarendezés */}
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">9. Vitarendezés</h2>
                 <div className="space-y-3 text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -134,7 +134,7 @@ const Terms = () => {
                 </div>
               </section>
 
-              {/* 10. Záró rendelkezések */}
+              {/* Záró rendelkezések */}
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">10. Záró rendelkezések</h2>
                 <div className="space-y-3 text-gray-600 dark:text-gray-400 leading-relaxed">

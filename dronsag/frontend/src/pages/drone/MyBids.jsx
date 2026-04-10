@@ -112,7 +112,7 @@ const MyBids = () => {
             </p>
           </div>
 
-          {/* Statisztika kártyák */}
+          {/* Statisztikák */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4 text-center">
               <p className="text-2xl font-bold text-gray-900 dark:text-white">{bids.length}</p>
@@ -192,7 +192,7 @@ const MyBids = () => {
             </div>
           </div>
 
-          {/* Ajánlatok lista */}
+          {/* Ajánlatok */}
           {loading ? (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
@@ -279,7 +279,7 @@ const MyBids = () => {
           </div>
           )}
 
-          {/* Összes bevétel */}
+          {/* Bevételek */}
           <div className="mt-8 bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg p-6 text-white">
             <div className="flex flex-col sm:flex-row items-center justify-between">
               <div>

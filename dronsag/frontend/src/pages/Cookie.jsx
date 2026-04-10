@@ -45,7 +45,7 @@ const Cookie = () => {
                 </p>
               </section>
 
-              {/* Cookie típusok */}
+              {/* Típusok */}
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Cookie-k típusai</h2>
                 
@@ -87,7 +87,7 @@ const Cookie = () => {
                 </div>
               </section>
 
-              {/* Cookie kezelése */}
+              {/* Kezelés */}
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Cookie-k kezelése</h2>
                 <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
@@ -130,7 +130,7 @@ const Cookie = () => {
                 </div>
               </section>
 
-              {/* Cookie beállítások gomb */}
+              {/* Gomb */}
               <div className="flex justify-center">
                 <button
                   onClick={() => setShowSettings(!showSettings)}
@@ -140,7 +140,7 @@ const Cookie = () => {
                 </button>
               </div>
 
-              {/* Cookie beállítások panel */}
+              {/* Beállítások */}
               {showSettings && (
                 <div className="p-6 border border-gray-200 dark:border-gray-700 rounded-lg">
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Cookie beállítások</h3>

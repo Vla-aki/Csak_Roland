@@ -104,7 +104,7 @@ const About = () => {
       <Navbar />
       
       <div className="pt-24 pb-16">
-        {/* Hero szekció - hullám nélkül, sima kocka */}
+        {/* Hero */}
         <section className="bg-gradient-to-r from-blue-600 to-blue-800 py-20 px-4 text-white transition-all duration-700">
           <div className="container mx-auto max-w-7xl text-center">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 transition-all duration-700">
@@ -117,7 +117,7 @@ const About = () => {
           </div>
         </section>
 
-        {/* Történet szekció */}
+        {/* Történet */}
         <section className="py-20 px-4 bg-white dark:bg-gray-800 transition-all duration-700">
           <div className="container mx-auto max-w-7xl">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -217,7 +217,7 @@ const About = () => {
             <div className="space-y-8">
               {timeline.map((item, index) => (
                 <div key={index} className="relative flex items-start gap-6">
-                  {/* Év jelölő */}
+                {/* Év */}
                   <div className="flex-shrink-0 w-24 text-right">
                     <span className="text-2xl font-bold text-blue-600 dark:text-blue-400 transition-all duration-700">
                       {item.year}
@@ -294,7 +294,7 @@ const About = () => {
           </div>
         </section>
 
-        {/* CTA szekció */}
+        {/* CTA */}
         <section className="py-20 px-4 bg-gradient-to-r from-blue-600 to-blue-800 text-white transition-all duration-700">
           <div className="container mx-auto max-w-4xl text-center">
             <h2 className="text-3xl sm:text-4xl font-bold mb-6 transition-all duration-700">
