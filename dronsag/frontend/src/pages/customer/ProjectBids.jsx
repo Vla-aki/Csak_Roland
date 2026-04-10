@@ -125,7 +125,7 @@ const ProjectBids = () => {
             Vissza a projektjeimhez
           </Link>
 
-          {/* Projekt infó */}
+          {/* Projekt */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-8 transition-all duration-700">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div>
@@ -145,7 +145,7 @@ const ProjectBids = () => {
             </div>
           </div>
 
-          {/* Szűrők és rendezés */}
+          {/* Szűrők */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-8 transition-all duration-700">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center gap-2">
@@ -187,7 +187,7 @@ const ProjectBids = () => {
             </div>
           </div>
 
-          {/* Ajánlatok lista */}
+          {/* Ajánlatok */}
           <div className="space-y-4">
             {sortedBids.map((bid) => (
               <div
@@ -202,7 +202,7 @@ const ProjectBids = () => {
               >
                 <div className="p-6">
                   <div className="flex flex-col lg:flex-row gap-6">
-                    {/* Pilóta infó */}
+                    {/* Pilóta */}
                     <div className="lg:w-64 flex-shrink-0">
                       <div className="flex items-center gap-3 mb-3">
                         <img src={bid.pilotImage} alt={bid.pilotName} className="w-12 h-12 rounded-full" />
@@ -241,7 +241,7 @@ const ProjectBids = () => {
                       </div>
                     </div>
 
-                    {/* Ajánlat részletei */}
+                    {/* Részletek */}
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-3">
                         <h4 className="font-medium text-gray-900 dark:text-white">Ajánlat részletei</h4>
@@ -258,7 +258,7 @@ const ProjectBids = () => {
                         ))}
                       </div>
                       
-                      {/* Akciógombok */}
+                      {/* Gombok */}
                       {bid.status === 'pending' && (
                         <div className="flex items-center gap-3 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                           <button
@@ -316,7 +316,7 @@ const ProjectBids = () => {
             ))}
           </div>
 
-          {/* Ha nincs ajánlat */}
+          {/* Üres állapot */}
           {bids.length === 0 && (
             <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
               <FaUserCircle className="mx-auto text-4xl text-gray-400 mb-4" />

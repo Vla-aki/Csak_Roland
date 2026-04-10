@@ -92,10 +92,10 @@ const Messages = () => {
       <div className="pt-24 pb-16 px-4 h-[calc(100vh-200px)]">
         <div className="container mx-auto max-w-7xl h-full">
           
-          {/* Üzenetek konténer */}
+          {/* Konténer */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 h-full flex overflow-hidden transition-all duration-700">
             
-            {/* Bal oldal - Chat lista */}
+            {/* Chat lista */}
             <div className="w-full md:w-96 border-r border-gray-200 dark:border-gray-700 flex flex-col">
               {/* Kereső */}
               <div className="p-4 border-b border-gray-200 dark:border-gray-700">
@@ -111,7 +111,7 @@ const Messages = () => {
                 </div>
               </div>
 
-              {/* Chat lista */}
+              {/* Partnerek */}
               <div className="flex-1 overflow-y-auto">
                 {filteredChats.map((chat) => (
                   <button
@@ -160,10 +160,10 @@ const Messages = () => {
               </div>
             </div>
 
-            {/* Jobb oldal - Chat ablak */}
+            {/* Chat ablak */}
             {selectedChat ? (
               <div className="flex-1 flex flex-col">
-                {/* Chat fejléc */}
+                {/* Fejléc */}
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="relative">
@@ -219,7 +219,7 @@ const Messages = () => {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Üzenet bevitel */}
+                {/* Beviteli mező */}
                 <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-200 dark:border-gray-700">
                   <div className="flex items-center gap-2">
                     <button

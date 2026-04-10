@@ -12,7 +12,7 @@ const pool = mysql.createPool({
     connectionLimit: 10
 });
 
-// 1. Chat partnerek és utolsó üzenetek lekérése
+// Partnerek lekérése
 router.get('/chats', authMiddleware, async (req, res) => {
     try {
         const userId = req.user.id;
@@ -57,7 +57,7 @@ router.get('/chats', authMiddleware, async (req, res) => {
     }
 });
 
-// 2. Üzenetek lekérése egy adott felhasználóval
+// Üzenetek lekérése
 router.get('/:otherUserId', authMiddleware, async (req, res) => {
     try {
         const userId = req.user.id;
@@ -77,7 +77,7 @@ router.get('/:otherUserId', authMiddleware, async (req, res) => {
     }
 });
 
-// 3. Üzenet küldése
+// Üzenet küldése
 router.post('/', authMiddleware, async (req, res) => {
     try {
         const { receiverId, message } = req.body;
@@ -91,7 +91,7 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 });
 
-// 4. Üzenetek lekérése EGY ADOTT SZERZŐDÉSHEZ (Munka Munkaterület)
+// Szerződés üzenetei
 router.get('/contract/:contractId', authMiddleware, async (req, res) => {
     try {
         const [messages] = await pool.query(
@@ -108,10 +108,10 @@ router.get('/contract/:contractId', authMiddleware, async (req, res) => {
     }
 });
 
-// 5. Üzenet küldése EGY ADOTT SZERZŐDÉSHEZ
+// Szerződés üzenetküldés
 router.post('/contract/:contractId', authMiddleware, async (req, res) => {
     try {
-        // Ellenőrizzük, hogy a user része-e a szerződésnek
+        // Jogosultság ellenőrzés
         const [contracts] = await pool.query('SELECT customer_id, driver_id FROM contracts WHERE id = ? AND (customer_id = ? OR driver_id = ?)', [req.params.contractId, req.user.id, req.user.id]);
         if (contracts.length === 0) return res.status(403).json({ message: 'Nincs jogosultságod ehhez a beszélgetéshez!' });
         

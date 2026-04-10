@@ -19,7 +19,7 @@ const DarkModeToggle = () => {
   }, []);
 
   const toggleDarkMode = () => {
-    const newDark = !isDark;
+    const newDark = !document.documentElement.classList.contains('dark');
     setIsDark(newDark);
     
     if (newDark) {

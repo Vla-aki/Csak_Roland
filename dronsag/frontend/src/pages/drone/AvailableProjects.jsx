@@ -105,7 +105,7 @@ const AvailableProjects = () => {
             </p>
           </div>
 
-          {/* Kategória szűrő */}
+          {/* Kategóriák */}
           <div className="flex flex-wrap gap-2 mb-6">
             {categories.map((cat) => (
               <button
@@ -123,7 +123,7 @@ const AvailableProjects = () => {
             ))}
           </div>
 
-          {/* Kereső és szűrők */}
+          {/* Szűrők */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-8 transition-all duration-700">
             <div className="flex flex-col lg:flex-row gap-4">
               <div className="flex-1 relative">
@@ -211,7 +211,7 @@ const AvailableProjects = () => {
             )}
           </div>
 
-          {/* Projektek grid */}
+          {/* Projektek */}
           {loading ? (
             <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>

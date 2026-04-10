@@ -93,7 +93,7 @@ const CustomerDashboard = () => {
       <div className="pt-24 pb-16 px-4">
         <div className="container mx-auto max-w-7xl">
           
-          {/* Üdvözlő sor */}
+          {/* Üdvözlet */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
             <div>
               <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2 transition-all duration-700">
@@ -112,7 +112,7 @@ const CustomerDashboard = () => {
             </Link>
           </div>
 
-          {/* Statisztika kártyák */}
+          {/* Statisztikák */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-700">
               <div className="flex items-center justify-between mb-2">
@@ -152,7 +152,7 @@ const CustomerDashboard = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Bal oldal - Legutóbbi projektek */}
+            {/* Legutóbbi projektek */}
             <div className="lg:col-span-2">
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-700">
                 <div className="flex items-center justify-between mb-6">
@@ -194,7 +194,7 @@ const CustomerDashboard = () => {
               </div>
             </div>
 
-            {/* Jobb oldal - Értesítések és gyorslinkek */}
+            {/* Értesítések és linkek */}
             <div className="space-y-6">
               {/* Értesítések */}
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-700">

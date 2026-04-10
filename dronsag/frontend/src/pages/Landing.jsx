@@ -4,7 +4,7 @@ import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
 
 const Landing = () => {
-  // ========== STATE MANAGEMENT ==========
+  // Állapotok
   const [scrollY, setScrollY] = useState(0);
   const [activeSection, setActiveSection] = useState('hero');
   const [searchQuery, setSearchQuery] = useState('');
@@ -21,7 +21,7 @@ const Landing = () => {
   const [freelancers, setFreelancers] = useState([]);
   const [targetStats, setTargetStats] = useState({ jobs: 1247, freelancers: 528, completed: 9876, earnings: 2450000 });
 
-  // ========== REFERENCIÁK ==========
+  // Referenciák
   const heroRef = useRef(null);
   const jobsRef = useRef(null);
   const freelancersRef = useRef(null);
@@ -29,7 +29,7 @@ const Landing = () => {
   const howItWorksRef = useRef(null);
   const ctaRef = useRef(null);
 
-  // ========== SCROLL EFFECTS ==========
+  // Görgetés
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY);
@@ -58,7 +58,7 @@ const Landing = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // ========== STATISZTIKA ANIMÁCIÓ ==========
+  // Statisztika animáció
   useEffect(() => {
     const duration = 2000;
     let startTime = Date.now();
@@ -84,13 +84,13 @@ const Landing = () => {
     return () => cancelAnimationFrame(animationFrame);
   }, [targetStats]);
 
-  // ========== ADATOK LEKÉRÉSE (ADATBÁZIS) ==========
+  // Adatlekérés
   useEffect(() => {
     const fetchData = async () => {
       try {
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
         
-        // 1. Statisztikák lekérése
+        // Statisztikák
         const statsRes = await fetch(`${apiUrl}/projects/system-stats`);
         const statsData = await statsRes.json();
         if (statsData.success && statsData.stats) {
@@ -102,7 +102,7 @@ const Landing = () => {
           });
         }
 
-        // 2. Legfrissebb projektek lekérése
+        // Projektek
         const projRes = await fetch(`${apiUrl}/projects`);
         const projData = await projRes.json();
         if (projData.success) {
@@ -129,7 +129,7 @@ const Landing = () => {
           setJobs(formattedJobs.slice(0, 6)); // Csak a legújabb 6 projekt
         }
 
-        // 3. Kiemelt pilóták lekérése
+        // Pilóták
         const pilotRes = await fetch(`${apiUrl}/auth/pilots`);
         const pilotData = await pilotRes.json();
         if (pilotData.success) {
@@ -142,7 +142,7 @@ const Landing = () => {
     fetchData();
   }, []);
 
-  // ========== JOBS ADATOK ==========
+  // Munkák adatai
   const jobCategories = [
     { id: 'all', name: 'Összes', count: 1247 },
     { id: 'photography', name: 'Légifotó', count: 432 },
@@ -160,7 +160,7 @@ const Landing = () => {
     return true;
   });
 
-  // ========== FREELANCERS ADATOK ==========
+  // Pilóták adatai
   const freelancerCategories = [
     { id: 'all', name: 'Összes', count: 528 },
     { id: 'photography', name: 'Fotós', count: 156 },
@@ -179,7 +179,7 @@ const Landing = () => {
     return true;
   });
 
-  // ========== HOW IT WORKS ==========
+  // Működés
   const howItWorks = [
     {
       step: 1,
@@ -211,10 +211,10 @@ const Landing = () => {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 transition-all duration-700">
       
-      {/* ===== NAVBAR ===== */}
+      {/* Navbar */}
       <Navbar />
 
-      {/* ===== HERO SZEKCIÓ ===== */}
+      {/* Hero szekció */}
       <section ref={heroRef} id="hero" className="pt-24 pb-16 px-4 bg-gradient-to-b from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 transition-all duration-700">
         <div className="container mx-auto max-w-7xl transition-all duration-700">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -279,7 +279,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* ===== STATISZTIKA ===== */}
+      {/* Statisztika */}
       <section ref={statsRef} id="stats" className="py-16 px-4 bg-gray-50 dark:bg-gray-800 border-y border-gray-200 dark:border-gray-700 transition-all duration-700">
         <div className="container mx-auto max-w-7xl transition-all duration-700">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
@@ -303,7 +303,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* ===== AKTUÁLIS PROJEKTEK ===== */}
+      {/* Aktuális projektek */}
       <section ref={jobsRef} id="jobs" className="py-24 px-4 transition-all duration-700">
         <div className="container mx-auto max-w-7xl transition-all duration-700">
           <div className="flex flex-wrap items-center justify-between mb-12">
@@ -468,7 +468,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* ===== PILÓTÁK ===== */}
+      {/* Pilóták */}
       <section ref={freelancersRef} id="freelancers" className="py-24 px-4 bg-gray-50 dark:bg-gray-800 transition-all duration-700">
         <div className="container mx-auto max-w-7xl transition-all duration-700">
           <div className="flex flex-wrap items-center justify-between mb-12">
@@ -556,7 +556,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* ===== HOW IT WORKS ===== */}
+      {/* Hogyan működik */}
       <section ref={howItWorksRef} id="how-it-works" className="py-24 px-4 transition-all duration-700">
         <div className="container mx-auto max-w-7xl transition-all duration-700">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white text-center mb-4 transition-all duration-700">Hogyan működik?</h2>
@@ -582,7 +582,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* ===== CTA ===== */}
+      {/* CTA szekció */}
       <section ref={ctaRef} id="cta" className="py-24 px-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 border-y border-gray-200 dark:border-gray-800 transition-all duration-700">
         <div className="container mx-auto max-w-4xl text-center transition-all duration-700">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-6 transition-all duration-700">
@@ -616,10 +616,10 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* ===== FOOTER ===== */}
+      {/* Footer */}
       <Footer />
 
-      {/* ===== PROJEKT MODAL ===== */}
+      {/* Projekt modal */}
       {showJobModal && selectedJob && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 transition-all duration-700">
           <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto transition-all duration-700">
@@ -698,7 +698,7 @@ const Landing = () => {
         </div>
       )}
 
-      {/* ===== PILÓTA MODAL ===== */}
+      {/* Pilóta modal */}
       {showFreelancerModal && selectedFreelancer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 transition-all duration-700">
           <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto transition-all duration-700">

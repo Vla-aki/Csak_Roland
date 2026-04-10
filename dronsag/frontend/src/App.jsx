@@ -3,6 +3,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import PrivateRoute from './components/common/PrivateRoute';
+import FloatingChat from './components/FloatingChat';
 import Landing from './pages/Landing';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -39,6 +40,8 @@ function App() {
   return (
     <Router>
       <AuthProvider>
+        {/* Lebegő Chat gomb a bal alsó sarokban (csak ha be van jelentkezve) */}
+        <FloatingChat />
         <Routes>
           {/* Publikus oldalak */}
           <Route path="/" element={<Landing />} />

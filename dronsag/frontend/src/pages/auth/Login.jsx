@@ -10,7 +10,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   
-  // State management
+  // Állapotok
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -22,21 +22,20 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
 
-  // Handle input changes
+  // Input kezelés
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-    // Clear error for this field when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
     setLoginError('');
   };
 
-  // Validate form - csak az email formátumot ellenőrizzük
+  // Validáció
   const validateForm = () => {
     const newErrors = {};
     
@@ -53,7 +52,7 @@ const Login = () => {
     return newErrors;
   };
 
-  // Handle form submission
+  // Űrlap küldés
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -67,11 +66,9 @@ const Login = () => {
     setLoginError('');
     
     try {
-      // API hívás a backend felé (szerepkör nélkül, azt a backend mondja meg)
       const result = await login(formData.email, formData.password);
       
       if (result.success) {
-        // Ha a backend visszaküldi a usert, az alapján irányítunk, különben főoldal
         if (result.user?.role === 'driver') {
           navigate('/drone-dashboard');
         } else if (result.user?.role === 'customer') {
@@ -95,10 +92,10 @@ const Login = () => {
       
       <div className="flex-1 flex pt-16">
         
-        {/* Bal oldali információs sáv (mobilon elrejtve) */}
+        {/* Információs sáv */}
         <div className="hidden lg:flex lg:w-1/3 xl:w-1/4 bg-blue-800 dark:bg-gray-900 text-white flex-col justify-between p-10 xl:p-14 relative overflow-hidden transition-colors duration-700">
           
-          {/* Háttér átmenetek a sötét/világos mód animálásához */}
+          {/* Háttér animáció */}
           <div className="absolute inset-0 bg-gradient-to-br from-blue-700 to-blue-900 dark:opacity-0 transition-opacity duration-700 z-0"></div>
           <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-gray-900 opacity-0 dark:opacity-100 transition-opacity duration-700 z-0"></div>
 
@@ -140,7 +137,7 @@ const Login = () => {
           </div>
         </div>
 
-        {/* Jobb oldali űrlap rész */}
+        {/* Űrlap */}
         <div className="w-full lg:w-2/3 xl:w-3/4 flex items-center justify-center p-6 sm:p-12 lg:p-20 bg-white dark:bg-gray-900 transition-colors duration-700">
           <div className="w-full max-w-md xl:max-w-lg space-y-8">
             
@@ -149,7 +146,7 @@ const Login = () => {
               <p className="text-gray-600 dark:text-gray-400 transition-colors duration-700">Jelentkezz be a fiókodba a folytatáshoz</p>
             </div>
             
-            {/* Általános hibaüzenet */}
+            {/* Hibaüzenet */}
             {loginError && (
               <div className="p-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded-r-lg transition-colors duration-700">
                 <p className="text-sm text-red-700 dark:text-red-400 font-medium transition-colors duration-700">{loginError}</p>
@@ -158,7 +155,7 @@ const Login = () => {
 
             <form onSubmit={handleSubmit} className="space-y-5">
               
-              {/* Email mező */}
+              {/* Email */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-700">
                   Email cím
@@ -179,7 +176,7 @@ const Login = () => {
                 )}
               </div>
 
-              {/* Jelszó mező */}
+              {/* Jelszó */}
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-700">
                   Jelszó
@@ -213,7 +210,7 @@ const Login = () => {
                 )}
               </div>
 
-              {/* Emlékezz rám */}
+              {/* Emlékezés */}
               <div className="flex items-center">
                 <label className="flex items-center cursor-pointer">
                   <input
@@ -229,7 +226,7 @@ const Login = () => {
                 </label>
               </div>
 
-              {/* Bejelentkezés gomb */}
+              {/* Bejelentkezés */}
               <button
                 type="submit"
                 disabled={isLoading}
@@ -250,7 +247,7 @@ const Login = () => {
               </button>
             </form>
 
-            {/* További linkek */}
+            {/* Linkek */}
             <div className="pt-5 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center transition-colors duration-700">
               <p className="text-sm text-gray-600 dark:text-gray-400 transition-colors duration-700">
                 Nincs még fiókod?{' '}

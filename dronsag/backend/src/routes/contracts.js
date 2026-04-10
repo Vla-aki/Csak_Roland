@@ -12,7 +12,7 @@ const pool = mysql.createPool({
     connectionLimit: 10
 });
 
-// Szerződés létrehozása (Megbízó elfogad egy ajánlatot)
+// Szerződéskötés
 router.post('/', authMiddleware, async (req, res) => {
     if (req.user.role !== 'customer') return res.status(403).json({ message: 'Csak megbízók köthetnek szerződést!' });
     const { bidId } = req.body;
@@ -49,7 +49,7 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 });
 
-// Saját szerződések lekérése
+// Saját szerződések
 router.get('/', authMiddleware, async (req, res) => {
     try {
         const isCustomer = req.user.role === 'customer';
@@ -70,7 +70,7 @@ router.get('/', authMiddleware, async (req, res) => {
     }
 });
 
-// Egy adott szerződés (munkaterület) részleteinek lekérése
+// Szerződés részletei
 router.get('/:id', authMiddleware, async (req, res) => {
     try {
         const query = `
@@ -93,7 +93,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
     }
 });
 
-// Szerződés lezárása, kifizetése és értékelése (Csak Megbízó)
+// Szerződés lezárása
 router.put('/:id/complete', authMiddleware, async (req, res) => {
     if (req.user.role !== 'customer') return res.status(403).json({ message: 'Csak megbízó zárhatja le a munkát!' });
     
@@ -112,15 +112,15 @@ router.put('/:id/complete', authMiddleware, async (req, res) => {
         if (contract.customer_id !== req.user.id) throw new Error('Nincs jogosultságod ehhez a szerződéshez!');
         if (contract.status === 'completed') throw new Error('A munka már le van zárva!');
 
-        // 1. Szerződés státuszának frissítése (Lezárva, Kifizetve)
+        // Státusz frissítése
         await connection.query('UPDATE contracts SET status = "completed", payment_status = "paid", completed_at = NOW() WHERE id = ?', [contractId]);
 
-        // 2. Értékelés mentése
+        // Értékelés mentése
         if (rating) {
             await connection.query('INSERT INTO reviews (contract_id, reviewer_id, reviewee_id, rating, comment) VALUES (?, ?, ?, ?, ?)', 
                 [contractId, req.user.id, contract.driver_id, rating, comment || null]);
             
-            // 3. Pilóta átlagának és statisztikáinak frissítése
+            // Statisztikák frissítése
             const [pilotReviews] = await connection.query('SELECT AVG(rating) as avg_rating, COUNT(*) as count FROM reviews WHERE reviewee_id = ?', [contract.driver_id]);
             await connection.query('UPDATE users SET rating = ?, reviews_count = ?, completed_jobs = completed_jobs + 1 WHERE id = ?', 
                 [pilotReviews[0].avg_rating || rating, pilotReviews[0].count || 1, contract.driver_id]);

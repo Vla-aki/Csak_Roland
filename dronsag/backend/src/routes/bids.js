@@ -3,7 +3,7 @@ const router = express.Router();
 const mysql = require('mysql2/promise');
 const authMiddleware = require('../middleware/authMiddleware');
 
-// Adatbázis kapcsolat
+// Adatbázis
 const pool = mysql.createPool({
     host: process.env.DB_HOST || 'dronsag_mysql',
     user: process.env.DB_USER || 'dronsag_user',
@@ -13,7 +13,7 @@ const pool = mysql.createPool({
     connectionLimit: 10
 });
 
-// Pilóta saját ajánlatai
+// Saját ajánlatok
 router.get('/my-bids', authMiddleware, async (req, res) => {
     if (req.user.role !== 'driver') return res.status(403).json({ message: 'Csak pilóták kérhetik le!' });
     try {
@@ -34,7 +34,7 @@ router.get('/my-bids', authMiddleware, async (req, res) => {
     }
 });
 
-// Ajánlat státuszának frissítése (pl. Megbízó elutasítja)
+// Státusz frissítés
 router.put('/:id/status', authMiddleware, async (req, res) => {
     const { status } = req.body;
     try {

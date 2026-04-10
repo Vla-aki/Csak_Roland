@@ -173,7 +173,7 @@ const FAQ = () => {
       <div className="pt-24 pb-16 px-4">
         <div className="container mx-auto max-w-4xl">
           
-          {/* Hero szekció */}
+          {/* Hero */}
           <div className="text-center mb-12">
             <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-4 transition-all duration-700">
               Gyakori kérdések
@@ -195,7 +195,7 @@ const FAQ = () => {
             </div>
           </div>
 
-          {/* Kategória gyorsugrók */}
+          {/* Kategóriák */}
           <div className="flex flex-wrap gap-3 justify-center mb-12">
             {faqData.map((category, index) => (
               <button
@@ -212,7 +212,7 @@ const FAQ = () => {
             ))}
           </div>
 
-          {/* FAQ kategóriák */}
+          {/* GyIK */}
           <div className="space-y-6">
             {filteredFaqs.map((category, index) => (
               <div
@@ -220,7 +220,7 @@ const FAQ = () => {
                 id={category.category}
                 className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-700"
               >
-                {/* Kategória fejléc */}
+              {/* Fejléc */}
                 <button
                   onClick={() => toggleCategory(category.category)}
                   className="w-full p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300"
@@ -243,7 +243,7 @@ const FAQ = () => {
                   )}
                 </button>
 
-                {/* Kérdések */}
+              {/* Kérdések */}
                 {openCategories[category.category] && (
                   <div className="border-t border-gray-200 dark:border-gray-700">
                     {category.questions.map((q) => (
@@ -276,7 +276,7 @@ const FAQ = () => {
             ))}
           </div>
 
-          {/* Ha nincs találat */}
+          {/* Üres állapot */}
           {filteredFaqs.length === 0 && (
             <div className="text-center py-12">
               <FaQuestionCircle className="text-6xl text-gray-300 dark:text-gray-600 mx-auto mb-4" />
@@ -295,7 +295,7 @@ const FAQ = () => {
             </div>
           )}
 
-          {/* Még kérdés? */}
+          {/* Kapcsolat */}
           <div className="mt-12 bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg p-8 text-center text-white">
             <h3 className="text-2xl font-bold mb-4">Még mindig van kérdésed?</h3>
             <p className="text-lg mb-6 opacity-90">

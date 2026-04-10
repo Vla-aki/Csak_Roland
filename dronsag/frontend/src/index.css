@@ -10,6 +10,11 @@
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
   }
+
+  /* Minden létező elemre (árnyékok, keretek, ikonok is) ható, lassú, 1 másodperces átmenet */
+  *, ::before, ::after {
+    transition: all 1s ease-in-out;
+  }
   
   /* Custom scrollbar */
   ::-webkit-scrollbar {
@@ -33,22 +38,31 @@
 
 @layer components {
   .glass-effect {
-    @apply bg-white bg-opacity-20 backdrop-blur-lg backdrop-filter;
+    background-color: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.3);
   }
   
   .glass-card {
-    @apply bg-white bg-opacity-20 backdrop-blur-md backdrop-filter;
+    background-color: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.3);
     box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
   }
   
   .gradient-text {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600;
+    background-image: linear-gradient(to right, #4f46e5, #9333ea);
+    -webkit-background-clip: text;
+    color: transparent;
   }
   
   .hover-glow {
-    @apply transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/50;
+    transition: all 0.3s ease-in-out;
+  }
+  .hover-glow:hover {
+    box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.5);
   }
   
   .slide-in-left {

@@ -111,7 +111,7 @@ const MyContracts = () => {
             </p>
           </div>
 
-          {/* Statisztika kártyák */}
+          {/* Statisztikák */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4 text-center">
               <p className="text-2xl font-bold text-gray-900 dark:text-white">{contracts.length}</p>
@@ -135,7 +135,7 @@ const MyContracts = () => {
             </div>
           </div>
 
-          {/* Függőben lévő kifizetések */}
+          {/* Függő kifizetések */}
           {stats.pendingPayment > 0 && (
             <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-8">
               <div className="flex items-center justify-between">
@@ -199,7 +199,7 @@ const MyContracts = () => {
             </div>
           </div>
 
-          {/* Szerződések lista */}
+          {/* Szerződések */}
           {loading ? (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
@@ -211,7 +211,7 @@ const MyContracts = () => {
                 key={contract.id}
                 className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-xl transition-all duration-300"
               >
-                {/* Szerződés fejléc */}
+                {/* Fejléc */}
                 <div className="bg-gray-50 dark:bg-gray-700 p-6 border-b border-gray-200 dark:border-gray-600">
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     <div className="flex items-start gap-4">
@@ -248,7 +248,7 @@ const MyContracts = () => {
                   </div>
                 </div>
 
-                {/* Szerződés részletek */}
+                {/* Részletek */}
                 <div className="p-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                     <div>
@@ -300,7 +300,7 @@ const MyContracts = () => {
                     </div>
                   )}
 
-                  {/* Akciógombok */}
+                  {/* Gombok */}
                   <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 flex flex-wrap gap-3">
                     <Link
                       to={`/contract/${contract.id}`}
@@ -326,7 +326,7 @@ const MyContracts = () => {
           </div>
           )}
 
-          {/* Ha nincs szerződés */}
+          {/* Üres állapot */}
           {filteredContracts.length === 0 && (
             <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
               <FaFileContract className="mx-auto text-4xl text-gray-400 mb-4" />

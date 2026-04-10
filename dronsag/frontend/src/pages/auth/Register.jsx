@@ -10,7 +10,7 @@ const Register = () => {
   const navigate = useNavigate();
   const { register } = useAuth();
   
-  // State management
+  // Állapotok
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -26,7 +26,7 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
 
-  // Jelszó erősség ellenőrzése
+  // Jelszó erősség
   const checkPasswordStrength = (password) => {
     let strength = 0;
     if (password.length >= 6) strength++;
@@ -49,7 +49,7 @@ const Register = () => {
     return 'bg-green-500';
   };
 
-  // Handle input changes
+  // Input kezelés
   const handleChange = (e) => {
     const { name, value } = e.target;
     
@@ -62,13 +62,12 @@ const Register = () => {
       checkPasswordStrength(value);
     }
     
-    // Clear error for this field
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
-  // Validate form
+  // Validáció
   const validateForm = () => {
     const newErrors = {};
     
@@ -76,7 +75,6 @@ const Register = () => {
       newErrors.name = 'A név megadása kötelező';
     }
     
-    // Email vagy telefonszám kötelező
     if (!formData.email && !formData.phone) {
       newErrors.email = 'Email vagy telefonszám megadása kötelező!';
     }
@@ -100,7 +98,7 @@ const Register = () => {
     return newErrors;
   };
 
-  // Handle form submission
+  // Űrlap küldés
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -116,8 +114,12 @@ const Register = () => {
       const result = await register(formData);
       
       if (result.success) {
-        // Sikeres regisztráció után egyből a főoldalra dobjuk a felhasználót
-        navigate('/');
+        // Sikeres regisztráció után egyből a megfelelő profilba dobjuk a felhasználót
+        if (result.user?.role === 'driver') {
+          navigate('/drone-dashboard');
+        } else {
+          navigate('/dashboard');
+        }
       } else {
         const errorMsg = result.error || 'Hiba történt a regisztráció során';
         // Ellenőrizzük, hogy a hiba a már létező fiók miatt van-e
@@ -144,10 +146,10 @@ const Register = () => {
       
       <div className="flex-1 flex pt-16">
         
-        {/* Bal oldali információs sáv (mobilon elrejtve) */}
+        {/* Információs sáv */}
         <div className="hidden lg:flex lg:w-1/3 xl:w-1/4 bg-blue-800 dark:bg-gray-900 text-white flex-col justify-between p-10 xl:p-14 relative overflow-hidden transition-colors duration-700">
           
-          {/* Háttér átmenetek a sötét/világos mód animálásához (a színátmenet opacitását animáljuk) */}
+          {/* Háttér animáció */}
           <div className="absolute inset-0 bg-gradient-to-br from-blue-700 to-blue-900 dark:opacity-0 transition-opacity duration-700 z-0"></div>
           <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-gray-900 opacity-0 dark:opacity-100 transition-opacity duration-700 z-0"></div>
 
@@ -189,7 +191,7 @@ const Register = () => {
           </div>
         </div>
 
-        {/* Jobb oldali űrlap rész */}
+        {/* Űrlap */}
         <div className="w-full lg:w-2/3 xl:w-3/4 flex items-center justify-center p-6 sm:p-12 lg:p-20 bg-white dark:bg-gray-900 transition-colors duration-700">
           <div className="w-full max-w-md xl:max-w-lg space-y-8">
             
@@ -206,7 +208,7 @@ const Register = () => {
 
             <form onSubmit={handleSubmit} className="space-y-5">
               
-              {/* Szerepkör választás (Tabs stílusban, modern) */}
+              {/* Szerepkör választás */}
               <div className="flex p-1 bg-gray-100 dark:bg-gray-800 rounded-lg mb-6 transition-colors duration-700">
                 <button
                   type="button"
@@ -232,7 +234,7 @@ const Register = () => {
                 </button>
               </div>
 
-              {/* Név mező */}
+              {/* Név */}
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-700">
                   Teljes név
@@ -253,9 +255,9 @@ const Register = () => {
                 )}
               </div>
 
-              {/* Kapcsolattartási adatok - Grid */}
+              {/* Kapcsolattartás */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Email mező */}
+                {/* Email */}
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-700">
                     Email cím
@@ -276,7 +278,7 @@ const Register = () => {
                   )}
                 </div>
 
-                {/* Telefonszám mező */}
+                {/* Telefon */}
                 <div>
                   <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-700">
                     Telefon <span className="text-gray-400 text-xs font-normal transition-colors duration-700">(opcionális)</span>
@@ -295,7 +297,7 @@ const Register = () => {
                 </div>
               </div>
 
-              {/* Jelszó mező */}
+              {/* Jelszó */}
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-700">
                   Jelszó
@@ -386,7 +388,7 @@ const Register = () => {
                 )}
               </div>
 
-              {/* Regisztráció gomb */}
+              {/* Regisztráció */}
               <button
                 type="submit"
                 disabled={isLoading}
@@ -408,7 +410,7 @@ const Register = () => {
 
             </form>
             
-            {/* További linkek */}
+            {/* Linkek */}
             <div className="pt-5 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center transition-colors duration-700">
               <p className="text-sm text-gray-600 dark:text-gray-400 transition-colors duration-700">
                 Már van fiókod?{' '}

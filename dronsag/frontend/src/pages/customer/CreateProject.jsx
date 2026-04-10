@@ -158,7 +158,7 @@ const CreateProject = () => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Hiba történt a mentés során');
       
-      // Sikeres létrehozás után átirányítás a projektek oldalra
+      // Átirányítás
       navigate('/my-projects', { 
         state: { message: 'Projekt sikeresen létrehozva!' } 
       });
@@ -227,7 +227,7 @@ const CreateProject = () => {
             )}
 
             <form onSubmit={handleSubmit}>
-              {/* STEP 1: Alapadatok */}
+          {/* 1. lépés: Alapadatok */}
               {currentStep === 1 && (
                 <div className="space-y-6">
                   <div>
@@ -311,7 +311,7 @@ const CreateProject = () => {
                 </div>
               )}
 
-              {/* STEP 2: Részletek */}
+          {/* 2. lépés: Részletek */}
               {currentStep === 2 && (
                 <div className="space-y-6">
                   <div>
@@ -416,7 +416,7 @@ const CreateProject = () => {
                 </div>
               )}
 
-              {/* STEP 3: Áttekintés és véglegesítés */}
+          {/* 3. lépés: Áttekintés */}
               {currentStep === 3 && (
                 <div className="space-y-6">
                   <div>

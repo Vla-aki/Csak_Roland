@@ -87,7 +87,7 @@ const Impressum = () => {
                 </div>
               </section>
 
-              {/* Bankszámla adatok */}
+              {/* Bankszámla */}
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Bankszámla adatok</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -110,7 +110,7 @@ const Impressum = () => {
                 </div>
               </section>
 
-              {/* Adatvédelmi tisztviselő */}
+              {/* Adatvédelem */}
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Adatvédelmi tisztviselő</h2>
                 <div className="space-y-2">
@@ -120,7 +120,7 @@ const Impressum = () => {
                 </div>
               </section>
 
-              {/* Tárhelyszolgáltató */}
+              {/* Tárhely */}
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Tárhelyszolgáltató</h2>
                 <div className="space-y-2">

@@ -33,7 +33,7 @@ const Privacy = () => {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-8 transition-all duration-700">
             <div className="space-y-8">
               
-              {/* 1. Adatkezelő adatai */}
+              {/* Adatkezelő */}
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">1. Adatkezelő adatai</h2>
                 <div className="space-y-2 text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -46,7 +46,7 @@ const Privacy = () => {
                 </div>
               </section>
 
-              {/* 2. Fogalommeghatározások */}
+              {/* Fogalmak */}
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">2. Fogalommeghatározások</h2>
                 <div className="space-y-2 text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -57,7 +57,7 @@ const Privacy = () => {
                 </div>
               </section>
 
-              {/* 3. Kezelt adatok köre */}
+              {/* Kezelt adatok */}
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">3. Kezelt adatok köre</h2>
                 <div className="space-y-4">
@@ -91,7 +91,7 @@ const Privacy = () => {
                 </div>
               </section>
 
-              {/* 4. Adatkezelés célja */}
+              {/* Célok */}
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">4. Adatkezelés célja</h2>
                 <ul className="list-disc pl-6 space-y-1 text-gray-600 dark:text-gray-400">
@@ -105,7 +105,7 @@ const Privacy = () => {
                 </ul>
               </section>
 
-              {/* 5. Jogalap */}
+              {/* Jogalap */}
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">5. Az adatkezelés jogalapja</h2>
                 <ul className="list-disc pl-6 space-y-1 text-gray-600 dark:text-gray-400">
@@ -116,7 +116,7 @@ const Privacy = () => {
                 </ul>
               </section>
 
-              {/* 6. Adattovábbítás */}
+              {/* Adattovábbítás */}
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">6. Adattovábbítás</h2>
                 <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-2">
@@ -130,7 +130,7 @@ const Privacy = () => {
                 </ul>
               </section>
 
-              {/* 7. Adatmegőrzési idő */}
+              {/* Adatmegőrzés */}
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">7. Adatmegőrzési idő</h2>
                 <ul className="list-disc pl-6 space-y-1 text-gray-600 dark:text-gray-400">
@@ -141,7 +141,7 @@ const Privacy = () => {
                 </ul>
               </section>
 
-              {/* 8. Érintettek jogai */}
+              {/* Jogok */}
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">8. Az érintettek jogai</h2>
                 <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-2">
@@ -161,7 +161,7 @@ const Privacy = () => {
                 </p>
               </section>
 
-              {/* 9. Adatbiztonság */}
+              {/* Adatbiztonság */}
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">9. Adatbiztonság</h2>
                 <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -171,7 +171,7 @@ const Privacy = () => {
                 </p>
               </section>
 
-              {/* 10. Kapcsolat */}
+              {/* Kapcsolat */}
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">10. Kapcsolat</h2>
                 <p className="text-gray-600 dark:text-gray-400 leading-relaxed">

@@ -12,10 +12,16 @@ const FindWork = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [filters, setFilters] = useState({
+    location: '',
+    minBudget: '',
+    maxBudget: '',
+    budgetType: 'all'
+  });
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Ajánlattételhez (Bidding) szükséges állapotok
+  // Ajánlattétel állapotok
   const [biddingProject, setBiddingProject] = useState(null);
   const [bidData, setBidData] = useState({ amount: '', estimated_days: '', message: '' });
   const [bidStatus, setBidStatus] = useState({ loading: false, message: '', type: '' });
@@ -44,22 +50,27 @@ const FindWork = () => {
     fetchProjects();
   }, [location.search]);
 
-  // Keresés szűrése a frontend oldalon
+  // Szűrés logika
   const filteredProjects = projects.filter(project => {
     const matchesQuery = project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          project.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          project.location.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCat = selectedCategory === 'all' || project.category === selectedCategory;
-    return matchesQuery && matchesCat;
+    const matchesLoc = !filters.location || project.location.toLowerCase().includes(filters.location.toLowerCase());
+    const matchesMin = !filters.minBudget || parseInt(project.budget) >= parseInt(filters.minBudget);
+    const matchesMax = !filters.maxBudget || parseInt(project.budget) <= parseInt(filters.maxBudget);
+    const matchesType = filters.budgetType === 'all' || project.budget_type === filters.budgetType;
+    
+    return matchesQuery && matchesCat && matchesLoc && matchesMin && matchesMax && matchesType;
   });
 
-  // Dátum formázó
+  // Dátum formázás
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('hu-HU', { year: 'numeric', month: 'short', day: 'numeric' });
   };
 
-  // Kategória fordító
+  // Kategória fordítás
   const getCategoryName = (cat) => {
     const cats = {
       'photography': 'Légifotózás',
@@ -125,7 +136,7 @@ const FindWork = () => {
 
         <div className="flex flex-col lg:flex-row gap-8">
           
-          {/* Bal oldali szűrősáv */}
+          {/* Szűrősáv */}
           <div className="lg:w-1/4">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 sticky top-24 transition-colors duration-700">
               <div className="flex items-center gap-2 mb-4 border-b border-gray-100 dark:border-gray-700 pb-3">
@@ -147,13 +158,47 @@ const FindWork = () => {
                 </div>
               </div>
               
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-4 italic">
-                További részletes szűrők (kategória, ár) hamarosan...
-              </p>
+              <div className="mb-5">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Kategória</label>
+                <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:text-white">
+                  <option value="all">Összes kategória</option>
+                  <option value="photography">Légifotózás</option>
+                  <option value="videography">Drónvideózás</option>
+                  <option value="inspection">Ipari ellenőrzés</option>
+                  <option value="mapping">Térképezés és 3D</option>
+                  <option value="delivery">Drónos szállítás</option>
+                </select>
+              </div>
+
+              <div className="mb-5">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Helyszín</label>
+                <input type="text" value={filters.location} onChange={(e) => setFilters({...filters, location: e.target.value})} placeholder="Pl. Budapest" className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:text-white" />
+              </div>
+
+              <div className="mb-5">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Díjazás típusa</label>
+                <select value={filters.budgetType} onChange={(e) => setFilters({...filters, budgetType: e.target.value})} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:text-white">
+                  <option value="all">Mindegy</option>
+                  <option value="fix">Fix összeg</option>
+                  <option value="hourly">Óradíj</option>
+                </select>
+              </div>
+
+              <div className="mb-5">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Költségkeret (Ft)</label>
+                <div className="flex gap-2">
+                  <input type="number" value={filters.minBudget} onChange={(e) => setFilters({...filters, minBudget: e.target.value})} placeholder="Min" className="w-1/2 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:text-white" />
+                  <input type="number" value={filters.maxBudget} onChange={(e) => setFilters({...filters, maxBudget: e.target.value})} placeholder="Max" className="w-1/2 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:text-white" />
+                </div>
+              </div>
+
+              <button onClick={() => {setSearchQuery(''); setSelectedCategory('all'); setFilters({location: '', minBudget: '', maxBudget: '', budgetType: 'all'});}} className="w-full px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                Szűrők törlése
+              </button>
             </div>
           </div>
 
-          {/* Jobb oldali lista: Projektek */}
+          {/* Projektek listája */}
           <div className="lg:w-3/4">
             {loading ? (
               <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
@@ -232,7 +277,7 @@ const FindWork = () => {
       </div>
       <Footer />
 
-      {/* AJÁNLATTÉTEL (BIDDING) MODAL */}
+      {/* Ajánlattétel modal */}
       {biddingProject && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all">
           <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden">
