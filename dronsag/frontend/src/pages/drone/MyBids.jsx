@@ -1,7 +1,7 @@
 // src/pages/drone/MyBids.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaEuroSign, FaCalendar, FaClock, FaCheckCircle, FaTimesCircle, FaHourglassHalf, FaTimes, FaMapMarkerAlt, FaTags } from 'react-icons/fa';
+import { FaMoneyBillWave, FaCalendar, FaClock, FaCheckCircle, FaTimesCircle, FaHourglassHalf, FaTimes, FaMapMarkerAlt, FaTags, FaInfoCircle } from 'react-icons/fa';
 import Navbar from '../../components/common/Navbar';
 import Footer from '../../components/common/Footer';
 
@@ -12,6 +12,7 @@ const MyBids = () => {
   const [deleteModal, setDeleteModal] = useState({ show: false, id: null });
   const [viewProject, setViewProject] = useState(null);
   const [loadingProject, setLoadingProject] = useState(false);
+  const [alertModal, setAlertModal] = useState({ show: false, message: '' });
 
   useEffect(() => {
     const fetchMyBids = async () => {
@@ -69,10 +70,19 @@ const MyBids = () => {
     try {
       const token = localStorage.getItem('token');
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-      await fetch(`${apiUrl}/bids/${deleteModal.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
-      setBids(bids.filter(b => b.id !== deleteModal.id));
+      const res = await fetch(`${apiUrl}/bids/${deleteModal.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+      const data = await res.json();
+      if (data.success) {
+        setBids(bids.filter(b => b.id !== deleteModal.id));
+        setDeleteModal({ show: false, id: null });
+      } else {
+        setDeleteModal({ show: false, id: null });
+        setAlertModal({ show: true, message: data.message || 'Hiba történt a törlés során.' });
+      }
+    } catch (error) {
       setDeleteModal({ show: false, id: null });
-    } catch (error) {}
+      setAlertModal({ show: true, message: 'Hálózati hiba történt.' });
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -248,7 +258,7 @@ const MyBids = () => {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                       <div className="flex items-center gap-2 text-sm">
-                        <FaEuroSign className="text-gray-400" />
+                        <FaMoneyBillWave className="text-gray-400" />
                         <span className="text-gray-900 dark:text-white font-medium">{bid.bidAmount} Ft</span>
                         <span className="text-gray-500 dark:text-gray-400">/{bid.bidType === 'fix' ? 'fix' : 'óra'}</span>
                       </div>
@@ -381,6 +391,23 @@ const MyBids = () => {
               <button onClick={() => setDeleteModal({ show: false, id: null })} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium">Mégse</button>
               <button onClick={confirmDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium">Igen, visszavonom</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Figyelmeztető modal */}
+      {alertModal.show && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full shadow-2xl p-6 text-center">
+            <FaInfoCircle className="text-5xl text-red-500 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Hiba</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">{alertModal.message}</p>
+            <button 
+              onClick={() => setAlertModal({ show: false, message: '' })}
+              className="px-6 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium w-full"
+            >
+              Bezárás
+            </button>
           </div>
         </div>
       )}

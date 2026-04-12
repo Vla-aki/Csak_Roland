@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaCommentDots, FaTimes, FaPaperPlane, FaArrowLeft } from 'react-icons/fa';
+import { FaCommentDots, FaTimes, FaPaperPlane, FaArrowLeft, FaExternalLinkAlt } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const FloatingChat = () => {
   const { user } = useAuth();
@@ -10,26 +11,18 @@ const FloatingChat = () => {
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState('');
   const messagesEndRef = useRef(null);
+  const navigate = useNavigate();
 
   // Partnerek lekérése
   const fetchContacts = async () => {
     try {
       const token = localStorage.getItem('token');
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-      const res = await fetch(`${apiUrl}/contracts`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const res = await fetch(`${apiUrl}/messages/chats`, { headers: { 'Authorization': `Bearer ${token}` } });
       const data = await res.json();
       
       if (data.success) {
-        const contacts = data.contracts.map(c => ({
-          id: user.role === 'customer' ? c.driver_id : c.customer_id,
-          name: c.otherPartyName,
-          project: c.projectTitle,
-          image: `https://ui-avatars.com/api/?name=${encodeURIComponent(c.otherPartyName)}&background=2563eb&color=fff`
-        }));
-        
-        // Duplikációk kiszűrése
-        const uniqueContacts = Array.from(new Set(contacts.map(a => a.id))).map(id => contacts.find(a => a.id === id));
-        setChats(uniqueContacts);
+        setChats(data.chats);
       }
     } catch (error) { console.error(error); }
   };
@@ -104,7 +97,14 @@ const FloatingChat = () => {
             ) : (
               <span className="font-semibold text-sm pl-2">Üzenetek (Munkatársak)</span>
             )}
-            <button onClick={() => setIsOpen(false)} className="hover:bg-blue-700 p-1.5 rounded transition-colors"><FaTimes /></button>
+            <div className="flex items-center gap-1">
+              <button onClick={() => { setIsOpen(false); navigate('/messages'); }} className="hover:bg-blue-700 p-1.5 rounded transition-colors" title="Teljes képernyős nézet">
+                <FaExternalLinkAlt size={12} />
+              </button>
+              <button onClick={() => setIsOpen(false)} className="hover:bg-blue-700 p-1.5 rounded transition-colors">
+                <FaTimes />
+              </button>
+            </div>
           </div>
 
           {/* Üzenetek */}
@@ -112,17 +112,31 @@ const FloatingChat = () => {
             {!activeChat ? (
               <div className="p-2 space-y-1">
                 {chats.length === 0 ? (
-                  <p className="text-center text-sm text-gray-500 mt-6 px-4">Még nincsenek partnereid. Kössetek szerződést, hogy itt tudjatok beszélgetni!</p>
+              <p className="text-center text-sm text-gray-500 mt-6 px-4">Még nincsenek üzeneteid. Írj egy megbízónak a munkák keresése oldalon!</p>
                 ) : (
-                  chats.map(chat => (
-                    <button key={chat.id} onClick={() => setActiveChat(chat)} className="w-full flex items-center gap-3 p-2.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors text-left">
-                      <img src={chat.image} className="w-10 h-10 rounded-full shadow-sm" alt="" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{chat.name}</p>
-                        <p className="text-xs text-gray-500 truncate">{chat.project}</p>
-                      </div>
-                    </button>
-                  ))
+              [...chats].sort((a, b) => {
+                // Olvasatlan üzenetek előre sorolása
+                if (a.unread > 0 && b.unread === 0) return -1;
+                if (a.unread === 0 && b.unread > 0) return 1;
+                return 0;
+              }).map(chat => (
+                <button key={chat.id} onClick={() => setActiveChat(chat)} className={`w-full flex items-center gap-3 p-2.5 rounded-lg transition-colors text-left ${chat.unread > 0 ? 'bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}>
+                  <div className="relative flex-shrink-0">
+                    <img src={chat.image} className="w-10 h-10 rounded-full shadow-sm object-cover" alt="" />
+                    {chat.unread > 0 && (
+                      <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 border-2 border-white dark:border-gray-800 rounded-full flex items-center justify-center"></span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-center">
+                      <p className={`text-sm truncate ${chat.unread > 0 ? 'font-bold text-blue-700 dark:text-blue-400' : 'font-bold text-gray-900 dark:text-white'}`}>{chat.name}</p>
+                    </div>
+                    <p className={`text-xs truncate ${chat.unread > 0 ? 'font-bold text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+                      {chat.lastMessage || 'Kattints a megtekintéshez...'}
+                    </p>
+                  </div>
+                </button>
+              ))
                 )}
               </div>
             ) : (
@@ -158,6 +172,9 @@ const FloatingChat = () => {
         className="w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-2xl shadow-blue-600/50 flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
       >
         {isOpen ? <FaTimes size={24} /> : <FaCommentDots size={24} />}
+        {!isOpen && chats.some(c => c.unread > 0) && (
+          <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 border-2 border-white dark:border-gray-900 rounded-full animate-pulse"></span>
+        )}
       </button>
     </div>
   );

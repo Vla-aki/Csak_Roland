@@ -82,6 +82,15 @@ router.post('/', authMiddleware, async (req, res) => {
     try {
         const { receiverId, message } = req.body;
         const [result] = await pool.query('INSERT INTO messages (sender_id, receiver_id, message) VALUES (?, ?, ?)', [req.user.id, receiverId, message]);
+        
+        // Értesítés a fogadónak
+        const [sender] = await pool.query('SELECT name FROM users WHERE id = ?', [req.user.id]);
+        const senderName = sender[0]?.name || 'Egy felhasználó';
+        await pool.query(
+            'INSERT INTO notifications (user_id, type, title, message, link) VALUES (?, ?, ?, ?, ?)',
+            [receiverId, 'message', 'Új üzenet', `${senderName} üzent neked!`, '/messages']
+        );
+
         res.status(201).json({ success: true, message: {
             id: result.insertId, senderId: 'me', text: message,
             time: new Date().toLocaleTimeString('hu-HU', {hour: '2-digit', minute:'2-digit'}), status: 'delivered'

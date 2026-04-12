@@ -50,6 +50,7 @@ const Profile = () => {
   const [selectedSkill, setSelectedSkill] = useState('');
   const [customSkill, setCustomSkill] = useState('');
 
+  const [roleSwitchError, setRoleSwitchError] = useState('');
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [roleSwitchLoading, setRoleSwitchLoading] = useState(false);
 
@@ -98,55 +99,43 @@ const Profile = () => {
     fileInputRef.current.click();
   };
 
-  // Kép tömörítése
-  const compressImage = (file) => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target.result;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 800;
-          const MAX_HEIGHT = 800;
-          let width = img.width;
-          let height = img.height;
-
-          if (width > height) {
-            if (width > MAX_WIDTH) {
-              height *= MAX_WIDTH / width;
-              width = MAX_WIDTH;
-            }
-          } else {
-            if (height > MAX_HEIGHT) {
-              width *= MAX_HEIGHT / height;
-              height = MAX_HEIGHT;
-            }
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-
-          // Tömörítés 70%-os minőségű JPEG-be
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-          resolve(compressedBase64);
-        };
-      };
+  // Kép feltöltése a szerverre
+  const uploadImage = async (file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    const token = localStorage.getItem('token');
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    
+    const response = await fetch(`${apiUrl}/upload`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
     });
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'Hiba a feltöltés során');
+    }
+    return data.url;
   };
 
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
       try {
-        const compressedDataUrl = await compressImage(file);
-        setProfileImagePreview(compressedDataUrl);
-        setFormData(prev => ({ ...prev, profile_image: compressedDataUrl }));
+        setIsSaving(true);
+        const url = await uploadImage(file);
+        const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace('/api', '');
+        const fullUrl = baseUrl + url;
+        setProfileImagePreview(fullUrl);
+        setFormData(prev => ({ ...prev, profile_image: fullUrl }));
+        setSaveMessage({ type: 'success', text: 'Kép sikeresen feltöltve!' });
       } catch (error) {
-        alert('Hiba a kép tömörítésekor!');
+        setSaveMessage({ type: 'error', text: 'Hiba a kép feltöltésekor!' });
+      } finally {
+        setIsSaving(false);
+        setTimeout(() => setSaveMessage({ type: '', text: '' }), 3000);
       }
     }
   };
@@ -158,13 +147,21 @@ const Profile = () => {
 
   const handlePortfolioChange = async (e) => {
     const files = Array.from(e.target.files);
-    for (const file of files) {
-      try {
-        const compressedDataUrl = await compressImage(file);
-        setFormData(prev => ({ ...prev, portfolio: [...prev.portfolio, compressedDataUrl] }));
-      } catch (error) {
-        alert('Hiba a portfólió kép tömörítésekor!');
+    setIsSaving(true);
+    let uploadedUrls = [];
+    try {
+      for (const file of files) {
+        const url = await uploadImage(file);
+        const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace('/api', '');
+        uploadedUrls.push(baseUrl + url);
       }
+      setFormData(prev => ({ ...prev, portfolio: [...prev.portfolio, ...uploadedUrls] }));
+      setSaveMessage({ type: 'success', text: 'Portfólió képek sikeresen feltöltve!' });
+    } catch (error) {
+      setSaveMessage({ type: 'error', text: 'Hiba a portfólió kép feltöltésekor!' });
+    } finally {
+      setIsSaving(false);
+      setTimeout(() => setSaveMessage({ type: '', text: '' }), 3000);
     }
   };
 
@@ -221,6 +218,7 @@ const Profile = () => {
   };
 
   const handleRoleSwitch = async () => {
+    setRoleSwitchError('');
     setRoleSwitchLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -239,15 +237,15 @@ const Profile = () => {
       if (response.ok) {
         localStorage.setItem('token', result.token);
         localStorage.setItem('user', JSON.stringify(result.user));
+        setShowRoleModal(false);
         window.location.href = result.user.role === 'driver' ? '/drone-dashboard' : '/dashboard';
       } else {
-        alert(result.message || 'Hiba történt a váltás során.');
+        setRoleSwitchError(result.message || 'Hiba történt a váltás során.');
       }
     } catch (error) {
-      alert('Hálózati hiba történt.');
+      setRoleSwitchError('Hálózati hiba történt.');
     } finally {
       setRoleSwitchLoading(false);
-      setShowRoleModal(false);
     }
   };
 
@@ -671,6 +669,12 @@ const Profile = () => {
                 ? 'Ha átváltasz Megbízó fiókra, az eddigi pilóta adataid (szakterületek, óradíj, elérhetőség) törlődni fognak az adatbázisból!' 
                 : 'Ha átváltasz Pilóta fiókra, új adatokat kell majd megadnod a profilodban (óradíj, szakterületek), hogy a megbízók megtaláljanak.'}
             </p>
+            
+            {roleSwitchError && (
+              <div className="mb-6 p-3 bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 rounded-lg text-sm font-medium">
+                {roleSwitchError}
+              </div>
+            )}
             <div className="flex justify-end gap-3">
               <button 
                 onClick={() => setShowRoleModal(false)}

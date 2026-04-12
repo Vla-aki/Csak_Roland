@@ -1,7 +1,7 @@
 // src/pages/FindFreelancers.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { FaSearch, FaMapMarkerAlt, FaEuroSign, FaStar, FaFilter, FaCheckCircle, FaAward, FaTimes } from 'react-icons/fa';
+import { FaSearch, FaMapMarkerAlt, FaMoneyBillWave, FaStar, FaFilter, FaCheckCircle, FaAward, FaTimes } from 'react-icons/fa';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
 
@@ -339,7 +339,7 @@ const FindFreelancers = () => {
                         <span className="text-sm text-gray-600 dark:text-gray-400">{f.location}</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <FaEuroSign className="text-gray-400" />
+                        <FaMoneyBillWave className="text-gray-400" />
                         <span className="font-semibold text-gray-900 dark:text-white">{f.hourlyRate}</span>
                         <span className="text-xs text-gray-500 dark:text-gray-400">/óra</span>
                       </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaPaperPlane, FaCheckCircle, FaStar, FaEuroSign, FaMapMarkerAlt, FaClock, FaCreditCard, FaLock, FaSpinner } from 'react-icons/fa';
+import { FaArrowLeft, FaPaperPlane, FaCheckCircle, FaStar, FaMoneyBillWave, FaMapMarkerAlt, FaClock, FaCreditCard, FaLock, FaSpinner } from 'react-icons/fa';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
 import { useAuth } from '../contexts/AuthContext';
@@ -17,6 +17,7 @@ const ContractWorkspace = () => {
   
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewData, setReviewData] = useState({ rating: 5, comment: '' });
+  const [reviewError, setReviewError] = useState('');
   const [paymentStep, setPaymentStep] = useState(1);
   const messagesEndRef = useRef(null);
 
@@ -96,9 +97,12 @@ const ContractWorkspace = () => {
       setPaymentStep(3);
         setTimeout(() => { setShowReviewModal(false); navigate('/dashboard'); }, 2000);
       } else {
-        alert(data.message);
+        setReviewError(data.message || 'Hiba történt a lezárás során.');
       }
-    } catch(e) { console.error(e); }
+    } catch(e) { 
+      console.error(e); 
+      setReviewError('Hálózati hiba történt.');
+    }
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>;
@@ -132,7 +136,7 @@ const ContractWorkspace = () => {
               </div>
               
               <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300 mb-8">
-                <p className="flex items-center gap-2"><FaEuroSign className="text-gray-400"/> Összeg: <strong>{parseInt(contract.amount).toLocaleString('hu-HU')} Ft</strong></p>
+                <p className="flex items-center gap-2"><FaMoneyBillWave className="text-gray-400"/> Összeg: <strong>{parseInt(contract.amount).toLocaleString('hu-HU')} Ft</strong></p>
                 <p className="flex items-center gap-2"><FaMapMarkerAlt className="text-gray-400"/> Helyszín: <strong>{contract.projectLocation}</strong></p>
                 <p className="flex items-center gap-2"><FaClock className="text-gray-400"/> Határidő: <strong>{new Date(contract.projectDeadline).toLocaleDateString('hu-HU')}</strong></p>
                 <p className="flex items-center gap-2"><FaCheckCircle className="text-gray-400"/> Partner: <strong>{otherPartyName}</strong></p>
@@ -220,6 +224,12 @@ const ContractWorkspace = () => {
                   </div>
                   <textarea placeholder="Írj egy rövid véleményt..." value={reviewData.comment} onChange={e => setReviewData({...reviewData, comment: e.target.value})} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none text-sm focus:ring-2 focus:ring-blue-500 outline-none" rows="2"></textarea>
                 </div>
+
+                {reviewError && (
+                  <div className="mb-6 p-3 bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 rounded-lg text-sm font-medium">
+                    {reviewError}
+                  </div>
+                )}
 
                 <div className="flex justify-end gap-3">
                   <button onClick={() => setShowReviewModal(false)} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 transition-colors">Mégse</button>

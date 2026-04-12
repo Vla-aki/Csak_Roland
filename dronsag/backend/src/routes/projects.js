@@ -76,7 +76,7 @@ router.get('/', async (req, res) => {
     try {
         const query = `
             SELECT p.id, p.title, p.description, p.category, p.location, p.budget_type, p.budget, p.deadline, 
-                   p.proposals_count, p.created_at, u.name as customer_name, u.profile_image as customer_image
+                   p.proposals_count, p.created_at, p.user_id as customer_id, u.name as customer_name, u.profile_image as customer_image
             FROM projects p
             JOIN users u ON p.user_id = u.id
             WHERE p.status = 'active'
@@ -119,6 +119,49 @@ router.get('/my-projects', authMiddleware, async (req, res) => {
     } catch (error) {
         console.error('❌ Saját projektek lekérési hiba:', error);
         res.status(500).json({ message: 'Szerver hiba: ' + error.message });
+    }
+});
+
+// Projekt szerkesztése (Megbízónak)
+router.put('/:id', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'customer') {
+        return res.status(403).json({ message: 'Csak megbízók szerkeszthetnek projektet!' });
+    }
+    try {
+        const projectId = req.params.id;
+        const { title, category, description, location, budget_type, budget, deadline } = req.body;
+
+        const [projects] = await pool.query('SELECT user_id FROM projects WHERE id = ?', [projectId]);
+        if (projects.length === 0) return res.status(404).json({ message: 'Projekt nem található!' });
+        if (projects[0].user_id !== req.user.id) return res.status(403).json({ message: 'Nincs jogosultságod ehhez a projekthez!' });
+
+        await pool.query(
+            'UPDATE projects SET title=?, category=?, description=?, location=?, budget_type=?, budget=?, deadline=? WHERE id=?',
+            [title, category, description, location, budget_type, budget, deadline, projectId]
+        );
+
+        res.json({ success: true, message: 'Projekt sikeresen frissítve!', project: { ...req.body, id: projectId } });
+    } catch (error) {
+        console.error('❌ Projekt szerkesztési hiba:', error);
+        res.status(500).json({ message: 'Szerver hiba a projekt szerkesztésekor.' });
+    }
+});
+
+// Projekt törlése (Megbízónak)
+router.delete('/:id', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'customer') {
+        return res.status(403).json({ message: 'Csak megbízók törölhetnek projektet!' });
+    }
+    try {
+        const [projects] = await pool.query('SELECT user_id FROM projects WHERE id = ?', [req.params.id]);
+        if (projects.length === 0) return res.status(404).json({ message: 'Projekt nem található!' });
+        if (projects[0].user_id !== req.user.id) return res.status(403).json({ message: 'Nincs jogosultságod ehhez a projekthez!' });
+
+        await pool.query('DELETE FROM projects WHERE id = ?', [req.params.id]);
+        res.json({ success: true, message: 'Projekt sikeresen törölve!' });
+    } catch (error) {
+        console.error('❌ Projekt törlési hiba:', error);
+        res.status(500).json({ message: 'Szerver hiba a projekt törlésekor.' });
     }
 });
 

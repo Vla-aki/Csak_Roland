@@ -26,6 +26,9 @@ const FindWork = () => {
   const [biddingProject, setBiddingProject] = useState(null);
   const [bidData, setBidData] = useState({ amount: '', estimated_days: '', message: '' });
   const [bidStatus, setBidStatus] = useState({ loading: false, message: '', type: '' });
+  const [alertModal, setAlertModal] = useState({ show: false, message: '' });
+  
+  const [quickMessageModal, setQuickMessageModal] = useState({ show: false, receiverId: null, receiverName: '', message: '', loading: false });
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -89,7 +92,7 @@ const FindWork = () => {
       return;
     }
     if (user.role !== 'driver') {
-      alert('Csak pilótaként regisztrált felhasználók jelentkezhetnek munkákra!');
+      setAlertModal({ show: true, message: 'Csak pilótaként regisztrált felhasználók jelentkezhetnek munkákra!' });
       return;
     }
     setBiddingProject(project);
@@ -119,6 +122,31 @@ const FindWork = () => {
       }
     } catch (error) {
       setBidStatus({ loading: false, message: 'Hálózati hiba történt.', type: 'error' });
+    }
+  };
+
+  const handleQuickMessageSubmit = async (e) => {
+    e.preventDefault();
+    setQuickMessageModal(prev => ({ ...prev, loading: true }));
+    try {
+      const token = localStorage.getItem('token');
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const res = await fetch(`${apiUrl}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ receiverId: quickMessageModal.receiverId, message: quickMessageModal.message })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setQuickMessageModal({ show: false, receiverId: null, receiverName: '', message: '', loading: false });
+        setAlertModal({ show: true, message: 'Az üzenetedet sikeresen elküldtük a megbízónak!' });
+      } else {
+        setAlertModal({ show: true, message: data.message || 'Hiba az üzenet küldésekor.' });
+        setQuickMessageModal(prev => ({ ...prev, loading: false }));
+      }
+    } catch (e) {
+      setAlertModal({ show: true, message: 'Hálózati hiba történt.' });
+      setQuickMessageModal(prev => ({ ...prev, loading: false }));
     }
   };
 
@@ -225,6 +253,8 @@ const FindWork = () => {
                           <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded-md text-gray-700 dark:text-gray-300">{getCategoryName(project.category)}</span>
                           <span>•</span>
                           <span>Feladva: {formatDate(project.created_at)}</span>
+                          <span>•</span>
+                          <span className="text-blue-600 dark:text-blue-400 font-bold">{project.proposals_count} jelentkező</span>
                         </div>
                         
                         <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3">
@@ -293,6 +323,7 @@ const FindWork = () => {
                 <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 rounded-full">{getCategoryName(viewProject.category)}</span>
                 <span className="text-gray-500 dark:text-gray-400"><FaMapMarkerAlt className="inline mr-1"/> {viewProject.location}</span>
                 <span className="text-gray-500 dark:text-gray-400"><FaClock className="inline mr-1"/> Feladva: {formatDate(viewProject.created_at)}</span>
+                <span className="text-blue-600 dark:text-blue-400 font-bold ml-2">{viewProject.proposals_count} jelentkező</span>
               </div>
               <div>
                 <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Leírás</h4>
@@ -316,6 +347,19 @@ const FindWork = () => {
                   <p className="text-lg font-bold text-gray-900 dark:text-white">{formatDate(viewProject.deadline)}</p>
                 </div>
               </div>
+
+              {/* Megbízó profilkártya */}
+              <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
+                <div className="flex items-center gap-4 w-full sm:w-auto mb-4 sm:mb-0">
+                  <img src={viewProject.customer_image} alt={viewProject.customer_name} className="w-12 h-12 rounded-full object-cover border-2 border-white dark:border-gray-700 shadow-sm" />
+                  <div>
+                    <p className="font-bold text-gray-900 dark:text-white text-lg">{viewProject.customer_name}</p>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 font-medium uppercase tracking-wide">Megbízó Profilja</p>
+                  </div>
+                </div>
+                <button onClick={() => { setViewProject(null); setQuickMessageModal({ show: true, receiverId: viewProject.customer_id, receiverName: viewProject.customer_name, message: '', loading: false }); }} className="w-full sm:w-auto px-5 py-2.5 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-gray-600 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700 transition-colors text-sm font-medium shadow-sm">Kérdés feltevése</button>
+              </div>
+
               <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
                 <button onClick={() => setViewProject(null)} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 font-medium">Bezárás</button>
                 <button 
@@ -392,6 +436,47 @@ const FindWork = () => {
                 </button>
               </form>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Gyors üzenet modal */}
+      {quickMessageModal.show && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Üzenet küldése</h3>
+              <button onClick={() => setQuickMessageModal({ ...quickMessageModal, show: false })} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><FaTimes size={20}/></button>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Kérdésed van a munkával kapcsolatban, vagy meggyőznéd <strong>{quickMessageModal.receiverName}</strong>-t? Írj neki közvetlenül!
+            </p>
+            <form onSubmit={handleQuickMessageSubmit}>
+              <textarea required rows="4" placeholder="Üdv! A projekt leírásában olvastam, hogy..." value={quickMessageModal.message} onChange={(e) => setQuickMessageModal({...quickMessageModal, message: e.target.value})} className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 resize-none mb-4 outline-none" />
+              <div className="flex justify-end gap-3">
+                <button type="button" onClick={() => setQuickMessageModal({ ...quickMessageModal, show: false })} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 transition-colors font-medium">Mégse</button>
+                <button type="submit" disabled={quickMessageModal.loading || !quickMessageModal.message.trim()} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50">
+                  {quickMessageModal.loading ? 'Küldés...' : 'Üzenet elküldése'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Figyelmeztető modal */}
+      {alertModal.show && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full shadow-2xl p-6 text-center">
+            <FaInfoCircle className="text-5xl text-blue-500 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Figyelem</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">{alertModal.message}</p>
+            <button 
+              onClick={() => setAlertModal({ show: false, message: '' })}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium w-full"
+            >
+              Rendben, értem
+            </button>
           </div>
         </div>
       )}

@@ -45,4 +45,24 @@ router.put('/:id/status', authMiddleware, async (req, res) => {
     }
 });
 
+// Ajánlat törlése/visszavonása (Pilótáknak)
+router.delete('/:id', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'driver') return res.status(403).json({ message: 'Csak pilóták törölhetnek ajánlatot!' });
+    
+    try {
+        const [bids] = await pool.query('SELECT driver_id, project_id FROM bids WHERE id = ?', [req.params.id]);
+        if (bids.length === 0) return res.status(404).json({ message: 'Ajánlat nem található!' });
+        if (bids[0].driver_id !== req.user.id) return res.status(403).json({ message: 'Nincs jogosultságod ehhez az ajánlathoz!' });
+
+        await pool.query('DELETE FROM bids WHERE id = ?', [req.params.id]);
+        
+        // Csökkentjük a projekt jelentkezőinek számát, vigyázva, hogy ne menjen 0 alá
+        await pool.query('UPDATE projects SET proposals_count = GREATEST(proposals_count - 1, 0) WHERE id = ?', [bids[0].project_id]);
+
+        res.json({ success: true, message: 'Ajánlat sikeresen törölve!' });
+    } catch (error) {
+        res.status(500).json({ message: 'Szerver hiba: ' + error.message });
+    }
+});
+
 module.exports = router;

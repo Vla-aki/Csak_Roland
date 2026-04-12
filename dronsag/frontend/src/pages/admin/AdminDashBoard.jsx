@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaTrash, FaUserShield, FaProjectDiagram, FaUsers } from 'react-icons/fa';
+import { FaTrash, FaUserShield, FaProjectDiagram, FaUsers, FaInfoCircle } from 'react-icons/fa';
 import Navbar from '../../components/common/Navbar';
 import Footer from '../../components/common/Footer';
 
@@ -9,6 +9,7 @@ const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState({ show: false, type: '', id: null });
+  const [alertModal, setAlertModal] = useState({ show: false, message: '' });
 
   const fetchData = async () => {
     setLoading(true);
@@ -49,7 +50,7 @@ const AdminDashboard = () => {
       fetchData(); 
       setDeleteConfirm({ show: false, type: '', id: null });
     } catch (error) {
-      alert('Hiba történt a törlés során.');
+      setAlertModal({ show: true, message: 'Hiba történt a törlés során.' });
     }
   };
 
@@ -158,6 +159,23 @@ const AdminDashboard = () => {
               <button onClick={() => setDeleteConfirm({ show: false, type: '', id: null })} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium">Mégse</button>
               <button onClick={confirmDeletion} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium">Igen, törlés</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Figyelmeztető modal */}
+      {alertModal.show && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full shadow-2xl p-6 text-center">
+            <FaInfoCircle className="text-5xl text-red-500 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Hiba</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">{alertModal.message}</p>
+            <button 
+              onClick={() => setAlertModal({ show: false, message: '' })}
+              className="px-6 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium w-full"
+            >
+              Bezárás
+            </button>
           </div>
         </div>
       )}

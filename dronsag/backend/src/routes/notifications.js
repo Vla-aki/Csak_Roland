@@ -24,4 +24,14 @@ router.get('/', authMiddleware, async (req, res) => {
     }
 });
 
+// Összes olvasottnak jelölése
+router.put('/read-all', authMiddleware, async (req, res) => {
+    try {
+        await pool.query('UPDATE notifications SET is_read = 1 WHERE user_id = ?', [req.user.id]);
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ message: 'Szerver hiba az értesítések frissítésekor.' });
+    }
+});
+
 module.exports = router;

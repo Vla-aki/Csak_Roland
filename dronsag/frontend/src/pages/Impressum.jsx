@@ -56,7 +56,7 @@ const Impressum = () => {
                       <p className="text-sm text-gray-500 dark:text-gray-400">Cégjegyzékszám</p>
                       <p className="font-semibold text-gray-900 dark:text-white">01-09-123456</p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">Fővárosi Törvényszék Cégbírósága</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Bejegyzés dátuma: 2016. március 15.</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Bejegyzés dátuma: 2026. március 15.</p>
                     </div>
                   </div>
                   <div className="space-y-3">
@@ -150,12 +150,12 @@ const Impressum = () => {
                     </thead>
                     <tbody>
                       <tr className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300">
-                        <td className="p-3 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600">DM-2024-12345</td>
+                        <td className="p-3 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600">DM-2026-12345</td>
                         <td className="p-3 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600">Nemzeti Közlekedési Hatóság</td>
                         <td className="p-3 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600">2027.01.14.</td>
                       </tr>
                       <tr className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300">
-                        <td className="p-3 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600">NK-2024-6789</td>
+                        <td className="p-3 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600">NK-2026-6789</td>
                         <td className="p-3 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600">Nemzeti Média- és Hírközlési Hatóság</td>
                         <td className="p-3 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600">2027.01.31.</td>
                       </tr>
@@ -171,7 +171,7 @@ const Impressum = () => {
                   A weboldalon található információk tájékoztató jellegűek, a teljesség igénye nélkül kerültek feltüntetésre.
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
-                  Utolsó frissítés: 2024. január 1.
+                  Utolsó frissítés: 2026. január 1.
                 </p>
               </div>
             </div>

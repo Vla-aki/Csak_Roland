@@ -1,7 +1,7 @@
 // src/pages/drone/Earnings.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaEuroSign, FaCalendar, FaDownload, FaChartLine, FaCheckCircle, FaClock } from 'react-icons/fa';
+import { FaMoneyBillWave, FaCalendar, FaDownload, FaChartLine, FaCheckCircle, FaClock } from 'react-icons/fa';
 import Navbar from '../../components/common/Navbar';
 import Footer from '../../components/common/Footer';
 
@@ -107,7 +107,7 @@ const Earnings = () => {
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-700">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Összes bevétel</h3>
-                <FaEuroSign className="text-blue-600 dark:text-blue-400 text-xl" />
+                <FaMoneyBillWave className="text-blue-600 dark:text-blue-400 text-xl" />
               </div>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">{earnings.total} Ft</p>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">+12% az előző hónaphoz</p>

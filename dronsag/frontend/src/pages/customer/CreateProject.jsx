@@ -1,7 +1,7 @@
 // src/pages/customer/CreateProject.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaMapMarkerAlt, FaEuroSign, FaCalendar, FaTag, FaPlus, FaTimes } from 'react-icons/fa';
+import { FaArrowLeft, FaMapMarkerAlt, FaMoneyBillWave, FaCalendar, FaTag, FaPlus, FaTimes } from 'react-icons/fa';
 import Navbar from '../../components/common/Navbar';
 import Footer from '../../components/common/Footer';
 
@@ -338,7 +338,7 @@ const CreateProject = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
                       <label htmlFor="budgetType" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        <FaEuroSign className="inline mr-1 text-gray-400" />
+                        <FaMoneyBillWave className="inline mr-1 text-gray-400" />
                         Költségkeret típusa
                       </label>
                       <select

@@ -18,7 +18,7 @@ const Terms = () => {
               Általános Szerződési Feltételek
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-400 mb-4 transition-all duration-700">
-              Hatályos: 2024. január 1-től
+              Hatályos: 2026. január 1-től
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Link to="/privacy" className="text-blue-600 dark:text-blue-400 hover:underline">Adatvédelem</Link>
@@ -147,7 +147,7 @@ const Terms = () => {
 
               <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  A jelen dokumentum 2024. január 1-jén lép hatályba és visszavonásig érvényes. 
+                  A jelen dokumentum 2026. január 1-jén lép hatályba és visszavonásig érvényes. 
                   Kérdés esetén forduljon ügyfélszolgálatunkhoz a <Link to="/contact" className="text-blue-600 dark:text-blue-400 hover:underline">kapcsolatfelvételi űrlapon</Link> keresztül.
                 </p>
               </div>

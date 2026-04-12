@@ -29,7 +29,7 @@ const About = () => {
   }, []);
 
   const stats = [
-    { value: '2024', label: 'Alapítás éve' },
+    { value: '2026', label: 'Alapítás éve' },
     { value: `${systemStats.freelancers}+`, label: 'Ellenőrzött pilóta' },
     { value: `${systemStats.completed}+`, label: 'Sikeres projekt' },
     { value: `${systemStats.earnings.toLocaleString()} Ft`, label: 'Kifizetett összeg' }
@@ -79,29 +79,29 @@ const About = () => {
 
   const timeline = [
     {
-      year: '2016',
+      year: '2026',
       title: 'Az ötlet megszületik',
-      description: 'Kovács Péter, maga is drónpilóta, felismerte, hogy szükség van egy megbízható platformra a megbízók és pilóták összekapcsolására.'
+      description: 'Kovács Péter, maga is drónpilóta, felismerte, hogy szükség van egy modern, hazai platformra a drónos közösség számára.'
     },
     {
-      year: '2017',
-      title: 'Elindul a HoverHire',
-      description: 'A platform béta verziója elindul 50 pilótával és az első projektekkel Budapesten.'
+      year: '2026',
+      title: 'A fejlesztés megkezdése',
+      description: 'Elkezdtük építeni a HoverHire platformot, fókuszban a biztonságos fizetéssel és az egyszerű projektkezeléssel.'
     },
     {
-      year: '2019',
-      title: 'Országos terjeszkedés',
-      description: 'A szolgáltatás elérhetővé válik az ország minden pontján, a pilóták száma eléri a 200-at.'
+      year: '2026',
+      title: 'Béta verzió indulása',
+      description: 'Sikeresen elindult a béta tesztelés egy zárt, szakmai közösséggel, akik segítettek finomhangolni a funkciókat.'
     },
     {
-      year: '2021',
-      title: 'Nemzetközi díj',
-      description: 'A HoverHire elnyeri az "Év Innovatív Startupja" díjat a Drón Technológiai Konferencián.'
+      year: '2026',
+      title: 'Az első felhasználók',
+      description: 'Regisztráltak az első hivatalos pilóták és megbízók, majd gazdára talált az első sikeres drónos projekt is.'
     },
     {
-      year: '2024',
-      title: '500+ pilóta',
-      description: 'Mára több mint 500 ellenőrzött pilóta és 1200+ sikeres projekt tartozik a platformhoz.'
+      year: '2026',
+      title: 'Hivatalos indulás',
+      description: 'A platform mindenki számára elérhetővé válik Magyarországon, megnyitva a kaput a drónos munkák új korszaka előtt.'
     }
   ];
 
@@ -132,19 +132,19 @@ const About = () => {
                   A HoverHire története
                 </h2>
                 <p className="text-lg text-gray-600 dark:text-gray-400 mb-4 transition-all duration-700">
-                  A HoverHire ötlete 2016-ban született meg, amikor alapítónk, Kovács Péter, 
+                  A HoverHire ötlete 2026-ban született meg, amikor alapítónk, Kovács Péter, 
                   maga is drónpilótaként szembesült azzal a problémával, hogy nehéz megbízható 
-                  megbízókat találni.
+                  megbízókat találni egy dedikált, hazai felületen.
                 </p>
                 <p className="text-lg text-gray-600 dark:text-gray-400 mb-4 transition-all duration-700">
-                  A kezdeti időkben csak egy egyszerű weboldal működött, ahol a pilóták 
-                  listázhatták magukat, és a megbízók elérhették őket. A sikereken felbuzdulva 
-                  folyamatosan fejlesztettük a platformot.
+                  Hamar világossá vált, hogy egy olyan modern megoldásra van szükség, ahol a pilóták 
+                  és a megbízók nem csak egymásra találhatnak, hanem a szerződéskötés és a fizetés is 
+                  biztonságosan, egy helyen történhet.
                 </p>
                 <p className="text-lg text-gray-600 dark:text-gray-400 transition-all duration-700">
-                  Ma már egy komplex piactérként működünk, ahol a megbízók könnyedén 
-                  meghirdethetik projektjeiket, a pilóták pedig ajánlatokat tehetnek rájuk. 
-                  Mindezt egy biztonságos, ellenőrzött környezetben.
+                  Így jött létre a HoverHire platform, amely új korszakot nyit a hazai drónos 
+                  szolgáltatások piacán. Célunk, hogy a piac meghatározó szereplőjévé váljunk 
+                  egy megbízható és átlátható közösség építésével.
                 </p>
               </div>
               <div className="relative transition-all duration-700">
@@ -154,8 +154,8 @@ const About = () => {
                   className="rounded-lg shadow-2xl transition-all duration-700"
                 />
                 <div className="absolute -bottom-6 -left-6 bg-blue-600 text-white p-6 rounded-lg shadow-xl transition-all duration-700">
-                  <p className="text-4xl font-bold transition-all duration-700">8+</p>
-                  <p className="text-sm transition-all duration-700">év tapasztalat</p>
+                  <p className="text-4xl font-bold transition-all duration-700">100%</p>
+                  <p className="text-sm transition-all duration-700">Hazai platform</p>
                 </div>
               </div>
             </div>
@@ -219,10 +219,10 @@ const About = () => {
                 Utunk a kezdetektől napjainkig
               </p>
             </div>
-
-            <div className="space-y-8">
+          
+            <div className="space-y-0">
               {timeline.map((item, index) => (
-                <div key={index} className="relative flex items-start gap-6">
+                <div key={index} className="relative flex gap-6">
                 {/* Év */}
                   <div className="flex-shrink-0 w-24 text-right">
                     <span className="text-2xl font-bold text-blue-600 dark:text-blue-400 transition-all duration-700">
@@ -231,15 +231,15 @@ const About = () => {
                   </div>
                   
                   {/* Pont a vonalon */}
-                  <div className="relative flex-shrink-0">
-                    <div className="w-4 h-4 mt-2 bg-blue-600 rounded-full transition-all duration-700"></div>
+                  <div className="relative flex flex-col items-center flex-shrink-0">
+                    <div className="w-4 h-4 mt-2 bg-blue-600 rounded-full z-10 transition-all duration-700"></div>
                     {index < timeline.length - 1 && (
-                      <div className="absolute top-6 left-2 w-0.5 h-24 bg-blue-200 dark:bg-blue-800 transition-all duration-700"></div>
+                      <div className="absolute top-6 -bottom-2 left-1/2 -translate-x-1/2 w-0.5 bg-blue-200 dark:bg-blue-800 transition-all duration-700"></div>
                     )}
                   </div>
                   
                   {/* Tartalom */}
-                  <div className="flex-1 pb-8 transition-all duration-700">
+                  <div className="flex-1 pb-10 transition-all duration-700">
                     <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 transition-all duration-700">
                       {item.title}
                     </h3>

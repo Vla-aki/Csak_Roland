@@ -10,6 +10,7 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [isMuted, setIsMuted] = useState(localStorage.getItem('notif_muted') === 'true');
   
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -74,6 +75,21 @@ const Navbar = () => {
     }
   }, [user]);
 
+  const markAllAsRead = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      await fetch(`${apiUrl}/notifications/read-all`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }});
+      setNotifications(notifications.map(n => ({ ...n, is_read: 1 })));
+    } catch (e) {}
+  };
+
+  const toggleMute = () => {
+    const newMuted = !isMuted;
+    setIsMuted(newMuted);
+    localStorage.setItem('notif_muted', newMuted.toString());
+  };
+
   const toggleDarkMode = () => {
     const isCurrentlyDark = document.documentElement.classList.contains('dark');
     const nextTheme = isCurrentlyDark ? 'light' : 'dark';
@@ -114,9 +130,9 @@ const Navbar = () => {
             {user?.role === 'customer' && (
               <>
                 <Link to="/my-projects" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Saját munkáim</Link>
+                <Link to="/create-project" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Munka hirdetés</Link>
                 <Link to="/find-work" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Munkák keresése</Link>
                 <Link to="/find-freelancers" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Pilóták</Link>
-                <Link to="/create-project" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Új munka meghirdetése</Link>
               </>
             )}
 
@@ -163,6 +179,11 @@ const Navbar = () => {
                         </div>
                       )) : <p className="p-4 text-sm text-gray-500 text-center">Nincs új értesítésed.</p>}
                     </div>
+                {notifications.filter(n => !n.is_read).length > 0 && (
+                  <div className="p-2 border-t border-gray-100 dark:border-gray-700">
+                    <button onClick={markAllAsRead} className="w-full text-sm text-blue-600 hover:text-blue-700 font-medium py-1.5 transition-colors">Összes olvasottnak jelölése</button>
+                  </div>
+                )}
                   </div>
                 )}
               </div>
@@ -259,9 +280,9 @@ const Navbar = () => {
               {user?.role === 'customer' && (
                 <>
                   <Link to="/my-projects" className="text-gray-700 dark:text-gray-300 hover:text-blue-600">Saját munkáim</Link>
+                  <Link to="/create-project" className="text-gray-700 dark:text-gray-300 hover:text-blue-600">Munka hirdetés</Link>
                   <Link to="/find-work" className="text-gray-700 dark:text-gray-300 hover:text-blue-600">Munkák keresése</Link>
                   <Link to="/find-freelancers" className="text-gray-700 dark:text-gray-300 hover:text-blue-600">Pilóták</Link>
-                  <Link to="/create-project" className="text-gray-700 dark:text-gray-300 hover:text-blue-600">Új munka meghirdetése</Link>
                 </>
               )}
               {user?.role === 'driver' && (

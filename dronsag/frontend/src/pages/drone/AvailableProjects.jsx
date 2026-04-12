@@ -1,7 +1,7 @@
 // src/pages/drone/AvailableProjects.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaMapMarkerAlt, FaEuroSign, FaCalendar, FaFilter, FaSearch, FaStar } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaMoneyBillWave, FaCalendar, FaFilter, FaSearch, FaStar } from 'react-icons/fa';
 import Navbar from '../../components/common/Navbar';
 import Footer from '../../components/common/Footer';
 
@@ -162,7 +162,7 @@ const AvailableProjects = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Minimum ár (€)
+                      Minimum ár (Ft)
                     </label>
                     <input
                       type="number"
@@ -174,7 +174,7 @@ const AvailableProjects = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Maximum ár (€)
+                      Maximum ár (Ft)
                     </label>
                     <input
                       type="number"
@@ -246,7 +246,7 @@ const AvailableProjects = () => {
 
                     <div className="flex items-center gap-4 mb-4 text-sm">
                       <div className="flex items-center gap-1">
-                        <FaEuroSign className="text-gray-400" />
+                        <FaMoneyBillWave className="text-gray-400" />
                         <span className="font-semibold text-gray-900 dark:text-white">{project.budget}</span>
                         <span className="text-xs text-gray-500 dark:text-gray-400">/{project.budgetType === 'fix' ? 'fix' : 'óra'}</span>
                       </div>

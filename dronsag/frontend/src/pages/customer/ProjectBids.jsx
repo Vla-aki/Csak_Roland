@@ -1,7 +1,7 @@
 // src/pages/customer/ProjectBids.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaEuroSign, FaStar, FaCheckCircle, FaTimesCircle, FaUserCircle, FaCalendar, FaComment } from 'react-icons/fa';
+import { FaArrowLeft, FaStar, FaCheckCircle, FaTimesCircle, FaUserCircle, FaCalendar, FaComment, FaInfoCircle } from 'react-icons/fa';
 import Navbar from '../../components/common/Navbar';
 import Footer from '../../components/common/Footer';
 
@@ -11,6 +11,7 @@ const ProjectBids = () => {
   const [sortBy, setSortBy] = useState('price');
   const [project, setProject] = useState(null);
   const [bids, setBids] = useState([]);
+  const [alertModal, setAlertModal] = useState({ show: false, message: '' });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -75,10 +76,10 @@ const ProjectBids = () => {
       if (data.success) {
         navigate(`/contract/${data.contractId}`);
       } else {
-        alert(data.message || 'Hiba történt!');
+        setAlertModal({ show: true, message: data.message || 'Hiba történt az elfogadás során!' });
       }
     } catch (error) {
-      console.error('Hiba az ajánlat elfogadásakor:', error);
+      setAlertModal({ show: true, message: 'Hálózati hiba történt.' });
     }
   };
 
@@ -330,6 +331,23 @@ const ProjectBids = () => {
       </div>
 
       <Footer />
+
+      {/* Figyelmeztető modal */}
+      {alertModal.show && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full shadow-2xl p-6 text-center">
+            <FaInfoCircle className="text-5xl text-red-500 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Hiba</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">{alertModal.message}</p>
+            <button 
+              onClick={() => setAlertModal({ show: false, message: '' })}
+              className="px-6 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium w-full"
+            >
+              Bezárás
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
