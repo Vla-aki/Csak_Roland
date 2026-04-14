@@ -17,7 +17,7 @@ timeout /t 3 /nobreak >nul
 echo.
 
 echo [3/4] Frontend függőségek ellenőrzése és telepítése (első indításnál eltarthat egy percig)...
-cd /d "%~dp0dronsag\frontend"
+cd /d "%~dp0hoverhire\frontend"
 call npm install
 echo.
 

@@ -1,144 +1,99 @@
-
-# Vizsgatervezet – Drónbérléses Webalkalmazás (HoverHire)
+# HoverHire
+Modern, biztonságos és átlátható drónbérléses piactér és közösségi platform.
 
 ## Tartalomjegyzék
+* [Projekt bemutatása](#projekt-bemutatása)
+* [Főbb funkciók és Architektúra](#főbb-funkciók-és-architektúra)
+* [Alkalmazott technológiák](#alkalmazott-technológiák)
+* [Fejlesztők és Felelősségi körök](#fejlesztők-és-felelősségi-körök)
+* [Telepítés és Futtatás (Docker)](#telepítés-és-futtatás-docker)
 
-* [Projekt célja](#projekt-célja)
-* [1. Regisztráció és bejelentkezés modul](#1-regisztráció-és-bejelentkezés-modul)
-* [2. Profilok és szerepkörök](#2-profilok-és-szerepkörök)
-* [3. Projektfeladás](#3-projektfeladás)
-* [4. Ajánlatküldés](#4-ajánlatküldés)
-* [5. Szerződéskötés](#5-szerződéskötés)
-* [6. Pilótakereső](#6-pilótakereső)
-* [7. Üzenetváltás](#7-üzenetváltás)
-* [8. Bevételkövetés](#8-bevételkövetés)
-* [9. Kapcsolat és infók](#9-kapcsolat-és-infók)
-* [10. Kinézet és dizájn](#10-kinézet-és-dizájn)
-* [11. Tesztelés](#11-tesztelés)
-* [12. Összegzés](#12-összegzés)
+## Projekt bemutatása
+A HoverHire egy komplex, vizsgaremekként készült Single Page Application (SPA) alapú piactér és közösségi platform, amely összeköti a professzionális drónpilótákat a megbízókkal. A rendszer ötvözi a modern szabadúszó portálok (pl. Upwork) letisztult élményét a specifikus drónos szolgáltatások (légifotózás, videózás, ipari ellenőrzés stb.) funkcionális igényeivel.
 
-## Projekt célja:
-Egy modern, könnyen kezelhető weboldal építése, ahol a megbízók és drónpilóták könnyedén egymásra találnak.
-Az ötlet onnan jött, hogy rengeteg megbízó keres profi drónost, a pilóták pedig munkát, de nincs egy igazán jól működő magyar platform, ahol ezt megtehetnék.
-Ezért született a HoverHire, ahol minden egy helyen van: projektfeladás, ajánlatküldés, szerződéskötés és fizetés.
-Magyarország első számú drónos piactere szeretnénk lenni, ahol gyorsan, egyszerűen és biztonságosan lehet üzletelni.
+A projekt elsődleges célja egy olyan aktív, kreatív ökoszisztéma kialakítása, ahol a felhasználók (megbízók és pilóták) egyetlen, központi felületen tudják menedzselni a projektfeladást, az ajánlattételt, a szerződéskötést, az üzenetváltást és a biztonságos fizetési folyamatokat.
 
-## 1. Regisztráció és bejelentkezés modul
-A felhasználók könnyedén létrehozhatnak fiókot, akár megbízóként, akár pilótaként. Csak néhány alapadat kell: név, email, jelszó és hogy melyik oldalon szeretnének tevékenykedni.
-A rendszer ellenőrzi, hogy az email cím még nem szerepel-e az adatbázisban, és ha minden rendben, máris lehet jelentkezni. A belépés után mindenki a saját szerepkörének megfelelő felületet látja.
-Fejlesztés közben egyszerűsítettük a dolgot: bármilyen jelszóval be lehet lépni, és a szerepkört is ki lehet próbálgatni. Élesben persze komolyabb biztonság lesz, jelszótitkosítással és tokenes azonosítással.
+## Főbb funkciók és Architektúra
 
-## 2. Profilok és szerepkörök
-Kétféle felhasználó van, teljesen más lehetőségekkel.
+### Dinamikus Kereső és Projektkezelés
+* **Többlépéses Projektfeladás:** A megbízók kategóriákra bontva, részletes leírással, határidővel és költségkerettel (fix vagy óradíjas) írhatnak ki munkákat.
+* **Komplex Keresőmotor:** A rendszer lehetővé teszi a projektek és a pilóták kiterjesztett szűrését dinamikus paraméterek (helyszín, ár, kategória, értékelés, elérhetőség) alapján.
+* **Ajánlattétel és Szerződéskötés:** A pilóták árajánlatokat küldhetnek a nyitott projektekre. A megbízók ezeket összehasonlíthatják, elfogadhatják, amiből a rendszer automatikusan szerződést generál.
+* **Mélyreható Pénzügyi Statisztikák:** Mind a pilóták, mind a megbízók dedikált felületeken követhetik nyomon a függőben lévő letéteiket, bevételeiket és kiadásaikat dinamikus grafikonokon.
 
-### Aki megbízó:
+### Közösségi Interakciók és Kommunikáció
+* **Értékelési Rendszer:** A sikeresen lezárt projektek után a megbízók szöveges és csillagos értékelést hagyhatnak a pilótáknak, ami megjelenik a publikus profiljukon.
+* **Privát Chat és Értesítések:** Beépített üzenetküldő rendszer kép- és fájlfeltöltési lehetőséggel (Multer és Node.js feldolgozással), valamint Emoji támogatással. A felhasználók valós időben kapnak rendszerértesítéseket az új ajánlatokról, üzenetekről és a szerződések státuszváltozásairól.
 
-- Feladhatja a munkákat
-- Válogathat a beérkezett ajánlatok közül
-- Szerződést köthet a kiválasztott pilótával
-- Értékelheti az elkészült munkát
+### Biztonság és Jogosultságkezelés
+* **JWT Hitelesítés és Route Protection:** A teljes rendszer biztonságos JSON Web Token alapú bejelentkezést használ. A React kliensoldalon Higher-Order Componentek (HOC) védik a privát útvonalakat (Külön Megbízói, Pilóta és Admin jogosultságok).
+* **Titkosítás:** A jelszavak nyílt szöveg helyett bcrypt.js segítségével, sózva (salted hash) kerülnek a MySQL adatbázisba.
+* **Adminisztrációs Vezérlőpult:** Egy dedikált, csak Admin jogosultsággal elérhető felület a platform moderálására. Lehetőséget ad a projektek és felhasználók biztonságos kezelésére, törlésére, valamint a globális platformstatisztikák áttekintésére.
 
-### Aki pilóta:
+## Alkalmazott technológiák
 
-- Böngészhet az elérhető projektek között
-- Árajánlatot adhat rájuk
-- Szerződhet a megbízóval
-- Követheti a bevételeit
-- Mutathatja a portfólióját és gyűjtheti az értékeléseket
+**Kliensoldal (Frontend):**
+* React.js (Vite) – Gyors, optimalizált fejlesztői környezet és kliensoldali renderelés
+* React Router DOM – Kliensoldali dinamikus navigáció
+* Tailwind CSS – Teljesen egyedi, modern UI, reszponzív kialakítás és beépített "Glassmorphism" sötét téma (Dark Mode)
+* React Icons & Emoji Picker – Ikonográfia és interaktív kommunikációs elemek
 
-A profilokat mindenki testreszabhatja: lehet profilkép, bemutatkozás, szakterületek, óradíj és hogy mikor érhető el. A pilóták még képeket is feltölthetnek korábbi munkáikról.
+**Szerveroldal és Adatbázis (Backend):**
+* Node.js & Express.js – Robusztus, aszinkron RESTful API szerver
+* MySQL – Relációs adatbázis a stabil, normalizált adattároláshoz és a komplex relációk kezeléséhez
+* Bcrypt.js & JWT – Biztonsági réteg és munkamenet-kezelés
+* Multer – Multipart/form-data kérések fogadása, fizikai profilképek és portfóliók feltöltéséhez
 
-## 3. Projektfeladás
-A megbízók három egyszerű lépésben adhatják fel a munkákat:
+**Tesztelés és DevOps:**
+* Jest & Supertest – Backend API végpontok és middleware-ek automatizált tesztelése
+* Selenium WebDriver – Frontend E2E (End-to-End) tesztelés automatizált böngészővel a főbb felhasználói folyamatokra
+* Docker & Docker Compose – A teljes architektúra konténerizált futtatásához
 
-- Első kör: projekt címe, kategória (fotó, videó, ellenőrzés, térképezés, szállítás) és részletes leírás
-- Második kör: pontos helyszín, mennyit szánnak rá (fix összeg vagy óradíj), határidő
-- Harmadik kör: milyen készségek kellenek hozzá, aztán egy összefoglaló és a véglegesítés
+## Fejlesztők és Felelősségi körök
 
-A feladott projektek azonnal megjelennek a listában, ahol a pilóták megtalálhatják őket. A megbízók a saját felületükön követhetik, hogy állnak a munkák és mennyi ajánlat érkezett rájuk.
+A projektet a modern agilis szoftverfejlesztési elveknek megfelelően építettük fel.
 
-## 4. Ajánlatküldés
-A pilóták a számukra szimpatikus projektekre küldhetnek ajánlatot. Meg kell adniuk:
+**Csák Roland (Full-Stack Fejlesztő / Alapító)**
+* **Kliensoldali Architektúra és UI/UX:** A teljes React.js (Vite) frontend alapjainak lefektetése. A Tailwind CSS alapú designrendszer, a reszponzív elrendezések és a beépített sötét téma (Dark Mode) elkészítése.
+* **Projekt- és Ajánlatkezelés (Frontend):** A többlépéses projektfeladási folyamat, a komplex pilótakereső szűrőrendszer és a dinamikus dashboard-ok (Megbízó/Pilóta) vizuális megvalósítása.
+* **Automatizált Tesztelés (E2E):** A Selenium WebDriver alapú end-to-end tesztek írása (regisztráció, projektfeladás, szűrés), biztosítva a kritikus felhasználói folyamatok megbízhatóságát.
 
-- Mennyiért vállalják
-- Mennyi idő kell hozzá
-- Egy rövid üzenetet a megbízónak
+**Szalai Bence (Full-Stack Fejlesztő / Társalapító)**
+* **Adatbázis-tervezés és Backend Logika:** A MySQL relációs adatbázis sémájának megtervezése, a táblák normalizálása és az összetett SQL lekérdezések optimalizálása (projektek, ajánlatok, szerződések, üzenetek integrációja).
+* **Hitelesítés és Kriptográfia:** A Node.js szerveren a JWT alapú autentikáció és a Bcrypt jelszótitkosítás API szintű implementálása.
+* **Fájlkezelés és Infrastruktúra (DevOps):** A Multer alapú profilkép- és portfólió fájlfeltöltő modulok megírása, a teljes alkalmazás (MySQL, phpMyAdmin, Backend, Frontend) Docker Compose alapú konténerizálása, valamint a Jest backend unit/integrációs tesztek elkészítése.
 
-A megbízók egy helyen látják az összes ajánlatot, összehasonlíthatják az árakat, a tapasztalatot és a korábbi értékeléseket. Ha valaki megtetszik, elfogadhatják, ha nem, elutasíthatják.
+## Telepítés és Futtatás (Docker)
 
-## 5. Szerződéskötés
-Az elfogadott ajánlatból jön létre a szerződés. Ebben benne van a projekt összes adata, a vállalt összeg és a határidő. A rendszerben lehet követni:
+Ez a projekt a Docker és Docker Compose, valamint a mellékelt gyorsindító `.bat` szkriptek segítségével egyetlen paranccsal elindítható (Windows környezetben). A rendszer automatikusan felépíti az adatbázist, és elindítja a backend, valamint a frontend szervereket.
 
-- Hol tart a munka
-- Milyen mérföldkövek vannak
-- Mikor lett kész
-- Ha gond van, lehet vitát indítani
+### Előfeltételek
+* **Docker Desktop** telepítve és fut.
+* **Node.js** telepítve (kizárólag az npm parancsok és a kliens futtatásához).
 
-A pilóták egy külön oldalon látják az összes szerződésüket: mik az aktívak, mik függőben és mik a lezártak. Mindegyikhez részletes infók tartoznak, még a fizetés állapotát is mutatja.
+### Indítás
+Nyiss egy terminált a projekt gyökérkönyvtárában (ahol a `start.bat` és a `docker-compose.yml` fájlok is találhatók), és futtasd a szkriptet:
 
-## 6. Pilótakereső
-A megbízók nem csak várhatják az ajánlatokat, hanem maguk is kereshetnek pilóták között. Egy külön oldalon lehet böngészni:
+```bash
+start.bat
+```
 
-- Lehet szűrni kategóriára, városra, óradíjra és arra, hogy mikor érnek rá
-- Lehet rendezni értékelésre, árra vagy a projektek számára
-- Meg lehet nézni a pilóták profilját részletesen
+A szkript a következőket végzi el automatikusan:
+1. Elindítja a **MySQL**, **phpMyAdmin** és **Backend** konténereket a háttérben (`docker-compose up -d`).
+2. Telepíti a Frontend függőségeit (`npm install`).
+3. Megnyit egy új terminálablakot, és elindítja a React fejlesztői szervert (`npm run dev`).
 
-Minden sikeres munka után lehet értékelést írni és csillagozni. Az értékelések ott virítanak a pilóták profiljában, így a megbízók könnyebben döntenek.
+### Elérhetőségek indítás után
+A sikeres indítást követően az alkalmazás részei az alábbi alapértelmezett címeken lesznek elérhetőek a böngésződből:
 
-## 7. Üzenetváltás
-A rendszerben van saját üzenetküldő is, hogy ne kelljen más alkalmazásokat használni. Az üzenetek:
+* **Frontend (HoverHire):** http://localhost:5173
+* **Backend API:** http://localhost:5000
+* **Adatbázis-kezelő (phpMyAdmin):** http://localhost:8081
 
-- Azonnal megjönnek (WebSocket)
-- Lehet őket projektekhez kötni
-- Látszik, ha elküldték, megkapták vagy elolvasták
+### Leállítás
+A projekt teljes leállításához futtasd a leállító szkriptet a projekt gyökerében:
 
-Az üzenetek egy központi helyen vannak, ahol lehet váltogatni a beszélgetések között. Így minden kommunikáció megmarad a platformon.
-
-## 8. Bevételkövetés
-A pilóták számára van egy külön oldal, ahol követhetik a pénzügyeiket:
-
-- Látják a teljes bevételt, a még ki nem fizetett tételeket és a már kifizetetteket
-- Egy grafikon mutatja a havi bontást
-- Lehet listázni az összes tranzakciót és szűrni rájuk
-- Ki is lehet kérni a kimutatásokat
-
-A rendszer automatikusan számolja, mennyi jár a sikeres projektek után, és jelzi, ha valami még függőben van.
-
-## 9. Kapcsolat és infók
-A "Kapcsolat" menüpontban két dolog van:
-
-- Egy űrlap, ahol bárki írhat az ügyfélszolgálatnak. Lehet kérdezni, reklamálni vagy jelezni, ha valami nem működik. Az űrlap ellenőrzi a bevitt adatokat, és ha minden oké, vissza is jelez.
-- Egy GYIK oldal, ahol a leggyakoribb kérdésekre lehet választ találni. Kategóriákba szedve, könnyen áttekinthetően.
-- Van még egy "Rólunk" oldal, ahol le van írva a cég története, kik vagyunk, mik a céljaink és a csapat. Illetve a jogi dolgok: ÁSZF, Adatvédelem, Cookie-k és Impresszum, mert azért rendes cégnek ezek is kellenek.
-
-## 10. Kinézet és dizájn
-A weboldal modern, letisztult és minden eszközön jól mutat. Akár telefonon, akár tableten, akár gépen nézi valaki, ugyanolyan jó élményt nyújt.
-
-Ami még kiemelhető:
-
-- Sötét mód: Lehet váltani a világos és sötét között, és minden szépen, egyenletesen változik át
-- Színek: Professzionális kék árnyalatok, sötét módban szürkék
-- Ikonok: A React Icons könyvtárat használjuk
-- Animációk: A számok szépen felszaladnak, a gombok reagálnak, az ablakok szépen nyílnak
-
-## 11. Tesztelés
-Mielőtt élesedne a rendszer, többféleképpen is ellenőrizzük:
-
-- Működési teszt: minden funkciót kipróbálunk, regisztrációtól a fizetésig
-- Használhatósági teszt: mások is megnézik, hogy érthető-e és könnyű-e kezelni
-- Reszponzivitás: megnézzük telefonon, tableten, hogy mindenhol jól néz-e ki
-- Sötét mód: minden elemet megnézünk sötétben is, hogy semmi se lógjon ki
-- Adatáramlás: ellenőrizzük, hogy a modulok között rendben mennek-e az adatok
-- Biztonság: megnézzük, hogy csak oda jut-e valaki, ahova szabad
-
-A hibákat felírjuk és kijavítjuk, aztán újra tesztelünk.
-
-## 12. Összegzés
-A cél egy olyan hely létrehozása volt, ahol a megbízók és drónpilóták könnyen megtalálják egymást, és minden egy helyen intézhető. Legyen szó projektfeladásról, ajánlatküldésről, szerződéskötésről vagy fizetésről.
-
-Jelenleg 22 oldal működik:
-
-- 11 publikus: Landing, Login, Register, Rólunk, Kapcsolat, Munka keresés, Pilóták keresése, GYIK, ÁSZF, Adatvédelem, Cookie, Impresszum
-- 2 közös védett: Profil, Üzenetek
-- 4 megbízói: Dashboard, Projekt létrehozás, Projektjeim, Projekt ajánlatok
-- 5 pilóta: Pilóta dashboard, Elérhető projektek, Ajánlataim, Szerződéseim, Bevételek
+```bash
+stop.bat
+```
+*(Ez automatikusan leállítja a Docker konténereket és bezárja a háttérben maradt frontend node/cmd folyamatokat.)*

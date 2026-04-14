@@ -14,7 +14,7 @@ services:
       - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./dronsag/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./hoverhire/database/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - dronsag_network
 
@@ -33,7 +33,7 @@ services:
       - dronsag_network
 
   backend:
-    build: ./dronsag/backend
+    build: ./hoverhire/backend
     container_name: dronsag_backend
     restart: always
     ports:
@@ -47,14 +47,14 @@ services:
       DB_NAME: dronsag
       JWT_SECRET: your_super_secret_key_change_this
     volumes:
-      - ./dronsag/backend:/app
+      - ./hoverhire/backend:/app
       - /app/node_modules
       - ./uploads:/uploads
     networks:
       - dronsag_network
 
   frontend:
-    build: ./dronsag/frontend
+    build: ./hoverhire/frontend
     container_name: dronsag_frontend
     ports:
       - "5173:5173"
@@ -63,7 +63,7 @@ services:
     environment:
       VITE_API_URL: http://localhost:5000/api
     volumes:
-      - ./dronsag/frontend:/app
+      - ./hoverhire/frontend:/app
       - /app/node_modules
     networks:
       - dronsag_network
