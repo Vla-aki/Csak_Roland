@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { FaUserCircle, FaSignOutAlt, FaCog, FaSun, FaMoon, FaBell } from 'react-icons/fa';
+import { FaUserCircle, FaSignOutAlt, FaCog, FaSun, FaMoon, FaBell, FaBellSlash } from 'react-icons/fa';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -144,6 +144,12 @@ const Navbar = () => {
               </>
             )}
 
+            {user?.role === 'admin' && (
+              <>
+                <Link to="/admin/dashboard" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Vezérlőpult</Link>
+              </>
+            )}
+
             <Link to="/about" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium">Rólunk</Link>
           </div>
 
@@ -161,15 +167,18 @@ const Navbar = () => {
               <div className="relative" ref={notifRef}>
                 <button onClick={() => setIsNotifOpen(!isNotifOpen)} className="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all">
                   <FaBell size={18} />
-                  {notifications.filter(n => !n.is_read).length > 0 && (
+                  {notifications.filter(n => !n.is_read).length > 0 && !isMuted && (
                     <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
                   )}
                 </button>
                 
                 {isNotifOpen && (
                   <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-xl py-2 z-50">
-                    <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+                    <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                       <h3 className="font-bold text-gray-900 dark:text-white">Értesítések</h3>
+                      <button onClick={toggleMute} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors" title={isMuted ? "Értesítések bekapcsolása" : "Értesítések némítása"}>
+                        {isMuted ? <FaBellSlash /> : <FaBell />}
+                      </button>
                     </div>
                     <div className="max-h-64 overflow-y-auto">
                       {notifications.length > 0 ? notifications.map(n => (
@@ -290,6 +299,11 @@ const Navbar = () => {
                   <Link to="/my-bids" className="text-gray-700 dark:text-gray-300 hover:text-blue-600">Ajánlataim</Link>
                   <Link to="/find-work" className="text-gray-700 dark:text-gray-300 hover:text-blue-600">Munkák keresése</Link>
                   <Link to="/find-freelancers" className="text-gray-700 dark:text-gray-300 hover:text-blue-600">Pilóták</Link>
+                </>
+              )}
+              {user?.role === 'admin' && (
+                <>
+                  <Link to="/admin/dashboard" className="text-gray-700 dark:text-gray-300 hover:text-blue-600">Vezérlőpult</Link>
                 </>
               )}
               <Link to="/about" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">

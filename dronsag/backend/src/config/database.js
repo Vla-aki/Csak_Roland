@@ -9,7 +9,6 @@ const pool = mysql.createPool({
     host: process.env.DB_HOST || 'dronsag_mysql',
     user: process.env.DB_USER || 'dronsag_user',
     password: process.env.DB_PASSWORD || 'dronsag_password',
-    database: process.env.DB_NAME || 'dronsag',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0

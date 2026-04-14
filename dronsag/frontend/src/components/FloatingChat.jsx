@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaCommentDots, FaTimes, FaPaperPlane, FaArrowLeft, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaCommentDots, FaTimes, FaPaperPlane, FaArrowLeft, FaExternalLinkAlt, FaSmile, FaDownload, FaStar, FaCheckCircle, FaMapMarkerAlt, FaClock } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import EmojiPicker from 'emoji-picker-react';
 
 const FloatingChat = () => {
   const { user } = useAuth();
@@ -12,6 +13,13 @@ const FloatingChat = () => {
   const [messageInput, setMessageInput] = useState('');
   const messagesEndRef = useRef(null);
   const navigate = useNavigate();
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState(null);
+  const prevMsgCount = useRef(0);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileData, setProfileData] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [profileLightboxImage, setProfileLightboxImage] = useState(null);
 
   // Partnerek lekérése
   const fetchContacts = async () => {
@@ -54,8 +62,25 @@ const FloatingChat = () => {
 
   // Automatikus görgetés
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messages.length > prevMsgCount.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+    prevMsgCount.current = messages.length;
   }, [messages]);
+
+  const handleOpenProfile = async (userId) => {
+    setLoadingProfile(true);
+    setShowProfileModal(true);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const res = await fetch(`${apiUrl}/auth/user/${userId}`);
+      const data = await res.json();
+      if (data.success) {
+        setProfileData(data.user);
+      }
+    } catch(e) { console.error(e); }
+    setLoadingProfile(false);
+  };
 
   // Üzenet elküldése
   const handleSendMessage = async (e) => {
@@ -77,6 +102,31 @@ const FloatingChat = () => {
     } catch(e) { console.error(e); }
   };
 
+  const formatMessageText = (text, isMe) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return text.split(urlRegex).map((part, i) => {
+      if (part.match(/^https?:\/\//)) {
+          const isImage = /\.(jpeg|jpg|gif|png|webp|bmp|svg)(\?.*)?$/i.test(part);
+          const isVideo = /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(part);
+          
+        if (isImage) {
+          return (
+              <img key={i} src={part} alt="Csatolmány" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setLightboxImage(part); }} className="max-w-full max-h-48 rounded-lg cursor-zoom-in hover:opacity-90 transition-opacity object-cover relative z-10" />
+            );
+          }
+          if (isVideo) {
+            return (
+              <video key={i} src={part} controls preload="metadata" className="max-w-full max-h-48 rounded-lg object-contain relative z-10" onClick={(e) => e.stopPropagation()} />
+          );
+        }
+        return (
+          <a key={i} href={part} target="_blank" rel="noreferrer" className={`underline break-all ${isMe ? 'text-blue-200 hover:text-white' : 'text-blue-600 dark:text-blue-400 hover:text-blue-800'}`}>{part}</a>
+        );
+      }
+      return part;
+    });
+  };
+
   // Jogosultság ellenőrzés
   if (!user) return null;
 
@@ -92,7 +142,9 @@ const FloatingChat = () => {
             {activeChat ? (
               <div className="flex items-center gap-2">
                 <button onClick={() => setActiveChat(null)} className="hover:bg-blue-700 p-1.5 rounded transition-colors"><FaArrowLeft size={14} /></button>
-                <span className="font-semibold text-sm truncate">{activeChat.name}</span>
+                <span className="font-semibold text-sm truncate cursor-pointer hover:underline" onClick={() => handleOpenProfile(activeChat.id)}>
+                  {activeChat.name}
+                </span>
               </div>
             ) : (
               <span className="font-semibold text-sm pl-2">Üzenetek (Munkatársak)</span>
@@ -143,9 +195,9 @@ const FloatingChat = () => {
               <div className="p-3 space-y-3 flex flex-col justify-end min-h-full">
                 {messages.map(msg => (
                   <div key={msg.id} className={`flex ${msg.senderId === 'me' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[85%] p-2.5 rounded-2xl text-sm shadow-sm ${msg.senderId === 'me' ? 'bg-blue-600 text-white rounded-br-none' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-none'}`}>
-                      {msg.text}
-                      <div className={`text-[10px] mt-1 text-right ${msg.senderId === 'me' ? 'text-blue-200' : 'text-gray-500'}`}>{msg.time}</div>
+                    <div className={`max-w-[85%] rounded-2xl text-sm shadow-sm ${msg.senderId === 'me' ? 'bg-blue-600 text-white rounded-br-none' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-none'} ${/^https?:\/\/[^\s]+\.(jpeg|jpg|gif|png|webp|bmp|svg|mp4|webm|ogg|mov)(\?.*)?$/i.test(msg.text.trim()) ? 'p-1' : 'p-2.5'}`}>
+                      <div className="whitespace-pre-wrap break-words">{formatMessageText(msg.text, msg.senderId === 'me')}</div>
+                      <div className={`text-[10px] mt-1 pr-1 text-right ${msg.senderId === 'me' ? 'text-blue-200' : 'text-gray-500'}`}>{msg.time}</div>
                     </div>
                   </div>
                 ))}
@@ -156,7 +208,24 @@ const FloatingChat = () => {
 
           {/* Beviteli mező */}
           {activeChat && (
-            <form onSubmit={handleSendMessage} className="p-3 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex gap-2">
+            <form onSubmit={handleSendMessage} className="p-3 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex gap-2 items-center">
+              <div className="relative">
+                <button type="button" onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="text-gray-400 hover:text-blue-600 transition-colors p-1">
+                  <FaSmile size={20} />
+                </button>
+                {showEmojiPicker && (
+                  <div className="absolute bottom-full left-0 mb-2 z-50 shadow-xl rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                    <EmojiPicker 
+                      onEmojiClick={(emojiObject) => { setMessageInput(prev => prev + emojiObject.emoji); setShowEmojiPicker(false); }}
+                      theme={document.documentElement.classList.contains('dark') ? 'dark' : 'light'}
+                      searchPlaceHolder="Keresés..."
+                      width={300}
+                      height={350}
+                      lazyLoadEmojis={true}
+                    />
+                  </div>
+                )}
+              </div>
               <input type="text" value={messageInput} onChange={e => setMessageInput(e.target.value)} placeholder="Írj üzenetet..." className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-full text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" />
               <button type="submit" disabled={!messageInput.trim()} className="w-9 h-9 flex items-center justify-center bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 transition-colors">
                 <FaPaperPlane size={13} className="-ml-0.5" />

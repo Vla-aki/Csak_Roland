@@ -178,21 +178,23 @@ const Landing = () => {
   // Pilóták adatai
   const freelancerCategories = [
     { id: 'all', name: 'Összes', count: freelancerTotal },
-    { id: 'photography', name: 'Fotós' },
-    { id: 'videography', name: 'Videós' },
-    { id: 'inspection', name: 'Ellenőrzés' },
-    { id: 'mapping', name: 'Térképezés' },
-    { id: 'delivery', name: 'Szállítás' }
+    { id: 'photography', name: 'Drónfotós' },
+    { id: 'videography', name: 'Drónvideós' },
+    { id: 'inspection', name: 'Ipari ellenőr' },
+    { id: 'mapping', name: 'Földmérő' },
+    { id: 'agriculture', name: 'Mezőgazdaság' },
+    { id: 'fpv', name: 'FPV pilóta' }
   ];
 
   const filteredFreelancers = freelancers.filter(f => {
     if (selectedFreelancerCategory !== 'all') {
       const catMap = {
-        photography: ['fotó', 'légifotó'],
+        photography: ['fotó'],
         videography: ['videó'],
-        inspection: ['ellenőr', 'ipari', 'hőkamera'],
-        mapping: ['térkép', 'földmér', '3d'],
-        delivery: ['szállít', 'mezőgazdaság']
+        inspection: ['ellenőr'],
+        mapping: ['térkép', 'földmér'],
+        agriculture: ['mezőgazdaság'],
+        fpv: ['fpv']
       };
       const keywords = catMap[selectedFreelancerCategory] || [];
       const hasSkill = f.skills.some(s => keywords.some(kw => s.toLowerCase().includes(kw)));

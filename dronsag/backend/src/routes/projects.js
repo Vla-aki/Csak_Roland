@@ -17,16 +17,14 @@ const pool = mysql.createPool({
 // Projekt létrehozása
 router.post('/', authMiddleware, async (req, res) => {
     console.log('📝 Projekt létrehozási kérés:', req.body);
-    const { id: customerId, role } = req.user; // Az authMiddleware adja hozzá az ID-t és a szerepkört
+    const { id: customerId, role } = req.user; 
 
-    // Jogosultság ellenőrzése
     if (role !== 'customer') {
         return res.status(403).json({ message: 'Csak megbízók hozhatnak létre projektet!' });
     }
 
     const { title, description, category, location, budget_type, budget, deadline, skills } = req.body;
 
-    // Validáció
     if (!title || !description || !category || !location || !budget_type || !budget || !deadline) {
         return res.status(400).json({ message: 'Hiányzó kötelező projekt adatok!' });
     }
@@ -36,7 +34,6 @@ router.post('/', authMiddleware, async (req, res) => {
         connection = await pool.getConnection();
         await connection.beginTransaction();
 
-        // Projekt beszúrása
         const insertProjectQuery = `
             INSERT INTO projects (user_id, title, description, category, location, budget_type, budget, deadline)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -47,7 +44,6 @@ router.post('/', authMiddleware, async (req, res) => {
 
         const projectId = projectResult.insertId;
 
-        // Szakterületek mentése
         if (skills && Array.isArray(skills) && skills.length > 0) {
             const skillValues = skills.map(skill => [projectId, skill]);
             await connection.query('INSERT INTO project_skills (project_id, skill) VALUES ?', [skillValues]);
@@ -84,11 +80,9 @@ router.get('/', async (req, res) => {
         `;
         const [projects] = await pool.query(query);
 
-        // Szakterületek lekérése
         for (let project of projects) {
             const [skills] = await pool.query('SELECT skill FROM project_skills WHERE project_id = ?', [project.id]);
             project.skills_required = skills.map(s => s.skill);
-            // Profilkép pótlása
             if (!project.customer_image) {
                 project.customer_image = `https://ui-avatars.com/api/?name=${encodeURIComponent(project.customer_name)}&background=2563eb&color=fff`;
             }
@@ -108,9 +102,13 @@ router.get('/my-projects', authMiddleware, async (req, res) => {
     }
     try {
         const query = `
-            SELECT p.*,
-                   (SELECT COUNT(*) FROM bids b WHERE b.project_id = p.id) as proposals_count
+            SELECT p.*, 
+                   (SELECT COUNT(*) FROM bids b WHERE b.project_id = p.id) as proposals_count,
+                   c.id as contract_id, c.status as contract_status,
+                   u.id as pilot_id, u.name as pilot_name, u.profile_image as pilot_image, u.verified as pilot_verified
             FROM projects p
+            LEFT JOIN contracts c ON p.id = c.project_id
+            LEFT JOIN users u ON c.driver_id = u.id
             WHERE p.user_id = ?
             ORDER BY p.created_at DESC
         `;
@@ -224,7 +222,6 @@ router.post('/:id/bids', authMiddleware, async (req, res) => {
     const driverId = req.user.id;
 
     try {
-        // Duplikáció ellenőrzése
         const [existing] = await pool.query('SELECT id FROM bids WHERE project_id = ? AND driver_id = ?', [projectId, driverId]);
         if (existing.length > 0) {
             return res.status(400).json({ message: 'Már tettél ajánlatot erre a projektre!' });
@@ -235,7 +232,6 @@ router.post('/:id/bids', authMiddleware, async (req, res) => {
             [projectId, driverId, amount, message || null, estimated_days || null]
         );
 
-        // Ajánlatszám frissítése
         await pool.query('UPDATE projects SET proposals_count = proposals_count + 1 WHERE id = ?', [projectId]);
 
         res.status(201).json({ success: true, message: 'Ajánlat sikeresen elküldve!' });
@@ -250,14 +246,13 @@ router.get('/:id/bids', authMiddleware, async (req, res) => {
     try {
         const projectId = req.params.id;
         
-        // Jogosultság ellenőrzése
         const [projects] = await pool.query('SELECT user_id FROM projects WHERE id = ?', [projectId]);
         if (projects.length === 0) return res.status(404).json({ message: 'Projekt nem található' });
         if (projects[0].user_id !== req.user.id) return res.status(403).json({ message: 'Nincs jogosultságod ehhez a projekthez!' });
 
         const query = `
             SELECT b.id, b.amount, b.message, b.estimated_days, b.status, b.created_at as submittedDate,
-                   u.id as pilotId, u.name as pilotName, u.profile_image as pilotImage, u.rating as pilotRating, u.reviews_count as pilotReviews, u.verified as pilotVerified
+                   u.id as pilotId, u.name as pilotName, u.profile_image as pilotImage, u.rating as pilotRating, u.reviews_count as pilotReviews, u.verified as pilotVerified, u.completed_jobs as pilotCompletedJobs
             FROM bids b
             JOIN users u ON b.driver_id = u.id
             WHERE b.project_id = ?

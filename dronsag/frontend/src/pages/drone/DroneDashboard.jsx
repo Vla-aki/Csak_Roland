@@ -38,7 +38,8 @@ const DroneDashboard = () => {
         const contractsData = await contractsRes.json();
         
         if (projData.success) {
-          setRecommendedProjects(projData.projects.slice(0, 3).map(p => ({
+          const activeProjs = projData.projects.filter(p => p.status === 'active' && !p.contract_id);
+          setRecommendedProjects(activeProjs.slice(0, 3).map(p => ({
             id: p.id, title: p.title, budget: p.budget, budgetType: p.budget_type,
             location: p.location, deadline: new Date(p.deadline).toLocaleDateString('hu-HU'),
             skills: p.skills_required || [], matched: Math.floor(Math.random() * 20) + 80
@@ -60,11 +61,11 @@ const DroneDashboard = () => {
         }
         
         setStats({
-          availableProjects: projData.projects?.length || 0,
+          availableProjects: projData.success ? projData.projects.filter(p => p.status === 'active' && !p.contract_id).length : 0,
           activeBids: bidsData.bids?.filter(b => b.status === 'pending').length || 0,
           completedJobs: completed,
           totalEarnings: earnings,
-          rating: user?.rating || 0
+          rating: user?.rating ? Number(user.rating).toFixed(1) : 0
         });
 
       } catch (error) {
@@ -138,7 +139,7 @@ const DroneDashboard = () => {
                 <FaSearch className="text-blue-600 dark:text-blue-400 text-xl" />
               </div>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.availableProjects}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">+8 új ma</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Jelentkezésre vár</p>
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-700">
@@ -147,7 +148,7 @@ const DroneDashboard = () => {
                 <FaClipboardList className="text-yellow-600 dark:text-yellow-400 text-xl" />
               </div>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.activeBids}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">2 elbírálás alatt</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Függőben lévő ajánlatok</p>
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-700">
@@ -156,7 +157,7 @@ const DroneDashboard = () => {
                 <FaCheckCircle className="text-green-600 dark:text-green-400 text-xl" />
               </div>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.completedJobs}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">+12 idén</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Eddigi sikeres munkák</p>
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-700">
@@ -164,11 +165,11 @@ const DroneDashboard = () => {
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Összes bevétel</h3>
                 <FaMoneyBillWave className="text-purple-600 dark:text-purple-400 text-xl" />
               </div>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalEarnings} Ft</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalEarnings.toLocaleString('hu-HU')} Ft</p>
               <div className="flex items-center gap-1 mt-2">
                 <FaStar className="text-yellow-400" />
                 <span className="text-sm font-medium text-gray-900 dark:text-white">{stats.rating}</span>
-                <span className="text-sm text-gray-500 dark:text-gray-400">(234 értékelés)</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">({user?.reviews_count || 0} értékelés)</span>
               </div>
             </div>
           </div>
@@ -185,7 +186,11 @@ const DroneDashboard = () => {
                 </div>
 
                 <div className="space-y-4">
-                  {recommendedProjects.map((project) => (
+                  {recommendedProjects.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500 dark:text-gray-400">Jelenleg nincs elérhető projekt.</p>
+                    </div>
+                  ) : recommendedProjects.map((project) => (
                     <div key={project.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-all duration-300">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div className="flex-1">
@@ -196,7 +201,7 @@ const DroneDashboard = () => {
                             </span>
                           </div>
                           <div className="flex flex-wrap items-center gap-3 text-sm">
-                            <span className="text-gray-900 dark:text-white font-medium">{project.budget} Ft / {project.budgetType === 'fix' ? 'fix' : 'óra'}</span>
+                            <span className="text-gray-900 dark:text-white font-medium">{parseInt(project.budget).toLocaleString('hu-HU')} Ft / {project.budgetType === 'fix' ? 'fix' : 'óra'}</span>
                             <span className="text-gray-500 dark:text-gray-400">{project.location}</span>
                             <span className="text-gray-500 dark:text-gray-400">Határidő: {project.deadline}</span>
                           </div>
@@ -232,14 +237,18 @@ const DroneDashboard = () => {
                 </div>
 
                 <div className="space-y-3">
-                  {activeBids.map((bid) => (
+                  {activeBids.length === 0 ? (
+                    <div className="text-center py-6">
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">Nincsenek függőben lévő ajánlataid.</p>
+                    </div>
+                  ) : activeBids.map((bid) => (
                     <div key={bid.id} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="font-medium text-gray-900 dark:text-white text-sm">{bid.projectTitle}</h3>
                         {getBidStatusBadge(bid.status)}
                       </div>
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-gray-500 dark:text-gray-400">Ajánlat: {bid.amount} Ft</span>
+                        <span className="text-gray-500 dark:text-gray-400">Ajánlat: {parseInt(bid.amount).toLocaleString('hu-HU')} Ft</span>
                         <span className="text-gray-500 dark:text-gray-400">{bid.submittedDate}</span>
                       </div>
                     </div>

@@ -214,10 +214,15 @@ const ProjectBids = () => {
                               <span className="text-blue-600 dark:text-blue-400 text-sm">✓</span>
                             )}
                           </div>
-                          <div className="flex items-center gap-1">
-                            <FaStar className="text-yellow-400 text-xs" />
-                            <span className="text-sm text-gray-600 dark:text-gray-400">{bid.pilotRating}</span>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">({bid.pilotReviews})</span>
+                          <div className="flex flex-wrap items-center gap-2 mt-1">
+                            <div className="flex items-center gap-1">
+                              <FaStar className="text-yellow-400 text-xs" />
+                              <span className="text-sm text-gray-600 dark:text-gray-400">{bid.pilotRating}</span>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">({bid.pilotReviews})</span>
+                            </div>
+                            <span className="text-[10px] font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                              {bid.pilotCompletedJobs || 0} sikeres munka
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -277,7 +282,8 @@ const ProjectBids = () => {
                             Elutasítás
                           </button>
                           <Link
-                            to={`/messages/${bid.pilotName}`}
+                            to="/messages"
+                            state={{ newChatUser: { id: bid.pilotId, name: bid.pilotName, image: bid.pilotImage, verified: bid.pilotVerified, role: 'driver' } }}
                             className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 text-sm"
                           >
                             Üzenet küldése

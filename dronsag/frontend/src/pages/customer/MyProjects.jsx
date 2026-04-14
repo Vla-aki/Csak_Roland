@@ -1,7 +1,7 @@
 // src/pages/customer/MyProjects.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaPlus, FaEye, FaEdit, FaTrash, FaFilter, FaSearch, FaTimes, FaSave, FaInfoCircle } from 'react-icons/fa';
+import { FaPlus, FaEye, FaEdit, FaTrash, FaFilter, FaSearch, FaTimes, FaSave, FaInfoCircle, FaClock, FaCheckCircle } from 'react-icons/fa';
 import Navbar from '../../components/common/Navbar';
 import Footer from '../../components/common/Footer';
 
@@ -107,7 +107,7 @@ const MyProjects = () => {
       case 'pending':
         return <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-600 dark:text-yellow-400 text-xs rounded-full">Függőben</span>;
       case 'completed':
-        return <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs rounded-full">Befejezett</span>;
+        return <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 text-xs rounded-full">Befejezett</span>;
       case 'expired':
         return <span className="px-2 py-1 bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 text-xs rounded-full">Lejárt</span>;
       default:
@@ -127,7 +127,9 @@ const MyProjects = () => {
   };
 
   const filteredProjects = projects.filter(project => {
-    if (filter !== 'all' && project.status !== filter) return false;
+    if (filter === 'active') return project.status === 'active' && !project.contract_id;
+    if (filter === 'pending') return project.contract_id && project.contract_status !== 'completed';
+    if (filter === 'completed') return project.contract_status === 'completed';
     if (searchQuery && !project.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   });
@@ -201,7 +203,7 @@ const MyProjects = () => {
                         : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
-                    Aktív ({projects.filter(p => p.status === 'active').length})
+                    Keresés alatt ({projects.filter(p => p.status === 'active' && !p.contract_id).length})
                   </button>
                   <button
                     onClick={() => setFilter('pending')}
@@ -211,7 +213,7 @@ const MyProjects = () => {
                         : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
-                    Függőben ({projects.filter(p => p.status === 'pending').length})
+                    Folyamatban ({projects.filter(p => p.contract_id && p.contract_status !== 'completed').length})
                   </button>
                   <button
                     onClick={() => setFilter('completed')}
@@ -221,7 +223,7 @@ const MyProjects = () => {
                         : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
-                    Befejezett ({projects.filter(p => p.status === 'completed').length})
+                    Befejezett ({projects.filter(p => p.contract_status === 'completed').length})
                   </button>
                 </div>
               </div>
@@ -239,7 +241,11 @@ const MyProjects = () => {
               {filteredProjects.map((project) => (
                 <div
                   key={project.id}
-                  className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition-all duration-300"
+                  className={`bg-white dark:bg-gray-800 rounded-lg shadow-lg border-2 ${
+                    project.contract_status === 'completed' ? 'border-blue-500 dark:border-blue-500' :
+                    project.contract_id ? 'border-green-500 dark:border-green-500' : 
+                    'border-transparent dark:border-gray-700'
+                  } p-6 hover:shadow-xl transition-all duration-300`}
                 >
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     <div className="flex-1">
@@ -253,14 +259,26 @@ const MyProjects = () => {
                             {project.description}
                           </p>
                           <div className="flex flex-wrap items-center gap-3 text-sm">
-                            {getStatusBadge(project.status)}
+                            {!project.contract_id && getStatusBadge(project.status)}
                             <span className="text-gray-500 dark:text-gray-400">
                               {parseInt(project.budget).toLocaleString('hu-HU')} Ft / {project.budget_type === 'fix' ? 'fix' : 'óra'}
                             </span>
                             <span className="text-gray-500 dark:text-gray-400">{project.location}</span>
-                            <span className="text-gray-500 dark:text-gray-400">
-                              {project.proposals_count} ajánlat
-                            </span>
+                            {project.contract_id ? (
+                              project.contract_status === 'completed' ? (
+                                <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-xs rounded-full font-bold flex items-center gap-1">
+                                  <FaCheckCircle /> Kifizetett projekt
+                               </span>
+                              ) : (
+                                <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-xs rounded-full font-bold flex items-center gap-1">
+                                  <FaClock /> Aktív projekt
+                                </span>
+                              )
+                            ) : (
+                              <span className="text-gray-500 dark:text-gray-400">
+                                {project.proposals_count} ajánlat
+                              </span>
+                            )}
                             <span className="text-gray-500 dark:text-gray-400">
                               Feladva: {formatDate(project.created_at)}
                             </span>
@@ -277,7 +295,7 @@ const MyProjects = () => {
                       >
                         <FaEye />
                       </button>
-                      {project.status !== 'completed' && (
+                      {!project.contract_id && project.status !== 'completed' && (
                         <>
                           <button
                             onClick={() => openProjectModal(project, true)}
@@ -298,7 +316,39 @@ const MyProjects = () => {
                     </div>
                   </div>
 
-                  {project.proposals_count > 0 && (
+                  {project.contract_id ? (
+                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={project.pilot_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(project.pilot_name)}&background=2563eb&color=fff`} 
+                          alt={project.pilot_name} 
+                          className="w-10 h-10 rounded-full border border-gray-200 dark:border-gray-700 object-cover" 
+                        />
+                        <div>
+                          <p className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-1">
+                            {project.pilot_name}
+                            {project.pilot_verified === 1 && <span className="text-blue-600 dark:text-blue-400 text-xs">✓</span>}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Kiválasztott pilóta</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          to="/messages"
+                          state={{ newChatUser: { id: project.pilot_id, name: project.pilot_name, image: project.pilot_image, verified: project.pilot_verified, role: 'driver' } }}
+                          className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium"
+                        >
+                          Üzenet
+                        </Link>
+                        <Link
+                          to={`/contract/${project.contract_id}`}
+                          className={`px-4 py-2 text-white rounded-lg transition-colors text-sm font-medium ${project.contract_status === 'completed' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'}`}
+                        >
+                          {project.contract_status === 'completed' ? 'Szerződés részletei' : 'Fizetés és Részletek'}
+                        </Link>
+                      </div>
+                    </div>
+                  ) : project.proposals_count > 0 && (
                     <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                       <Link
                         to={`/project/${project.id}/bids`}

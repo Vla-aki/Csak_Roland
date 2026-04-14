@@ -1,7 +1,7 @@
 // src/pages/customer/Dashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaPlus, FaClipboardList, FaFileAlt, FaChartLine, FaBell, FaUserCircle } from 'react-icons/fa';
+import { FaPlus, FaClipboardList, FaFileAlt, FaChartLine, FaBell, FaUserCircle, FaMoneyBillWave } from 'react-icons/fa';
 import Navbar from '../../components/common/Navbar';
 import Footer from '../../components/common/Footer';
 import { useAuth } from '../../contexts/AuthContext';
@@ -38,10 +38,11 @@ const CustomerDashboard = () => {
           const projs = projData.projects;
           setRecentProjects(projs.slice(0, 3)); // Csak az utolsó 3
           
-          let active = 0, completed = 0, proposals = 0;
+          let active = 0, ongoing = 0, completed = 0, proposals = 0;
           projs.forEach(p => {
-            if (p.status === 'active') active++;
-            if (p.status === 'completed') completed++;
+            if (p.status === 'active' && !p.contract_id) active++;
+            if (p.contract_id && p.contract_status !== 'completed') ongoing++;
+            if (p.contract_status === 'completed') completed++;
             proposals += p.proposals_count;
           });
           
@@ -49,7 +50,7 @@ const CustomerDashboard = () => {
           if (contractData.success) {
              spent = contractData.contracts.filter(c => c.payment_status === 'paid' || c.status === 'completed').reduce((sum, c) => sum + Number(c.amount), 0);
           }
-          setStats({ activeProjects: active, totalProposals: proposals, completedProjects: completed, totalSpent: spent });
+          setStats({ activeProjects: active + ongoing, totalProposals: proposals, completedProjects: completed, totalSpent: spent });
         }
         
         if (notifData.success && notifData.notifications.length > 0) {
@@ -75,7 +76,7 @@ const CustomerDashboard = () => {
       case 'pending':
         return <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-600 dark:text-yellow-400 text-xs rounded-full">Függőben</span>;
       case 'completed':
-        return <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs rounded-full">Befejezett</span>;
+        return <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 text-xs rounded-full">Befejezett</span>;
       default:
         return null;
     }
@@ -147,7 +148,7 @@ const CustomerDashboard = () => {
                 <span className="text-blue-600 dark:text-blue-400 text-xl font-bold">Ft</span>
               </div>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalSpent} Ft</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Hamarosan...</p>
+              <Link to="/billing" className="text-sm text-blue-600 dark:text-blue-400 hover:underline mt-2 inline-block">Részletek megtekintése →</Link>
             </div>
           </div>
 
@@ -175,7 +176,9 @@ const CustomerDashboard = () => {
                         <div>
                           <h3 className="font-semibold text-gray-900 dark:text-white mb-2">{project.title}</h3>
                           <div className="flex flex-wrap items-center gap-3 text-sm">
-                            {getStatusBadge(project.status)}
+                            {!project.contract_id && getStatusBadge(project.status)}
+                            {project.contract_id && project.contract_status === 'completed' && <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 text-xs rounded-full">Befejezett</span>}
+                            {project.contract_id && project.contract_status !== 'completed' && <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 text-xs rounded-full">Folyamatban</span>}
                             <span className="text-gray-500 dark:text-gray-400">{project.proposals_count} ajánlat</span>
                             <span className="text-gray-500 dark:text-gray-400">{parseInt(project.budget).toLocaleString('hu-HU')} Ft</span>
                             <span className="text-gray-500 dark:text-gray-400">Határidő: {formatDate(project.deadline)}</span>
@@ -203,7 +206,7 @@ const CustomerDashboard = () => {
                   <FaBell className="text-gray-400 dark:text-gray-500 text-xl" />
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-3 max-h-[320px] overflow-y-auto pr-2">
                   {notifications.length > 0 ? notifications.map((notification) => (
                     <div key={notification.id} className={`p-3 rounded-lg transition-all duration-300 ${
                       notification.read 
@@ -215,10 +218,6 @@ const CustomerDashboard = () => {
                     </div>
                   )) : <p className="text-gray-500 text-sm">Nincsenek új értesítések.</p>}
                 </div>
-
-                <button className="w-full mt-4 text-sm text-blue-600 dark:text-blue-400 hover:underline text-center">
-                  Összes megtekintése
-                </button>
               </div>
 
               {/* Gyorslinkek */}
@@ -232,11 +231,11 @@ const CustomerDashboard = () => {
                       <p className="text-xs text-gray-500 dark:text-gray-400">Tallózz a regisztrált pilóták között</p>
                     </div>
                   </Link>
-                  <Link to="/my-proposals" className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-300">
+                  <Link to="/my-projects" className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-300">
                     <FaFileAlt className="text-green-600 dark:text-green-400 text-xl" />
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-white">Ajánlataim</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Kövesd nyomon az ajánlatokat</p>
+                      <p className="font-medium text-gray-900 dark:text-white">Projektjeim</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Kezeld a feladott munkáidat</p>
                     </div>
                   </Link>
                   <Link to="/profile" className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-300">
@@ -244,6 +243,13 @@ const CustomerDashboard = () => {
                     <div>
                       <p className="font-medium text-gray-900 dark:text-white">Profil szerkesztése</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">Frissítsd az adataidat</p>
+                    </div>
+                  </Link>
+                  <Link to="/billing" className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-300">
+                    <FaMoneyBillWave className="text-red-600 dark:text-red-400 text-xl" />
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white">Kiadások</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Pénzügyek és számlázás</p>
                     </div>
                   </Link>
                 </div>

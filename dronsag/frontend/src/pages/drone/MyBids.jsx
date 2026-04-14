@@ -35,9 +35,14 @@ const MyBids = () => {
             status: b.status,
             deadline: new Date(b.deadline).toLocaleDateString('hu-HU'),
             clientName: b.clientName,
+            clientId: b.clientId,
+            clientImage: b.clientImage,
+            clientVerified: b.clientVerified === 1,
             clientRating: b.clientRating || 5.0,
             message: b.message,
-            estimatedDuration: `${b.estimatedDuration || 1} nap`
+            estimatedDuration: `${b.estimatedDuration || 1} nap`,
+            paymentAmount: b.paymentAmount ? parseInt(b.paymentAmount) : null,
+            acceptedDate: b.acceptedDate ? new Date(b.acceptedDate).toLocaleDateString('hu-HU') : null
           }));
           setBids(formatted);
         }
@@ -241,7 +246,12 @@ const MyBids = () => {
             {filteredBids.map((bid) => (
               <div
                 key={bid.id}
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition-all duration-300"
+                className={`bg-white dark:bg-gray-800 rounded-lg shadow-lg border-2 transition-all duration-300 p-6 hover:shadow-xl ${
+                  bid.status === 'completed' ? 'border-blue-500 dark:border-blue-500' :
+                  bid.status === 'accepted' ? 'border-green-500 dark:border-green-500' : 
+                  bid.status === 'rejected' ? 'border-red-500 dark:border-red-500' : 
+                  'border-transparent dark:border-gray-700'
+                }`}
               >
                 <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                   <div className="flex-1">
@@ -307,6 +317,15 @@ const MyBids = () => {
                     >
                       Projekt megtekintése
                     </button>
+                    {(bid.status === 'accepted' || bid.status === 'completed') && (
+                      <Link
+                        to="/messages"
+                        state={{ newChatUser: { id: bid.clientId, name: bid.clientName, image: bid.clientImage, verified: bid.clientVerified, role: 'customer' } }}
+                        className="px-4 py-2 text-center text-green-600 dark:text-green-400 border border-green-600 dark:border-green-400 rounded-lg hover:bg-green-600 hover:text-white transition-all duration-300"
+                      >
+                        Üzenet küldése
+                      </Link>
+                    )}
                     {bid.status === 'pending' && (
                       <button 
                         onClick={() => setDeleteModal({ show: true, id: bid.id })}

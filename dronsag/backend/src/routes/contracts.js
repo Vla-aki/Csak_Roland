@@ -39,6 +39,19 @@ router.post('/', authMiddleware, async (req, res) => {
         await connection.query('UPDATE bids SET status = "rejected" WHERE project_id = ? AND id != ?', [project.id, bid.id]);
         await connection.query('UPDATE projects SET status = "completed" WHERE id = ?', [project.id]);
 
+        // Értesítés a nyertes pilótának
+        await connection.query(
+            'INSERT INTO notifications (user_id, type, title, message, link) VALUES (?, ?, ?, ?, ?)',
+            [bid.driver_id, 'bid', 'Ajánlat elfogadva!', `Gratulálunk! A(z) "${project.title}" projektre tett ajánlatodat elfogadták.`, `/contract/${result.insertId}`]
+        );
+
+        // Értesítés a többi (elutasított) pilótának
+        const [rejectedBids] = await connection.query('SELECT driver_id FROM bids WHERE project_id = ? AND id != ?', [project.id, bid.id]);
+        if (rejectedBids.length > 0) {
+            const notifValues = rejectedBids.map(rb => [rb.driver_id, 'bid', 'Ajánlat elutasítva', `Sajnos a(z) "${project.title}" projektre tett ajánlatodat elutasították, mert a megbízó mást választott.`, '/find-work']);
+            await connection.query('INSERT INTO notifications (user_id, type, title, message, link) VALUES ?', [notifValues]);
+        }
+
         await connection.commit();
         res.status(201).json({ success: true, contractId: result.insertId, message: 'Szerződés létrejött!' });
     } catch (error) {
@@ -54,7 +67,8 @@ router.get('/', authMiddleware, async (req, res) => {
     try {
         const isCustomer = req.user.role === 'customer';
         const query = `
-            SELECT c.*, p.title as projectTitle, p.description, u.name as otherPartyName, u.rating as otherPartyRating 
+            SELECT c.*, p.title as projectTitle, p.description, 
+                   u.id as otherPartyId, u.name as otherPartyName, u.rating as otherPartyRating, u.profile_image as otherPartyImage, u.verified as otherPartyVerified
             FROM contracts c 
             JOIN projects p ON c.project_id = p.id 
             JOIN users u ON (isCustomer = true AND c.driver_id = u.id) OR (isCustomer = false AND c.customer_id = u.id)

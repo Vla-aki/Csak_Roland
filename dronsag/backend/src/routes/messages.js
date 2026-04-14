@@ -84,11 +84,25 @@ router.post('/', authMiddleware, async (req, res) => {
         const [result] = await pool.query('INSERT INTO messages (sender_id, receiver_id, message) VALUES (?, ?, ?)', [req.user.id, receiverId, message]);
         
         // Értesítés a fogadónak
+        const [unreadMsgs] = await pool.query('SELECT COUNT(*) as count FROM messages WHERE sender_id = ? AND receiver_id = ? AND is_read = 0', [req.user.id, receiverId]);
+        const unreadCount = unreadMsgs[0].count;
+
         const [sender] = await pool.query('SELECT name FROM users WHERE id = ?', [req.user.id]);
         const senderName = sender[0]?.name || 'Egy felhasználó';
+
+        const notifMessage = unreadCount > 1 
+            ? `${senderName} küldött ${unreadCount} új üzenetet!` 
+            : `${senderName} üzent neked!`;
+
+        // Előző olvasatlan értesítések törlése ettől a feladótól, hogy ne spameljük tele
+        await pool.query(
+            "DELETE FROM notifications WHERE user_id = ? AND type = 'message' AND is_read = 0 AND message LIKE ?",
+            [receiverId, `${senderName}%`]
+        );
+
         await pool.query(
             'INSERT INTO notifications (user_id, type, title, message, link) VALUES (?, ?, ?, ?, ?)',
-            [receiverId, 'message', 'Új üzenet', `${senderName} üzent neked!`, '/messages']
+            [receiverId, 'message', 'Új üzenet', notifMessage, '/messages']
         );
 
         res.status(201).json({ success: true, message: {
@@ -128,6 +142,22 @@ router.post('/contract/:contractId', authMiddleware, async (req, res) => {
         const receiverId = req.user.id === contract.customer_id ? contract.driver_id : contract.customer_id;
 
         const [result] = await pool.query('INSERT INTO messages (sender_id, receiver_id, contract_id, message) VALUES (?, ?, ?, ?)', [req.user.id, receiverId, req.params.contractId, req.body.message]);
+        
+        // Értesítés a fogadónak a szerződéses chatből is (csoportosítva)
+        const [unreadMsgs] = await pool.query('SELECT COUNT(*) as count FROM messages WHERE sender_id = ? AND receiver_id = ? AND is_read = 0', [req.user.id, receiverId]);
+        const unreadCount = unreadMsgs[0].count;
+
+        const [sender] = await pool.query('SELECT name FROM users WHERE id = ?', [req.user.id]);
+        const senderName = sender[0]?.name || 'Egy felhasználó';
+
+        const notifMessage = unreadCount > 1 
+            ? `${senderName} küldött ${unreadCount} új üzenetet a szerződésnél!` 
+            : `${senderName} üzent a szerződésnél!`;
+
+        await pool.query("DELETE FROM notifications WHERE user_id = ? AND type = 'message' AND is_read = 0 AND message LIKE ?", [receiverId, `${senderName}%`]);
+
+        await pool.query('INSERT INTO notifications (user_id, type, title, message, link) VALUES (?, ?, ?, ?, ?)', [receiverId, 'message', 'Szerződés üzenet', notifMessage, `/contract/${req.params.contractId}`]);
+
         res.status(201).json({ success: true, message: {
             id: result.insertId, senderId: 'me', text: req.body.message,
             time: new Date().toLocaleTimeString('hu-HU', {hour: '2-digit', minute:'2-digit'})

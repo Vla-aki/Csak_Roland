@@ -23,16 +23,10 @@ const FindFreelancers = () => {
   const [showFreelancerModal, setShowFreelancerModal] = useState(false);
   const [pilotReviews, setPilotReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
+  const [profileLightboxImage, setProfileLightboxImage] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 9;
   const location = useLocation();
-
-  const categories = [
-    { id: 'all', name: 'Összes', count: 528, icon: '👥' },
-    { id: 'photography', name: 'Fotós', count: 156, icon: '📷' },
-    { id: 'videography', name: 'Videós', count: 143, icon: '🎥' },
-    { id: 'inspection', name: 'Ellenőrzés', count: 98, icon: '🔍' },
-    { id: 'mapping', name: 'Térképezés', count: 76, icon: '🗺️' },
-    { id: 'delivery', name: 'Szállítás', count: 55, icon: '📦' }
-  ];
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -56,6 +50,35 @@ const FindFreelancers = () => {
     fetchPilots();
   }, [location.search]);
 
+  // Lapozás visszaállítása ha változik a szűrő
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory, filters, sortBy]);
+
+  const getCategoryCount = (categoryId) => {
+    if (categoryId === 'all') return freelancers.length;
+    const catMap = {
+      photography: ['fotó'],
+      videography: ['videó'],
+      inspection: ['ellenőr'],
+      mapping: ['térkép', 'földmér'],
+      agriculture: ['mezőgazdaság'],
+      fpv: ['fpv']
+    };
+    const keywords = catMap[categoryId] || [];
+    return freelancers.filter(f => f.skills?.some(s => keywords.some(kw => s.toLowerCase().includes(kw)))).length;
+  };
+
+  const dynamicCategories = [
+    { id: 'all', name: 'Összes', count: freelancers.length, icon: '👥' },
+    { id: 'photography', name: 'Drónfotós', count: getCategoryCount('photography'), icon: '📷' },
+    { id: 'videography', name: 'Drónvideós', count: getCategoryCount('videography'), icon: '🎥' },
+    { id: 'inspection', name: 'Ipari ellenőr', count: getCategoryCount('inspection'), icon: '🔍' },
+    { id: 'mapping', name: 'Földmérő', count: getCategoryCount('mapping'), icon: '🗺️' },
+    { id: 'agriculture', name: 'Mezőgazdaság', count: getCategoryCount('agriculture'), icon: '🌾' },
+    { id: 'fpv', name: 'FPV pilóta', count: getCategoryCount('fpv'), icon: '🚀' }
+  ];
+
   const getAvailabilityBadge = (availability) => {
     switch(availability) {
       case 'full_time':
@@ -70,7 +93,19 @@ const FindFreelancers = () => {
   };
 
   const filteredFreelancers = freelancers.filter(f => {
-    if (selectedCategory !== 'all' && f.category !== selectedCategory) return false;
+    if (selectedCategory !== 'all') {
+      const catMap = {
+        photography: ['fotó'],
+        videography: ['videó'],
+        inspection: ['ellenőr'],
+        mapping: ['térkép', 'földmér'],
+        agriculture: ['mezőgazdaság'],
+        fpv: ['fpv']
+      };
+      const keywords = catMap[selectedCategory] || [];
+      const hasSkill = f.skills?.some(s => keywords.some(kw => s.toLowerCase().includes(kw)));
+      if (!hasSkill) return false;
+    }
     if (searchQuery && !(f.name || '').toLowerCase().includes(searchQuery.toLowerCase()) && 
         !(f.title || '').toLowerCase().includes(searchQuery.toLowerCase()) &&
         !(f.description || '').toLowerCase().includes(searchQuery.toLowerCase())) return false;
@@ -90,6 +125,9 @@ const FindFreelancers = () => {
     if (sortBy === 'jobs') return b.jobs - a.jobs;
     return 0;
   });
+
+  const totalPages = Math.ceil(sortedFreelancers.length / itemsPerPage);
+  const paginatedFreelancers = sortedFreelancers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const clearFilters = () => {
     setFilters({
@@ -221,10 +259,8 @@ const FindFreelancers = () => {
                       className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-600 dark:focus:border-blue-400 text-gray-900 dark:text-white"
                     >
                       <option value="all">Mindegy</option>
-                      <option value="azonnal">Azonnal</option>
-                      <option value="2 nap">2 napon belül</option>
-                      <option value="3 nap">3 napon belül</option>
-                      <option value="1 hét">1 héten belül</option>
+                      <option value="full_time">Teljes munkaidőben</option>
+                      <option value="part_time">Részmunkaidőben</option>
                     </select>
                   </div>
                   <div className="flex items-center">
@@ -253,7 +289,7 @@ const FindFreelancers = () => {
 
           {/* Kategória szűrők */}
           <div className="flex flex-wrap gap-2 mb-8">
-            {categories.map((cat) => (
+            {dynamicCategories.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
@@ -282,7 +318,7 @@ const FindFreelancers = () => {
             </div>
           ) : sortedFreelancers.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sortedFreelancers.map((f) => (
+              {paginatedFreelancers.map((f) => (
                 <div
                   key={f.id}
                   className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-xl transition-all duration-300 cursor-pointer group flex flex-col h-full"
@@ -366,24 +402,32 @@ const FindFreelancers = () => {
           )}
 
           {/* Lapozás */}
-          {sortedFreelancers.length > 0 && (
+          {totalPages > 1 && (
             <div className="mt-8 flex justify-center">
               <nav className="flex items-center gap-2">
-                <button className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300">
+                <button 
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300 disabled:opacity-50"
+                >
                   ←
                 </button>
-                <button className="w-10 h-10 flex items-center justify-center rounded-lg bg-blue-600 text-white">1</button>
-                <button className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300">
-                  2
-                </button>
-                <button className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300">
-                  3
-                </button>
-                <span className="text-gray-500 dark:text-gray-400">...</span>
-                <button className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300">
-                  8
-                </button>
-                <button className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300">
+                
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-300 ${currentPage === page ? 'bg-blue-600 text-white' : 'border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                  >
+                    {page}
+                  </button>
+                ))}
+
+                <button 
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300 disabled:opacity-50"
+                >
                   →
                 </button>
               </nav>
@@ -456,7 +500,7 @@ const FindFreelancers = () => {
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Portfólió</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {selectedFreelancer.portfolio.map((img, i) => (
-                    <img key={i} src={img} alt={`Portfolio ${i}`} className="w-full h-32 object-cover rounded-lg shadow-sm border border-gray-200 dark:border-gray-700" />
+                    <img key={i} src={img} alt={`Portfolio ${i}`} className="w-full h-32 object-cover rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 cursor-zoom-in" onClick={(e) => { e.stopPropagation(); setProfileLightboxImage(img); }} />
                   ))}
                 </div>
               </div>
@@ -492,6 +536,7 @@ const FindFreelancers = () => {
                   </div>
                   <Link
                     to="/messages"
+                    state={{ newChatUser: { id: selectedFreelancer.id, name: selectedFreelancer.name, image: selectedFreelancer.image, verified: selectedFreelancer.verified, role: 'driver' } }}
                     className="w-full sm:w-auto px-8 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-md text-center"
                   >
                     Kapcsolatfelvétel
@@ -499,6 +544,28 @@ const FindFreelancers = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Profil Portfólió Kép Nagyító */}
+      {profileLightboxImage && (
+        <div 
+          className="fixed inset-0 flex items-center justify-center p-4 bg-black/95 backdrop-blur-md transition-all"
+          style={{ zIndex: 10001 }}
+          onClick={(e) => { e.stopPropagation(); setProfileLightboxImage(null); }}
+        >
+          <div className="relative bg-white dark:bg-gray-800 p-1.5 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 max-w-5xl" onClick={(e) => e.stopPropagation()}>
+            <div className="absolute -top-4 -right-4 flex gap-2" style={{ zIndex: 10002 }}>
+              <button 
+                className="w-10 h-10 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 shadow-xl border-2 border-white dark:border-gray-800 transition-colors"
+                onClick={(e) => { e.stopPropagation(); setProfileLightboxImage(null); }}
+                title="Bezárás"
+              >
+                <FaTimes size={16} />
+              </button>
+            </div>
+            <img src={profileLightboxImage} alt="Nagyított portfólió kép" className="max-w-full max-h-[85vh] object-contain rounded-lg" />
           </div>
         </div>
       )}

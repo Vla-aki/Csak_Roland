@@ -3,7 +3,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
-import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaInfoCircle, FaMoneyBillWave, FaClock, FaStar, FaBriefcase, FaSave, FaTags, FaCamera, FaPlus, FaTimes, FaCalendarAlt, FaCheckCircle, FaEdit } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaInfoCircle, FaMoneyBillWave, FaClock, FaStar, FaBriefcase, FaSave, FaTags, FaCamera, FaPlus, FaTimes, FaCalendarAlt, FaCheckCircle, FaEdit, FaLock, FaEyeSlash, FaEye } from 'react-icons/fa';
+import Cropper from 'react-easy-crop';
 
 const Profile = () => {
   const { user } = useAuth();
@@ -26,6 +27,7 @@ const Profile = () => {
   const fileInputRef = useRef(null);
   const portfolioFileInputRef = useRef(null);
   const [profileImagePreview, setProfileImagePreview] = useState(user?.profile_image || null);
+  const [cropModal, setCropModal] = useState({ show: false, imageSrc: null, crop: { x: 0, y: 0 }, zoom: 1, croppedAreaPixels: null });
 
   // Adatok betöltése
   useEffect(() => {
@@ -56,6 +58,12 @@ const Profile = () => {
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState({ type: '', text: '' });
+
+  // Jelszó csere állapotok
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordData, setPasswordData] = useState({ current: '', new: '', confirm: '' });
+  const [passwordStatus, setPasswordStatus] = useState({ loading: false, error: '', success: '' });
+  const [showPw, setShowPw] = useState({ current: false, new: false, confirm: false });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -123,20 +131,74 @@ const Profile = () => {
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      try {
-        setIsSaving(true);
-        const url = await uploadImage(file);
-        const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace('/api', '');
-        const fullUrl = baseUrl + url;
-        setProfileImagePreview(fullUrl);
-        setFormData(prev => ({ ...prev, profile_image: fullUrl }));
-        setSaveMessage({ type: 'success', text: 'Kép sikeresen feltöltve!' });
-      } catch (error) {
-        setSaveMessage({ type: 'error', text: 'Hiba a kép feltöltésekor!' });
-      } finally {
-        setIsSaving(false);
-        setTimeout(() => setSaveMessage({ type: '', text: '' }), 3000);
+      if (file.type === 'image/gif') {
+        try {
+          setIsSaving(true);
+          const url = await uploadImage(file);
+          const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace('/api', '');
+          const fullUrl = baseUrl + url;
+          setProfileImagePreview(fullUrl);
+          setFormData(prev => ({ ...prev, profile_image: fullUrl }));
+          setSaveMessage({ type: 'success', text: 'GIF profilkép sikeresen feltöltve!' });
+        } catch (error) {
+          setSaveMessage({ type: 'error', text: 'Hiba a GIF feltöltésekor!' });
+        } finally {
+          setIsSaving(false);
+          setTimeout(() => setSaveMessage({ type: '', text: '' }), 3000);
+        }
+      } else {
+        const reader = new FileReader();
+        reader.addEventListener('load', () => {
+          setCropModal(prev => ({ ...prev, show: true, imageSrc: reader.result }));
+        });
+        reader.readAsDataURL(file);
       }
+    }
+    e.target.value = '';
+  };
+
+  const getCroppedImg = async (imageSrc, pixelCrop) => {
+    const image = new Image();
+    image.src = imageSrc;
+    await new Promise(resolve => image.onload = resolve);
+    const canvas = document.createElement('canvas');
+    canvas.width = pixelCrop.width;
+    canvas.height = pixelCrop.height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(
+      image,
+      pixelCrop.x,
+      pixelCrop.y,
+      pixelCrop.width,
+      pixelCrop.height,
+      0,
+      0,
+      pixelCrop.width,
+      pixelCrop.height
+    );
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        resolve(new File([blob], "profile.jpg", { type: "image/jpeg" }));
+      }, 'image/jpeg');
+    });
+  };
+
+  const handleCropConfirm = async () => {
+    try {
+      setIsSaving(true);
+      setCropModal(prev => ({ ...prev, show: false }));
+      const croppedFile = await getCroppedImg(cropModal.imageSrc, cropModal.croppedAreaPixels);
+      const url = await uploadImage(croppedFile);
+      const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace('/api', '');
+      const fullUrl = baseUrl + url;
+      setProfileImagePreview(fullUrl);
+      setFormData(prev => ({ ...prev, profile_image: fullUrl }));
+      setSaveMessage({ type: 'success', text: 'Kép sikeresen beállítva!' });
+    } catch (error) {
+      setSaveMessage({ type: 'error', text: 'Hiba a kép feldolgozásakor!' });
+    } finally {
+      setIsSaving(false);
+      setTimeout(() => setSaveMessage({ type: '', text: '' }), 3000);
     }
   };
 
@@ -249,6 +311,42 @@ const Profile = () => {
     }
   };
 
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setPasswordStatus({ loading: true, error: '', success: '' });
+
+    if (passwordData.new !== passwordData.confirm) {
+      return setPasswordStatus({ loading: false, error: 'Az új jelszavak nem egyeznek!', success: '' });
+    }
+    if (passwordData.new.length < 6) {
+      return setPasswordStatus({ loading: false, error: 'Az új jelszónak legalább 6 karakternek kell lennie!', success: '' });
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const res = await fetch(`${apiUrl}/auth/change-password`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ currentPassword: passwordData.current, newPassword: passwordData.new })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setPasswordStatus({ loading: false, error: '', success: 'Jelszó sikeresen megváltoztatva!' });
+        setTimeout(() => {
+          setShowPasswordModal(false);
+          setPasswordData({ current: '', new: '', confirm: '' });
+          setPasswordStatus({ loading: false, error: '', success: '' });
+        }, 2000);
+      } else {
+        setPasswordStatus({ loading: false, error: data.message, success: '' });
+      }
+    } catch (err) {
+      setPasswordStatus({ loading: false, error: 'Hálózati hiba történt.', success: '' });
+    }
+  };
+
   if (!user) return null;
 
   // Dátum formázás
@@ -304,9 +402,6 @@ const Profile = () => {
               <p className="text-blue-600 dark:text-blue-400 font-medium mt-1">
                 {user.role === 'driver' ? (formData.skills && formData.skills.length > 0 ? formData.skills.join(' • ') : 'Drónpilóta') : 'Megbízó'}
               </p>
-              <div className="mt-4 inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-full text-sm font-medium">
-                <span className="w-2 h-2 rounded-full bg-green-500"></span> Aktív fiók
-              </div>
               
               <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                 <FaCalendarAlt /> Tag ekkortól: {formatDate(user.member_since || user.created_at)}
@@ -350,6 +445,15 @@ const Profile = () => {
                   className="w-full px-4 py-2 border-2 border-red-500 text-red-600 dark:text-red-400 font-medium rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                 >
                   Váltás {user.role === 'driver' ? 'Megbízó' : 'Drónpilóta'} fiókra
+                </button>
+              </div>
+              
+              <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                <button 
+                  onClick={() => setShowPasswordModal(true)}
+                  className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <FaLock className="inline mr-2" /> Jelszó megváltoztatása
                 </button>
               </div>
             </div>
@@ -689,6 +793,97 @@ const Profile = () => {
               >
                 {roleSwitchLoading ? 'Váltás folyamatban...' : 'Igen, váltok'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Jelszócsere Modal */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full shadow-2xl p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Jelszó megváltoztatása</h3>
+              <button onClick={() => setShowPasswordModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><FaTimes size={20}/></button>
+            </div>
+            
+            {passwordStatus.error && <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">{passwordStatus.error}</div>}
+            {passwordStatus.success && <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-lg text-sm">{passwordStatus.success}</div>}
+            
+            <form onSubmit={handlePasswordChange} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Jelenlegi jelszó</label>
+                <div className="relative">
+                  <input type={showPw.current ? 'text' : 'password'} required value={passwordData.current} onChange={e => setPasswordData({...passwordData, current: e.target.value})}
+                    className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg dark:text-white focus:ring-2 focus:ring-blue-500" />
+                  <button type="button" onClick={() => setShowPw({...showPw, current: !showPw.current})} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    {showPw.current ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Új jelszó</label>
+                <div className="relative">
+                  <input type={showPw.new ? 'text' : 'password'} required value={passwordData.new} onChange={e => setPasswordData({...passwordData, new: e.target.value})}
+                    className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg dark:text-white focus:ring-2 focus:ring-blue-500" />
+                  <button type="button" onClick={() => setShowPw({...showPw, new: !showPw.new})} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    {showPw.new ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Új jelszó megerősítése</label>
+                <div className="relative">
+                  <input type={showPw.confirm ? 'text' : 'password'} required value={passwordData.confirm} onChange={e => setPasswordData({...passwordData, confirm: e.target.value})}
+                    className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg dark:text-white focus:ring-2 focus:ring-blue-500" />
+                  <button type="button" onClick={() => setShowPw({...showPw, confirm: !showPw.confirm})} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    {showPw.confirm ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
+              </div>
+              
+              <div className="pt-4 flex justify-end gap-3 border-t border-gray-100 dark:border-gray-700">
+                <button type="button" onClick={() => setShowPasswordModal(false)} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 transition-colors font-medium">Mégse</button>
+                <button type="submit" disabled={passwordStatus.loading} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50">
+                  {passwordStatus.loading ? 'Mentés...' : 'Jelszó frissítése'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Képvágó Modal */}
+      {cropModal.show && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden flex flex-col h-[500px]">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Profilkép beállítása</h3>
+              <button onClick={() => setCropModal(prev => ({ ...prev, show: false }))} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white transition-colors">
+                <FaTimes />
+              </button>
+            </div>
+            <div className="relative flex-1 bg-gray-900">
+              <Cropper
+                image={cropModal.imageSrc}
+                crop={cropModal.crop}
+                zoom={cropModal.zoom}
+                aspect={1}
+                cropShape="round"
+                showGrid={false}
+                onCropChange={(crop) => setCropModal(prev => ({ ...prev, crop }))}
+                onZoomChange={(zoom) => setCropModal(prev => ({ ...prev, zoom }))}
+                onCropComplete={(_, croppedAreaPixels) => setCropModal(prev => ({ ...prev, croppedAreaPixels }))}
+              />
+            </div>
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+              <input type="range" value={cropModal.zoom} min={1} max={3} step={0.1} onChange={(e) => setCropModal(prev => ({ ...prev, zoom: e.target.value }))} className="w-full mb-4 accent-blue-600" />
+              <div className="flex justify-end gap-3">
+                <button onClick={() => setCropModal(prev => ({ ...prev, show: false }))} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium">Mégse</button>
+                <button onClick={handleCropConfirm} disabled={isSaving} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50">Mentés</button>
+              </div>
             </div>
           </div>
         </div>

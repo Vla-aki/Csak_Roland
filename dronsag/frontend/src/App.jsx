@@ -7,6 +7,7 @@ import FloatingChat from './components/FloatingChat';
 import Landing from './pages/Landing';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import ForgotPassword from './pages/auth/ForgotPassword';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import Profile from './pages/Profile';
@@ -25,6 +26,7 @@ import ContractWorkspace from './pages/ContractWorkspace';
 import CreateProject from './pages/customer/CreateProject';
 import MyProjects from './pages/customer/MyProjects';
 import ProjectBids from './pages/customer/ProjectBids';
+import Billing from './pages/customer/Billing';
 
 // Drone pages
 import DroneDashboard from './pages/drone/DroneDashboard';
@@ -51,6 +53,7 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/find-work" element={<FindWork />} />
@@ -97,6 +100,11 @@ function App() {
           <Route path="/project/:projectId/bids" element={
             <PrivateRoute requiredRole="customer">
               <ProjectBids />
+            </PrivateRoute>
+          } />
+          <Route path="/billing" element={
+            <PrivateRoute requiredRole="customer">
+              <Billing />
             </PrivateRoute>
           } />
           

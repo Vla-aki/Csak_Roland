@@ -25,6 +25,9 @@ const MyContracts = () => {
             projectId: c.project_id,
             projectTitle: c.projectTitle,
             clientName: c.otherPartyName,
+            clientId: c.otherPartyId,
+            clientImage: c.otherPartyImage,
+            clientVerified: c.otherPartyVerified === 1,
             clientRating: c.otherPartyRating || 5.0,
             startDate: new Date(c.created_at).toLocaleDateString('hu-HU'),
             endDate: c.end_date ? new Date(c.end_date).toLocaleDateString('hu-HU') : '-',
@@ -209,7 +212,11 @@ const MyContracts = () => {
             {filteredContracts.map((contract) => (
               <div
                 key={contract.id}
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-xl transition-all duration-300"
+                className={`bg-white dark:bg-gray-800 rounded-lg shadow-lg border-2 overflow-hidden hover:shadow-xl transition-all duration-300 ${
+                  contract.status === 'completed' ? 'border-blue-500 dark:border-blue-500' : 
+                  contract.status === 'active' ? 'border-green-500 dark:border-green-500' : 
+                  'border-transparent dark:border-gray-700'
+                }`}
               >
                 {/* Fejléc */}
                 <div className="bg-gray-50 dark:bg-gray-700 p-6 border-b border-gray-200 dark:border-gray-600">
@@ -314,10 +321,11 @@ const MyContracts = () => {
                       </button>
                     )}
                     <Link
-                      to={`/messages/${contract.clientName}`}
+                      to="/messages"
+                      state={{ newChatUser: { id: contract.clientId, name: contract.clientName, image: contract.clientImage, verified: contract.clientVerified, role: 'customer' } }}
                       className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 text-sm"
                     >
-                      Üzenet küldése
+                      Üzenetek megnyitása
                     </Link>
                   </div>
                 </div>

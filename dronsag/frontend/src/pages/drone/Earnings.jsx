@@ -8,10 +8,11 @@ import Footer from '../../components/common/Footer';
 const Earnings = () => {
   const [period, setPeriod] = useState('all');
   const [earnings, setEarnings] = useState({
-    total: 0, pending: 0, paid: 0, thisMonth: 0, lastMonth: 0, averagePerProject: 0, projectsCompleted: 0
+    total: 0, pending: 0, paid: 0, thisMonth: 0, lastMonth: 0, averagePerProject: 0, projectsCompleted: 0, pendingCount: 0, paidCount: 0, monthPercent: '0%'
   });
   const [transactions, setTransactions] = useState([]);
-  const [monthlyData, setMonthlyData] = useState([]);
+  const [allMonthlyData, setAllMonthlyData] = useState([]);
+  const [chartPeriod, setChartPeriod] = useState(6);
 
   useEffect(() => {
     const fetchEarnings = async () => {
@@ -22,43 +23,70 @@ const Earnings = () => {
         const data = await res.json();
         
         if (data.success) {
-          let total = 0, pending = 0, paid = 0, thisMonth = 0;
+          const monthNames = ['Jan', 'Feb', 'Már', 'Ápr', 'Máj', 'Jún', 'Júl', 'Aug', 'Szep', 'Okt', 'Nov', 'Dec'];
           const now = new Date();
+          const last12Months = [];
+          for (let i = 11; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            last12Months.push({ month: monthNames[d.getMonth()], year: d.getFullYear(), monthNum: d.getMonth(), amount: 0 });
+          }
+
+          let total = 0, pending = 0, paid = 0;
+          let thisMonth = 0, lastMonth = 0;
+          let pendingCount = 0, paidCount = 0;
+
+          const currentMonth = now.getMonth();
+          const currentYear = now.getFullYear();
+          const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          const lastMonthNum = lastMonthDate.getMonth();
+          const lastMonthYear = lastMonthDate.getFullYear();
           
           const formattedTransactions = data.contracts.map(c => {
             const amount = Number(c.amount);
             const isPaid = c.payment_status === 'paid' || c.status === 'completed';
+            const date = new Date(c.completed_at || c.created_at);
             
             if (isPaid) {
               paid += amount;
               total += amount;
-              const d = new Date(c.created_at);
-              if (d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
+              paidCount++;
+              
+              if (date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
                 thisMonth += amount;
+              } else if (date.getMonth() === lastMonthNum && date.getFullYear() === lastMonthYear) {
+                lastMonth += amount;
               }
+
+              const chartItem = last12Months.find(m => m.monthNum === date.getMonth() && m.year === date.getFullYear());
+              if (chartItem) chartItem.amount += amount;
             } else {
               pending += amount;
+              pendingCount++;
             }
             
             return {
               id: c.id, project: c.projectTitle, client: c.otherPartyName,
-              amount, date: new Date(c.created_at).toLocaleDateString('hu-HU'),
+              amount, date: date.toLocaleDateString('hu-HU'),
               status: isPaid ? 'paid' : 'pending', paymentMethod: 'Banki átutalás'
             };
           });
           
+          // Százalékos változás számolása
+          const calcPercent = (curr, prev) => {
+            if (prev === 0) return curr > 0 ? '+100%' : '0%';
+            const diff = ((curr - prev) / prev) * 100;
+            return (diff > 0 ? '+' : '') + diff.toFixed(1) + '%';
+          };
+
           setTransactions(formattedTransactions);
           setEarnings({
-            total, pending, paid, thisMonth, lastMonth: 0,
+            total, pending, paid, thisMonth, lastMonth,
             averagePerProject: total > 0 ? Math.round(total / data.contracts.length) : 0,
-            projectsCompleted: data.contracts.filter(c => c.status === 'completed').length
+            projectsCompleted: data.contracts.filter(c => c.status === 'completed').length,
+            pendingCount, paidCount, monthPercent: calcPercent(thisMonth, lastMonth)
           });
 
-          setMonthlyData([
-            { month: 'Jan', amount: 0 }, { month: 'Feb', amount: 0 },
-            { month: 'Már', amount: thisMonth }, { month: 'Ápr', amount: 0 },
-            { month: 'Máj', amount: 0 }, { month: 'Jún', amount: 0 }
-          ]);
+          setAllMonthlyData(last12Months);
         }
       } catch (error) {
         console.error('Hiba a bevételek lekérésekor:', error);
@@ -85,6 +113,8 @@ const Earnings = () => {
     return true;
   });
 
+  const displayedMonthlyData = allMonthlyData.slice(-chartPeriod);
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 transition-all duration-700 flex flex-col">
       <Navbar />
@@ -110,7 +140,7 @@ const Earnings = () => {
                 <FaMoneyBillWave className="text-blue-600 dark:text-blue-400 text-xl" />
               </div>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">{earnings.total} Ft</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">+12% az előző hónaphoz</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Összesített bevétel</p>
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-700">
@@ -119,7 +149,7 @@ const Earnings = () => {
                 <FaClock className="text-yellow-600 dark:text-yellow-400 text-xl" />
               </div>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">{earnings.pending} Ft</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">3 kifizetésre vár</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{earnings.pendingCount} kifizetésre vár</p>
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-700">
@@ -128,7 +158,7 @@ const Earnings = () => {
                 <FaCheckCircle className="text-green-600 dark:text-green-400 text-xl" />
               </div>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">{earnings.paid} Ft</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">5 sikeres kifizetés</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{earnings.paidCount} sikeres kifizetés</p>
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-700">
@@ -137,7 +167,7 @@ const Earnings = () => {
                 <FaChartLine className="text-purple-600 dark:text-purple-400 text-xl" />
               </div>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">{earnings.thisMonth} Ft</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">+13.7% az előző hónaphoz</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{earnings.monthPercent} az előző hónaphoz</p>
             </div>
           </div>
 
@@ -146,21 +176,37 @@ const Earnings = () => {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">Havi bevételek</h2>
               <div className="flex gap-2">
-                <button className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg">6 hónap</button>
-                <button className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg">12 hónap</button>
+                <button 
+                  onClick={() => setChartPeriod(6)}
+                  className={`px-3 py-1 text-sm rounded-lg transition-colors ${chartPeriod === 6 ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
+                >
+                  6 hónap
+                </button>
+                <button 
+                  onClick={() => setChartPeriod(12)}
+                  className={`px-3 py-1 text-sm rounded-lg transition-colors ${chartPeriod === 12 ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
+                >
+                  12 hónap
+                </button>
               </div>
             </div>
             <div className="h-64 flex items-end justify-between gap-2">
-              {monthlyData.map((data, index) => (
-                <div key={index} className="flex-1 flex flex-col items-center gap-2">
+              {displayedMonthlyData.map((data, index) => {
+                const maxAmount = Math.max(...displayedMonthlyData.map(d => d.amount), 10000);
+                const heightPx = Math.max((data.amount / maxAmount) * 200, 4); // Min 4px magasság, hogy látszódjon ha 0
+                return (
+                <div key={index} className="flex-1 flex flex-col items-center gap-2 group">
                   <div 
-                    className="w-full bg-blue-600 dark:bg-blue-500 rounded-t-lg transition-all duration-300 hover:bg-blue-700"
-                    style={{ height: `${(data.amount / 4000) * 200}px` }}
+                    className="w-full bg-blue-600 dark:bg-blue-500 rounded-t-lg transition-all duration-500 hover:bg-blue-700 relative"
+                    style={{ height: `${heightPx}px` }}
+                    title={`${data.amount.toLocaleString('hu-HU')} Ft`}
                   ></div>
                   <span className="text-sm text-gray-600 dark:text-gray-400">{data.month}</span>
-                  <span className="text-xs font-medium text-gray-900 dark:text-white">{data.amount} Ft</span>
+                  <span className="text-[10px] sm:text-xs font-medium text-gray-900 dark:text-white">
+                    {data.amount > 0 ? (data.amount > 999999 ? (data.amount/1000000).toFixed(1)+'M' : (data.amount/1000).toFixed(0)+'k') : '0'}
+                  </span>
                 </div>
-              ))}
+              )})}
             </div>
           </div>
 

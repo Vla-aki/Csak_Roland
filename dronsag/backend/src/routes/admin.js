@@ -23,6 +23,28 @@ const isAdmin = (req, res, next) => {
 // Middleware-ek
 router.use(authMiddleware, isAdmin);
 
+// Statisztikák lekérése
+router.get('/stats', async (req, res) => {
+    try {
+        const [[activeProjects]] = await pool.query("SELECT COUNT(*) as count FROM projects WHERE status = 'active'");
+        const [[totalProposals]] = await pool.query("SELECT COUNT(*) as count FROM bids");
+        const [[completedProjects]] = await pool.query("SELECT COUNT(*) as count FROM projects WHERE status = 'completed'");
+        const [[totalUsers]] = await pool.query("SELECT COUNT(*) as count FROM users WHERE role != 'admin'");
+
+        res.json({
+            success: true,
+            stats: {
+                activeProjects: activeProjects.count,
+                totalProposals: totalProposals.count,
+                completedProjects: completedProjects.count,
+                totalUsers: totalUsers.count
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Szerver hiba a statisztikák lekérésekor.' });
+    }
+});
+
 // Projektek lekérése
 router.get('/projects', async (req, res) => {
     try {
@@ -60,6 +82,27 @@ router.delete('/users/:id', async (req, res) => {
         res.json({ success: true, message: 'Felhasználó sikeresen törölve!' });
     } catch (error) {
         res.status(500).json({ message: 'Hiba a felhasználó törlésekor.' });
+    }
+});
+
+// Összes üzenet lekérése (Admin megfigyelő)
+router.get('/messages', async (req, res) => {
+    try {
+        // Lekérjük a legutóbbi 500 üzenetet a feladó és címzett nevével
+        const query = `
+            SELECT m.id, m.message, m.created_at, 
+                   s.name as sender_name, s.role as sender_role,
+                   r.name as receiver_name, r.role as receiver_role
+            FROM messages m
+            JOIN users s ON m.sender_id = s.id
+            JOIN users r ON m.receiver_id = r.id
+            ORDER BY m.created_at DESC
+            LIMIT 500
+        `;
+        const [messages] = await pool.query(query);
+        res.json({ success: true, messages });
+    } catch (error) {
+        res.status(500).json({ message: 'Szerver hiba az üzenetek lekérésekor.' });
     }
 });
 
