@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Gép: mysql
--- Létrehozás ideje: 2026. Ápr 13. 23:29
+-- Létrehozás ideje: 2026. Ápr 14. 14:17
 -- Kiszolgáló verziója: 8.0.45
 -- PHP verzió: 8.3.26
 
@@ -45,7 +45,8 @@ CREATE TABLE `bids` (
 
 INSERT INTO `bids` (`id`, `project_id`, `driver_id`, `amount`, `message`, `estimated_days`, `status`, `created_at`, `updated_at`) VALUES
 (3, 4, 12, 5000000.00, 'Mert egy baromi jo pilota vagyok', 2, 'accepted', '2026-04-13 13:25:14', '2026-04-13 17:21:12'),
-(6, 4, 16, 500.00, 'Utasítsad el test', 20, 'rejected', '2026-04-13 16:52:20', '2026-04-13 17:21:12');
+(6, 4, 16, 500.00, 'Utasítsad el test', 20, 'rejected', '2026-04-13 16:52:20', '2026-04-13 17:21:12'),
+(7, 6, 12, 27500.00, 'Testtt', 1, 'accepted', '2026-04-13 23:52:51', '2026-04-13 23:53:04');
 
 -- --------------------------------------------------------
 
@@ -75,7 +76,8 @@ CREATE TABLE `contracts` (
 --
 
 INSERT INTO `contracts` (`id`, `project_id`, `bid_id`, `customer_id`, `driver_id`, `amount`, `start_date`, `end_date`, `status`, `payment_status`, `payment_date`, `completed_at`, `created_at`, `updated_at`) VALUES
-(1, 4, 3, 11, 12, 5000000.00, NULL, NULL, 'active', 'pending', NULL, NULL, '2026-04-13 17:21:12', '2026-04-13 17:21:12');
+(1, 4, 3, 11, 12, 5000000.00, NULL, NULL, 'completed', 'paid', NULL, '2026-04-13 23:49:30', '2026-04-13 17:21:12', '2026-04-13 23:49:30'),
+(2, 6, 7, 11, 12, 27500.00, NULL, NULL, 'completed', 'paid', NULL, '2026-04-14 00:12:01', '2026-04-13 23:53:04', '2026-04-14 00:12:01');
 
 -- --------------------------------------------------------
 
@@ -184,7 +186,8 @@ INSERT INTO `notifications` (`id`, `user_id`, `type`, `title`, `message`, `is_re
 (18, 12, 'message', 'Új üzenet', 'TestM üzent neked!', 1, '/messages', '2026-04-13 20:10:00'),
 (19, 12, 'message', 'Új üzenet', 'TestM üzent neked!', 1, '/messages', '2026-04-13 20:10:34'),
 (20, 12, 'message', 'Új üzenet', 'TestM üzent neked!', 1, '/messages', '2026-04-13 20:30:21'),
-(22, 11, 'message', 'Új üzenet', 'TestP küldött 2 új üzenetet!', 0, '/messages', '2026-04-13 22:09:09');
+(22, 11, 'message', 'Új üzenet', 'TestP küldött 2 új üzenetet!', 0, '/messages', '2026-04-13 22:09:09'),
+(23, 12, 'bid', 'Ajánlat elfogadva!', 'Gratulálunk! A(z) \"Testt\" projektre tett ajánlatodat elfogadták.', 0, '/contract/2', '2026-04-13 23:53:04');
 
 -- --------------------------------------------------------
 
@@ -199,6 +202,13 @@ CREATE TABLE `password_resets` (
   `expires_at` datetime NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- A tábla adatainak kiíratása `password_resets`
+--
+
+INSERT INTO `password_resets` (`id`, `email`, `code`, `expires_at`, `created_at`) VALUES
+(5, 'testm@gmail.com', '101324', '2026-04-14 04:12:31', '2026-04-14 03:57:31');
 
 -- --------------------------------------------------------
 
@@ -251,7 +261,10 @@ CREATE TABLE `projects` (
 --
 
 INSERT INTO `projects` (`id`, `user_id`, `title`, `description`, `category`, `location`, `budget_type`, `budget`, `deadline`, `status`, `featured`, `views`, `proposals_count`, `created_at`, `updated_at`) VALUES
-(4, 11, 'Test', 'Test Test Test Test Test Test Test ', 'videography', 'Keszthely', 'fix', 5000000.00, '2026-05-01', 'completed', 0, 0, 2, '2026-04-12 21:15:10', '2026-04-13 17:21:12');
+(4, 11, 'Test', 'Test Test Test Test Test Test Test ', 'videography', 'Keszthely', 'fix', 5000000.00, '2026-05-01', 'completed', 0, 0, 2, '2026-04-12 21:15:10', '2026-04-13 17:21:12'),
+(6, 11, 'Testt', 'Test Test Test Test Test Test ', 'videography', 'Budapest', 'fix', 27500.00, '2026-04-14', 'completed', 0, 0, 1, '2026-04-13 23:50:08', '2026-04-13 23:53:04'),
+(7, 21, 'Automata Teszt Projekt', 'Ez egy Selenium robottal automatikusan létrehozott projekt.', 'videography', 'Budapest', 'fix', 150000.00, '2026-12-31', 'active', 0, 0, 0, '2026-04-14 03:53:46', '2026-04-14 03:53:46'),
+(8, 23, 'Automata Teszt Projekt', 'Ez egy Selenium robottal automatikusan létrehozott projekt.', 'videography', 'Budapest', 'fix', 150000.00, '2026-12-31', 'active', 0, 0, 0, '2026-04-14 03:57:36', '2026-04-14 03:57:36');
 
 -- --------------------------------------------------------
 
@@ -274,7 +287,12 @@ INSERT INTO `project_skills` (`id`, `project_id`, `skill`) VALUES
 (18, 4, 'rendezvény'),
 (19, 4, 'esküvő'),
 (20, 4, 'szerkesztés'),
-(21, 4, 'színkorrekció');
+(21, 4, 'színkorrekció'),
+(27, 6, 'videózás'),
+(28, 6, 'rendezvény'),
+(29, 6, 'esküvő'),
+(30, 6, 'szerkesztés'),
+(31, 6, 'színkorrekció');
 
 -- --------------------------------------------------------
 
@@ -291,6 +309,14 @@ CREATE TABLE `reviews` (
   `comment` text,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- A tábla adatainak kiíratása `reviews`
+--
+
+INSERT INTO `reviews` (`id`, `contract_id`, `reviewer_id`, `reviewee_id`, `rating`, `comment`, `created_at`) VALUES
+(1, 1, 11, 12, 5, NULL, '2026-04-13 23:49:30'),
+(2, 2, 11, 12, 2, 'Értékelési test, mukodj', '2026-04-14 00:12:01');
 
 -- --------------------------------------------------------
 
@@ -328,13 +354,19 @@ INSERT INTO `users` (`id`, `name`, `email`, `phone`, `password`, `role`, `verifi
 (2, 'Nagy Eszter', 'eszter@example.com', '+36 20 234 5678', '$2a$10$YourHashedPasswordHere', 'driver', 1, NULL, NULL, NULL, NULL, 0, 0.00, 0, '2019-06-20', '2026-04-01 14:02:17', '2026-04-01 14:02:17', NULL),
 (3, 'Ingatlan.com Zrt.', 'info@ingatlan.com', NULL, '$2a$10$YourHashedPasswordHere', 'customer', 1, NULL, NULL, NULL, NULL, 0, 0.00, 0, '2018-09-01', '2026-04-01 14:02:17', '2026-04-01 14:02:17', NULL),
 (4, 'Győri Ipari Park', 'info@gyoripark.hu', NULL, '$2a$10$YourHashedPasswordHere', 'customer', 1, NULL, NULL, NULL, NULL, 0, 0.00, 0, '2019-11-15', '2026-04-01 14:02:17', '2026-04-01 14:02:17', NULL),
-(5, 'Teszt Elek', 'teszt@elek.hu', '+36301234567', '$2b$10$jEGRsru6QsQ6GrOxa0o5LuO.mmQBHE4dVbspdkspu9v1pHjK7nmp2', 'customer', 0, NULL, NULL, NULL, NULL, 0, 0.00, 0, '2026-04-01', '2026-04-01 14:19:17', '2026-04-01 14:19:17', NULL),
 (11, 'TestM', 'testm@gmail.com', '+06203815718', '$2b$10$fHLlwVUWglORs.DTjDZdMuyQnYjwFTe/IUl2EmDsHwheYlvLKpVzO', 'customer', 0, 'Keszthely', 'Megbízói tesztfiók', NULL, '', 0, 0.00, 0, NULL, '2026-04-11 14:21:12', '2026-04-13 22:11:03', 'http://localhost:5000/uploads/1776118256908-631572473.gif'),
-(12, 'TestP', 'testp@gmail.com', '+06203845157', '$2b$10$4aQZnGFyHHICH4XikCYKo.mhT0O0Nku8gw6K27/LjpnM5fJjR/XBa', 'driver', 0, 'Keszthely', ' TestP  TestP  TestP  TestP  TestP  TestP', 15000.00, 'full_time', 0, 0.00, 0, NULL, '2026-04-11 14:21:46', '2026-04-13 22:08:43', 'http://localhost:5000/uploads/1776117984842-155516125.jpg'),
+(12, 'TestP', 'testp@gmail.com', '+06203845157', '$2b$10$4aQZnGFyHHICH4XikCYKo.mhT0O0Nku8gw6K27/LjpnM5fJjR/XBa', 'driver', 0, 'Keszthely', ' TestP  TestP  TestP  TestP  TestP  TestP', 15000.00, 'full_time', 2, 3.50, 2, NULL, '2026-04-11 14:21:46', '2026-04-14 00:12:01', 'http://localhost:5000/uploads/1776117984842-155516125.jpg'),
 (13, 'TestA', 'testa@gmail.com', '+36203467257', '$2b$10$eku3ke0FqBgDJmjXTSZFFeO1ZJ7gncfCwpKCJsm3k/LzAN/oAPenm', 'admin', 0, NULL, NULL, NULL, NULL, 0, 0.00, 0, NULL, '2026-04-11 14:23:16', '2026-04-11 14:23:47', NULL),
 (14, 'Csák Roland', 'roland.csak56@gmail.com', '+36203813556', '$2a$10$3IISTM9KJB.93RRs0V9CXOz0QE3s5F3acTC5C/IETZ.sJXxpfYfvG', 'driver', 0, NULL, NULL, NULL, NULL, 0, 0.00, 0, NULL, '2026-04-11 18:04:37', '2026-04-13 23:22:05', NULL),
 (15, 'Telefonszamtest', 'tefe@gmail.com', '+36345213556', '$2b$10$w5MtvyNcywNIZrl8EjFthetglzt6KmjVofe/CJVYbMs1h8t4DtLbK', 'customer', 0, NULL, NULL, NULL, NULL, 0, 0.00, 0, '2026-04-13', '2026-04-13 11:34:30', '2026-04-13 11:34:30', NULL),
-(16, 'TestP2', 'testp2@gmail.com', '+36232679146', '$2b$10$wpSKWxES1QqE.VONGBdBYuAlUMJaJv/UHJGU5IzUSO6xufRNkSiGu', 'driver', 0, NULL, NULL, NULL, NULL, 0, 0.00, 0, '2026-04-13', '2026-04-13 16:45:53', '2026-04-13 16:45:53', NULL);
+(16, 'TestP2', 'testp2@gmail.com', '+36232679146', '$2b$10$wpSKWxES1QqE.VONGBdBYuAlUMJaJv/UHJGU5IzUSO6xufRNkSiGu', 'driver', 0, NULL, NULL, NULL, NULL, 0, 0.00, 0, '2026-04-13', '2026-04-13 16:45:53', '2026-04-13 16:45:53', NULL),
+(17, 'Selenium Megbízó', 'customer_1776137073074@example.com', NULL, '$2a$10$6kauvMvauOcTRdN46HoxRu3d5PCjORajggc9Of/hVHA2Q1b5f4g66', 'customer', 0, NULL, NULL, NULL, NULL, 0, 0.00, 0, '2026-04-14', '2026-04-14 03:24:36', '2026-04-14 03:24:36', NULL),
+(18, 'Selenium Pilóta', 'pilot_1776137073074@example.com', NULL, '$2a$10$r2Rv3aLybfyQDuF4xa8P2OWM4xdRAkWjItZ.iqtkIuigqM797YFCe', 'driver', 0, NULL, NULL, NULL, NULL, 0, 0.00, 0, '2026-04-14', '2026-04-14 03:24:51', '2026-04-14 03:24:51', NULL),
+(19, 'Selenium Megbízó', 'customer_1776138270625@example.com', NULL, '$2a$10$svqhW/Pf8/nKB/T2bxMPE.eqx7yPF9KIXbnBJL1F5LuL3U1E3eUTS', 'customer', 0, NULL, NULL, NULL, NULL, 0, 0.00, 0, '2026-04-14', '2026-04-14 03:44:35', '2026-04-14 03:44:35', NULL),
+(20, 'Selenium Pilóta', 'pilot_1776138270625@example.com', NULL, '$2a$10$D6vfq98H3XHclLSFbyAmYe1C6Ze0JSHKwTJz3hecHqwTkH3dn4UBW', 'driver', 0, NULL, NULL, NULL, NULL, 0, 0.00, 0, '2026-04-14', '2026-04-14 03:44:48', '2026-04-14 03:44:48', NULL),
+(21, 'Selenium Megbízó', 'customer_1776138805986@example.com', NULL, '$2a$10$dhKTLVnLjLCitdIm101Xx.B87u4ifM25WxehaMu/EUg7kXTLmPRbC', 'customer', 0, NULL, NULL, NULL, NULL, 0, 0.00, 0, '2026-04-14', '2026-04-14 03:53:41', '2026-04-14 03:53:41', NULL),
+(22, 'Selenium Pilóta', 'pilot_1776138805986@example.com', NULL, '$2a$10$5K8jQKoT9YdkF9qU4mSSD.4JUQbOYjiOCJPe.tSB.gNFa9EDtNViS', 'driver', 0, NULL, NULL, NULL, NULL, 0, 0.00, 0, '2026-04-14', '2026-04-14 03:53:49', '2026-04-14 03:53:49', NULL),
+(23, 'Selenium Megbízó', 'customer_1776139047051@example.com', NULL, '$2a$10$zdR5ubJPMTo48Rba1WqwH.5mswkNSD7GiWmuhZV0ZxuiFgEWFJ7yu', 'customer', 0, NULL, NULL, NULL, NULL, 0, 0.00, 0, '2026-04-14', '2026-04-14 03:57:31', '2026-04-14 03:57:31', NULL);
 
 -- --------------------------------------------------------
 
@@ -462,13 +494,13 @@ ALTER TABLE `user_skills`
 -- AUTO_INCREMENT a táblához `bids`
 --
 ALTER TABLE `bids`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT a táblához `contracts`
 --
 ALTER TABLE `contracts`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT a táblához `contract_milestones`
@@ -486,13 +518,13 @@ ALTER TABLE `messages`
 -- AUTO_INCREMENT a táblához `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT a táblához `password_resets`
 --
 ALTER TABLE `password_resets`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT a táblához `portfolio`
@@ -504,25 +536,25 @@ ALTER TABLE `portfolio`
 -- AUTO_INCREMENT a táblához `projects`
 --
 ALTER TABLE `projects`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT a táblához `project_skills`
 --
 ALTER TABLE `project_skills`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT a táblához `reviews`
 --
 ALTER TABLE `reviews`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT a táblához `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT a táblához `user_skills`
